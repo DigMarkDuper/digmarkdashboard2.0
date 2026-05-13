@@ -24,21 +24,35 @@ def init_connection():
         return None
 
 @st.cache_data(ttl=600)
+@st.cache_data(ttl=600)
 def fetch_all_master_data():
-    """BATCH LOADING: Menarik semua tab sekaligus"""
     client = init_connection()
     if not client: return None
     try:
         master = client.open("MASTER DATA DIGITAL MARKETING 2.0")
+        
         def get_df(idx):
             try:
+                # Polisi Tidur: Jeda 1.5 detik sebelum menarik tab baru
+                # Ini mengamankan kuota API Google Sheets kita
+                time.sleep(1.5) 
+                
                 data = master.get_worksheet(idx).get_all_records()
                 return pd.DataFrame(data) if data else pd.DataFrame()
-            except: return pd.DataFrame()
+            except Exception as e: 
+                print(f"Gagal tarik tab {idx}: {e}")
+                return pd.DataFrame()
         
+        # Tarik data satu per satu dengan santai
         return {
-            0: get_df(0), 1: get_df(1), 2: get_df(2), 3: get_df(3),
-            4: get_df(4), 6: get_df(6), 7: get_df(7), 8: get_df(8)
+            0: get_df(0), 
+            1: get_df(1), 
+            2: get_df(2), 
+            3: get_df(3),
+            4: get_df(4), 
+            6: get_df(6), 
+            7: get_df(7), 
+            8: get_df(8)
         }
     except Exception as e:
         st.error(f"Gagal Sinkronisasi Master Data: {e}")
