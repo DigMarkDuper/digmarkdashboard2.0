@@ -110,18 +110,20 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                     
                     # --- LOGIKA TIKTOK (Overview.csv) ---
                     if "video views" in sample_text or "shares" in sample_text:
+                        # TikTok Overview tidak punya data Reach Unik per hari
+                        # Kita set Reach ke 0 agar data tidak 'bohong' atau menyesatkan
                         res = pd.DataFrame({
                             'Date': df_raw['Date'],
                             'Platform': 'TikTok',
                             'View': df_raw.get('Video Views', 0),
-                            'Reach': df_raw.get('Video Views', 0), # Proxy untuk Reach
+                            'Reach': 0, # Diubah menjadi 0 karena data unik reach tidak ada di file ini
                             'Interaction': df_raw.get('Likes', 0) + df_raw.get('Comments', 0) + df_raw.get('Shares', 0),
                             'Profile Visit': df_raw.get('Profile Views', 0),
                             'Link Clicks': 0,
-                            'Follow': df_raw.get('Followers', 0) # Jika ada kolom followers
+                            'Follow': 0 # Data follow biasanya ada di file 'Followers' terpisah
                         })
                         all_platform_data.append(res)
-                        st.caption(f"✅ TikTok Overview Detected: {f.name}")
+                        st.caption(f"✅ TikTok Overview Detected: {f.name} (Reach set to 0 for accuracy)")
 
                     # --- LOGIKA INSTAGRAM ---
                     else:
