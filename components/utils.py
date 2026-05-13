@@ -103,6 +103,24 @@ def load_wa_admin():
         if kolom_penting:
             df = df.dropna(subset=kolom_penting, how='all')
     return df
-
-# Fungsi lainnya (append_sheet_rows, set_bg_local, render_kpi) bisa tetap sama.
-# ... (masukkan sisa fungsi Mas di bawah sini)
+def set_bg_local(main_bg):
+    """Fungsi untuk memasang background image dari file lokal menggunakan Base64"""
+    import base64
+    try:
+        with open(main_bg, "rb") as f:
+            bin_str = base64.b64encode(f.read()).decode()
+        st.markdown(
+            f"""
+            <style>
+            .stApp {{
+                background-image: url("data:image/png;base64,{bin_str}");
+                background-size: cover;
+                background-attachment: fixed;
+            }}
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+    except Exception as e:
+        # Jika file gambar tidak ditemukan, biarkan aplikasi berjalan tanpa background
+        pass
