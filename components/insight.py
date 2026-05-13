@@ -5,16 +5,18 @@ import plotly.express as px
 from datetime import datetime
 import components.utils as utils
 
-# --- 1. FUNGSI PEMBANTU (DI LUAR AGAR STABIL) ---
+# --- 1. FUNGSI PEMBANTU ---
 
 def universal_date_parser(d_str):
     if pd.isna(d_str) or d_str == "": return ""
     d_str = str(d_str).strip()
+    # Format TikTok: "January 1", Format IG: "2026-01-01"
     formats = ['%B %d', '%b %d', '%d-%m-%Y', '%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y', '%B %d, %Y']
     for fmt in formats:
         try:
             dt_obj = datetime.strptime(d_str, fmt)
-            if dt_obj.year == 1900: dt_obj = dt_obj.replace(year=2026)
+            if dt_obj.year == 1900: 
+                dt_obj = dt_obj.replace(year=2026) # Target Tahun 2026
             return dt_obj.strftime('%d/%m/%Y')
         except: continue
     return d_str
@@ -37,26 +39,22 @@ def create_modern_chart(data, y_col, color, title):
     )
     return fig
 
-# --- 2. FUNGSI UTAMA HALAMAN ---
-
-def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
-    st.title("📈 ANALITIK KONTEN")
-
-    header_names = ["Date", "Platform", "View", "Reach", "Interaction", "Profile Visit", "Link Clicks", "Follow"]
-    numeric_cols = ["View", "Reach", "Interaction", "Profile Visit", "Link Clicks", "Follow"]
-    
-    if 'preview_data' not in st.session_state: st.session_state.preview_data = None
-    if 'uploader_key' not in st.session_state: st.session_state.uploader_key = 0
-
-    df_db_main = st.session_state.get('bundle', {}).get(2, pd.DataFrame())
-
-    # --- A. RENDER SCOREBOARD (GRAND TOTAL ONLY) ---
+# --- RENDER SUMMARY & CHARTS (MODERN SEPARATED GRID) ---
     if not df_db_main.empty:
         df_calc = df_db_main.copy()
-        if len(df_calc.columns) == len(header_names): df_calc.columns = header_names
-        for col in numeric_cols: df_calc[col] = pd.to_numeric(df_calc[col], errors='coerce').fillna(0)
+        if len(df_calc.columns) == len(header_names): 
+            df_calc.columns = header_names
+        
+        for col in numeric_cols: 
+            df_calc[col] = pd.to_numeric(df_calc[col], errors='coerce').fillna(0)
 
-        st.markdown(f'<div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left: 10px solid {BRAND_YELLOW};"><h2 style="margin:0; color:white; font-size:20px;">🌍 EXECUTIVE SUMMARY PERFORMA (GABUNGAN)</h2></div>', unsafe_allow_html=True)
+        # 1. GRAND TOTAL (Hanya Angka - Scoreboard Utama)
+        st.markdown(f"""
+            <div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left: 10px solid {BRAND_YELLOW};">
+                <h2 style="margin:0; color:white; font-size:20px;">🌍 TOTAL PERFORMA GABUNGAN (ALL-TIME)</h2>
+            </div>
+        """, unsafe_allow_html=True)
+        
         g1, g2, g3, g4 = st.columns(4)
         g1.metric("Grand Total Views", f"{int(df_calc['View'].sum()):,}")
         g2.metric("Grand Total Reach", f"{int(df_calc['Reach'].sum()):,}")
@@ -65,68 +63,74 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # --- B. RENDER GRAFIK PER PLATFORM (TERPISAH) ---
+        # 2. GRAFIK PER PLATFORM
         try:
             df_trend = df_calc.copy()
             df_trend['Date'] = pd.to_datetime(df_trend['Date'], dayfirst=True, errors='coerce')
             df_trend = df_trend.dropna(subset=['Date']).sort_values('Date')
             
+            # Grouping per Bulan dan Platform
             df_m = df_trend.groupby([df_trend['Date'].dt.to_period('M'), 'Platform']).sum(numeric_only=True).reset_index()
             df_m['Date'] = df_m['Date'].dt.to_timestamp()
 
-            # --- TIKTOK SECTION ---
+            # --- BARIS 1: TIKTOK ANALYTICS ---
             st.subheader("🎵 Tren Pertumbuhan TikTok")
             df_tk = df_m[df_m['Platform'] == 'TikTok']
             if not df_tk.empty:
-                tk1, tk2 = st.columns(2)
-                with tk1: st.plotly_chart(create_modern_chart(df_tk, 'View', BRAND_BLUE, "TikTok Video Views"), use_container_width=True)
-                with tk2: st.plotly_chart(create_modern_chart(df_tk, 'Follow', "#00CC96", "TikTok New Followers"), use_container_width=True)
-            
+                tk_c1, tk_c2 = st.columns(2)
+                with tk_c1: 
+                    st.plotly_chart(create_modern_chart(df_tk, 'View', BRAND_BLUE, "TikTok Video Views"), use_container_width=True)
+                with tk_c2: 
+                    st.plotly_chart(create_modern_chart(df_tk, 'Follow', "#00CC96", "TikTok New Followers"), use_container_width=True)
+            else:
+                st.info("Data TikTok belum tersedia untuk grafik.")
+
             st.markdown("<br>", unsafe_allow_html=True)
 
-            # --- INSTAGRAM SECTION ---
+            # --- BARIS 2: INSTAGRAM ANALYTICS ---
             st.subheader("📸 Tren Pertumbuhan Instagram")
             df_ig = df_m[df_m['Platform'] == 'Instagram']
             if not df_ig.empty:
-                ig1, ig2 = st.columns(2)
-                with ig1: st.plotly_chart(create_modern_chart(df_ig, 'View', "#E1306C", "Instagram Views"), use_container_width=True)
-                with ig2: st.plotly_chart(create_modern_chart(df_ig, 'Follow', "#833AB4", "Instagram New Followers"), use_container_width=True)
-        except: pass
+                ig_c1, ig_c2 = st.columns(2)
+                with ig_c1: 
+                    st.plotly_chart(create_modern_chart(df_ig, 'View', "#E1306C", "Instagram Views"), use_container_width=True)
+                with ig_c2: 
+                    st.plotly_chart(create_modern_chart(df_ig, 'Follow', "#833AB4", "Instagram New Followers"), use_container_width=True)
+            else:
+                st.info("Data Instagram belum tersedia untuk grafik.")
+
+        except Exception as e:
+            st.error(f"Gagal memuat grafik tren: {e}")
+            
     else:
         st.info("Database masih kosong.")
 
-    st.markdown("---")
-
     # =====================================================
-    # 3. SMART IMPORTER (FIXED FOR MULTIPLE TIKTOK FILES)
+    # 3. SMART IMPORTER (V7 - FIXED INSTAGRAM DETECTION)
     # =====================================================
     with st.expander("🚀 Ultra-Smart Importer (TikTok & Instagram)", expanded=True):
-        files = st.file_uploader("Upload CSV TikTok/IG (Bisa multiple)", type=["csv"], accept_multiple_files=True, key=f"ins_v6_{st.session_state.uploader_key}")
+        files = st.file_uploader("Upload CSV TikTok/IG (Bisa multiple)", type=["csv"], accept_multiple_files=True, key=f"ins_v7_{st.session_state.uploader_key}")
         
         if files:
             all_platform_data = []
             
             for f in files:
                 try:
-                    # Coba deteksi encoding (TikTok biasanya UTF-8 dengan BOM)
                     raw_bytes = f.getvalue()
-                    content = ""
+                    content_str = ""
                     for enc in ["utf-8-sig", "utf-8", "latin-1"]:
                         try:
-                            content = raw_bytes.decode(enc)
+                            content_str = raw_bytes.decode(enc)
                             break
                         except: continue
                     
-                    df_raw = pd.read_csv(io.StringIO(content))
-                    sample_text = content.lower()
+                    # Bersihkan teks untuk deteksi keyword
+                    sample_text = content_str.lower()
                     
-                    # Standarisasi Tanggal
-                    date_col = next((c for c in df_raw.columns if "Date" in c), None)
-                    if date_col:
-                        df_raw['Date'] = df_raw[date_col].apply(universal_date_parser)
-                    
-                    # --- LOGIKA TIKTOK OVERVIEW (Views/Likes/Shares) ---
+                    # --- LOGIKA TIKTOK OVERVIEW ---
                     if "video views" in sample_text:
+                        df_raw = pd.read_csv(io.StringIO(content_str))
+                        df_raw['Date'] = df_raw['Date'].apply(universal_date_parser)
                         res = pd.DataFrame({
                             'Date': df_raw['Date'],
                             'Platform': 'TikTok',
@@ -137,21 +141,49 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                         all_platform_data.append(res)
                         st.caption(f"✅ TikTok Overview Detected: {f.name}")
 
-                    # --- LOGIKA TIKTOK FOLLOWER HISTORY ---
+                    # --- LOGIKA TIKTOK FOLLOWER ---
                     elif "follower" in sample_text and "difference" in sample_text:
+                        df_raw = pd.read_csv(io.StringIO(content_str))
+                        df_raw['Date'] = df_raw['Date'].apply(universal_date_parser)
                         res = pd.DataFrame({
                             'Date': df_raw['Date'],
                             'Platform': 'TikTok',
                             'Follow': df_raw.get('Difference in followers from previous day', 0)
                         })
                         all_platform_data.append(res)
-                        st.caption(f"✅ TikTok Follower History Detected: {f.name}")
+                        st.caption(f"✅ TikTok Follower Detected: {f.name}")
 
-                    # --- LOGIKA INSTAGRAM ---
+                    # --- LOGIKA INSTAGRAM (DIPERKUAT) ---
                     else:
-                        target_map = {"follows": "Follow", "interactions": "Interaction", "reach": "Reach", "views": "View", "linkclicks": "Link Clicks"}
-                        found_target = next((v for k, v in target_map.items() if k in sample_text), None)
-                        if found_target:
+                        # Instagram sering punya baris sampah di atas, kita cari baris yang ada kata 'Date'
+                        lines = content_str.splitlines()
+                        skip_rows = 0
+                        for i, line in enumerate(lines):
+                            if "date" in line.lower() and "primary" in line.lower():
+                                skip_rows = i
+                                break
+                        
+                        # Baca ulang dengan skip rows
+                        df_raw = pd.read_csv(io.StringIO("\n".join(lines[skip_rows:])))
+                        
+                        # Map Target
+                        target_map = {
+                            "follows": "Follow", 
+                            "interactions": "Interaction", 
+                            "reach": "Reach", 
+                            "views": "View", 
+                            "link clicks": "Link Clicks"
+                        }
+                        
+                        found_target = None
+                        for key, val in target_map.items():
+                            if key in sample_text:
+                                found_target = val
+                                break
+                        
+                        if found_target and 'Date' in df_raw.columns:
+                            # Bersihkan format tanggal IG (T00:00:00)
+                            df_raw['Date'] = df_raw['Date'].astype(str).str.split('T').str[0].apply(universal_date_parser)
                             res = pd.DataFrame({
                                 'Date': df_raw['Date'],
                                 'Platform': 'Instagram',
@@ -159,21 +191,36 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                             })
                             all_platform_data.append(res)
                             st.caption(f"✅ Instagram {found_target} Detected: {f.name}")
+                        else:
+                            st.warning(f"❓ File tidak dikenali: {f.name}. Pastikan file adalah ekspor asli TikTok/Instagram.")
 
                 except Exception as e:
                     st.error(f"Error pada file {f.name}: {e}")
 
-            # PROSES MERGING (MENGGABUNGKAN FILE)
+            # PROSES MERGING
             if all_platform_data:
                 df_merged = pd.concat(all_platform_data, ignore_index=True)
-                # Group by Date & Platform untuk menyatukan baris yang sama (Smart Merge)
                 df_merged = df_merged.groupby(['Date', 'Platform']).sum(numeric_only=True).reset_index()
                 
-                # Pastikan semua kolom standar tersedia
                 for col in header_names:
                     if col not in df_merged.columns: df_merged[col] = 0
                 
+                # Masukkan ke preview agar tombol muncul
                 st.session_state.preview_data = df_merged[header_names]
+
+    # --- 4. PREVIEW & SAVE ---
+    if st.session_state.preview_data is not None:
+        st.markdown("### 🔍 Preview Penggabungan Data")
+        st.dataframe(st.session_state.preview_data, use_container_width=True, hide_index=True)
+        if st.button("🚀 SIMPAN SEMUA KE DATABASE", use_container_width=True):
+            final_list = st.session_state.preview_data.values.tolist()
+            if utils.append_sheet_rows(2, final_list):
+                st.success("🔥 Data Berhasil Digabungkan & Disimpan!")
+                st.session_state.preview_data = None
+                st.session_state.uploader_key += 1
+                st.cache_data.clear()
+                st.session_state.bundle = utils.fetch_all_master_data()
+                st.rerun()
 
     # --- 5. DATABASE TABLE ---
     st.markdown("### 🗄️ Riwayat Database")
@@ -183,3 +230,8 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         df_show['SortDate'] = pd.to_datetime(df_show['Date'], dayfirst=True, errors='coerce')
         df_show = df_show.sort_values(by='SortDate', ascending=False).drop(columns=['SortDate'])
         st.dataframe(df_show, use_container_width=True, hide_index=True)
+
+    if st.button("🔄 Segarkan Data", use_container_width=True):
+        st.cache_data.clear()
+        st.session_state.bundle = utils.fetch_all_master_data()
+        st.rerun()
