@@ -2,17 +2,23 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import datetime
-from database_lokasi import indo_coords # Import koordinat peta
 
-def show_homepage(BRAND_BLUE, go_to_page_func, data_loaders):
-    # Kita ambil fungsi loader dari parameter agar tidak perlu import ulang
+# --- WAJIB ADA: Panggil file utils kita ---
+import components.utils as utils
+
+# Pastikan file database_lokasi.py ada di folder utama
+try:
+    from database_lokasi import indo_coords
+except:
+    indo_coords = {}
+
+def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
+    # --- AMBIL DATA DARI UTILS (Sangat Rapih & Aman) ---
     df_wa = utils.load_wa_admin()
-    load_wa_admin = data_loaders['load_wa_admin']
-    load_insight = data_loaders['load_insight']
-    load_sosmed = data_loaders['load_sosmed']
-    load_website = data_loaders['load_website']
+    df_sos = utils.load_sosmed()
+    df_web = utils.load_website()
 
-    # --- 1. CSS & HEADER ---
+    # --- 1. CSS CUSTOM UNTUK TAMPILAN ---
     st.markdown("""
         <style>
         .kpi-card {
@@ -24,13 +30,16 @@ def show_homepage(BRAND_BLUE, go_to_page_func, data_loaders):
             display: flex;
             align-items: center;
             gap: 15px;
+            transition: all 0.3s ease;
         }
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
         </style>
     """, unsafe_allow_html=True)
 
+    # --- 2. HEADER ---
     st.markdown('<div class="feature-header" style="text-align: center; margin-bottom:20px;">🚀 DIGITAL MARKETING COMMAND CENTER</div>', unsafe_allow_html=True)
-    
-    # --- 2. FUNGSI CARD NAVIGASI ---
+
+    # --- 3. NAVIGASI MENU (CARD) ---
     def create_square_card(icon, title, subtitle, target_page, button_key):
         with st.container(border=True):
             st.markdown(f"""
@@ -42,7 +51,7 @@ def show_homepage(BRAND_BLUE, go_to_page_func, data_loaders):
             """, unsafe_allow_html=True)
             st.button("Masuk ➔", key=button_key, use_container_width=True, on_click=go_to_page_func, args=(target_page,))
 
-    # Susunan Menu
+    # Data Menu
     nav_data = [
         ("📱", "Sosmed", "Jadwal PIC", "📱 SOSIAL MEDIA", "btn_sos"),
         ("🌐", "Website", "SEO Audit", "🌐 WEBSITE AUDIT", "btn_web"),
@@ -65,34 +74,75 @@ def show_homepage(BRAND_BLUE, go_to_page_func, data_loaders):
 
     st.markdown("---")
 
-    # --- 3. EXECUTIVE SUMMARY (LOGIKA PERHITUNGAN) ---
+    # --- 4. EXECUTIVE SUMMARY ---
     try:
-        df_wa_home = load_wa_admin()
-        df_sos_home = load_sosmed()
-        df_web_home = load_website()
+        # Logic Waktu
+        sekarang = datetime.datetime.now()
+        bulan_ini = sekarang.month
+        tahun_ini = sekarang.year
 
-        # ... (Masukkan seluruh logika perhitungan total_leads, total_closing, dll di sini) ...
-        # (Gunakan kode yang sudah Mas buat tadi)
+        # A. Hitung Leads & Closing
+        total_leads, total_closing = 0, 0
+        if not df_wa.empty:
+            df_wa['tgl_p'] = pd.to_datetime(df_wa['Tanggal Masuk'], dayfirst=True, errors='coerce')
+            df_current = df_wa[(df_wa['tgl_p'].dt.month == bulan_ini) & (df_wa['tgl_p'].dt.year == tahun_ini)]
+            
+            status_col = next((c for c in df_wa.columns if 'Status' in str(c)), None)
+            total_leads = len(df_current)
+            if status_col:
+                total_closing = len(df_current[df_current[status_col].astype(str).str.contains('Closing', case=False, na=False)])
 
-        # Render KPI
-        st.markdown('<div style="font-weight: 800; margin-bottom: 15px;">📊 RINGKASAN PERFORMA</div>', unsafe_allow_html=True)
+        # B. Render KPI
+        st.markdown('<div style="font-weight: 800; margin-bottom: 15px;">📊 RINGKASAN PERFORMA BULAN INI</div>', unsafe_allow_html=True)
         k1, k2, k3 = st.columns(3)
-        
-        # Fungsi Render KPI Internal
-        def render_kpi(icon, title, value):
-            st.markdown(f"""<div class="kpi-card"><div style="font-size: 24px;">{icon}</div><div><div style="font-size: 11px; color: #6B7280; font-weight: 600;">{title}</div><div style="font-size: 18px; font-weight: 800; color: #111827;">{value}</div></div></div>""", unsafe_allow_html=True)
 
-        with k1: render_kpi("🎯", "Closing / Leads", f"0 / 0") # Ganti dengan variabel asli
-        with k2: render_kpi("📱", "Utang Sosmed", "0")
-        with k3: render_kpi("🌐", "Utang Web", "0")
+        def render_kpi(icon, title, value):
+            st.markdown(f"""
+                <div class="kpi-card">
+                    <div style="font-size: 24px;">{icon}</div>
+                    <div>
+                        <div style="font-size: 11px; color: #6B7280; font-weight: 600;">{title}</div>
+                        <div style="font-size: 18px; font-weight: 800; color: #111827;">{value}</div>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+
+        with k1: render_kpi("🎯", "Closing / Leads", f"{total_closing} / {total_leads}")
+        with k2: 
+            sos_pend = len(df_sos[df_sos['PROSES'].astype(str).str.upper() != 'DONE']) if not df_sos.empty and 'PROSES' in df_sos.columns else 0
+            render_kpi("📱", "Hutang Sosmed", f"{sos_pend} Task")
+        with k3:
+            web_pend = len(df_web[~df_web['Status Post'].astype(str).str.upper().isin(['DONE', 'V', '1'])]) if not df_web.empty and 'Status Post' in df_web.columns else 0
+            render_kpi("🌐", "Hutang Web", f"{web_pend} Page")
 
     except Exception as e:
         st.error(f"Gagal memuat metrik: {e}")
 
-    # --- 4. PETA PERSEBARAN ---
-    st.markdown(f"<h3 style='color:{BRAND_BLUE}; font-size: 18px;'>🗺️ Peta Persebaran</h3>", unsafe_allow_html=True)
-    try:
-        # ... (Masukkan seluruh kode Peta & Treemap Mas di sini) ...
-        pass
-    except Exception as e:
-        st.error(f"Peta Error: {e}")
+    st.markdown("---")
+
+    # --- 5. PETA PERSEBARAN ---
+    st.markdown(f"<h3 style='color:{BRAND_BLUE}; font-size: 18px;'>🗺️ Peta Persebaran Prospek</h3>", unsafe_allow_html=True)
+    
+    if not df_wa.empty and 'Asal' in df_wa.columns:
+        asal_counts = df_wa['Asal'].value_counts().reset_index()
+        asal_counts.columns = ['Lokasi', 'Jumlah']
+        
+        lats, lons = [], []
+        for loc in asal_counts['Lokasi']:
+            loc_clean = str(loc).lower().strip()
+            coord = next((v for k, v in indo_coords.items() if k.lower() in loc_clean or loc_clean in k.lower()), [None, None])
+            lats.append(coord[0]); lons.append(coord[1])
+        
+        asal_counts['Lat'], asal_counts['Lon'] = lats, lons
+        map_data = asal_counts.dropna(subset=['Lat', 'Lon'])
+
+        if not map_data.empty:
+            fig_map = px.scatter_mapbox(
+                map_data, lat="Lat", lon="Lon", size="Jumlah", color="Jumlah",
+                color_continuous_scale="Reds", size_max=30, zoom=3.5,
+                mapbox_style="carto-positron", hover_name="Lokasi"
+            )
+            fig_map.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, height=500)
+            st.plotly_chart(fig_map, use_container_width=True)
+        else:
+            st.info("💡 Data lokasi tersedia, tapi koordinat belum terpetakan.")
