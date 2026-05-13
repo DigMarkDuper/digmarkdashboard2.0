@@ -31,56 +31,27 @@ def init_connection():
         return None
 
 @st.cache_data(ttl=300) # Turunkan ke 5 menit supaya lebih fresh saat debug
+@st.cache_data(ttl=60)
 def fetch_all_master_data():
-    """BATCH LOADING: Menarik semua tab sekaligus"""
     client = init_connection()
-    if not client: 
-        return None
-        
+    if not client: return None
+    
     try:
-        # 1. Pastikan Nama File Sama Persis (Cek Spasi/Titik)
-        NAMA_FILE = "MASTER DATA DIGITAL MARKETING 2.0"
-        master = client.open(NAMA_FILE)
+        master = client.open("MASTER DATA DIGITAL MARKETING 2.0")
         
-        # 2. Fungsi Ambil Data per Tab dengan Error Reporting
-        def get_df(idx, nama_halaman):
-            try:
-                sheet = master.get_worksheet(idx)
-                if sheet is None:
-                    st.sidebar.warning(f"⚠️ Index {idx} ({nama_halaman}) tidak ditemukan!")
-                    return pd.DataFrame()
-                data = sheet.get_all_records()
-                return pd.DataFrame(data) if data else pd.DataFrame()
-            except Exception as e:
-                st.sidebar.error(f"❌ Gagal di Tab {idx} ({nama_halaman}): {e}")
-                return pd.DataFrame()
+        # COBA TARIK 1 TAB SAJA DULU (Tab paling kiri / Index 0)
+        sheet_nol = master.get_worksheet(0)
+        df_nol = pd.DataFrame(sheet_nol.get_all_records())
         
-        # 3. Eksekusi Penarikan (Mapping Halaman)
-        data_bundle = {
-            0: get_df(0, "Sosmed"),
-            1: get_df(1, "Website"),
-            2: get_df(2, "Insight"),
-            3: get_df(3, "WA Admin"),
-            4: get_df(4, "CRM"),
-            5: get_df(5, "TikTok Ads"),
-            6: get_df(6, "Meta Ads"),
-            7: get_df(7, "Mekari")
+        # Kembalikan struktur dummy untuk ngetes
+        return {
+            0: df_nol, 1: pd.DataFrame(), 2: pd.DataFrame(), 
+            3: pd.DataFrame(), 4: pd.DataFrame(), 6: pd.DataFrame(), 
+            7: pd.DataFrame(), 8: pd.DataFrame()
         }
-        
-        # Verifikasi: Jika semua dataframe kosong, berarti ada yang salah
-        if all(df.empty for df in data_bundle.values()):
-            st.error("❌ Semua Tab Kosong! Periksa isi Google Sheets Mas.")
-            return None
-            
-        return data_bundle
-
-    except gspread.exceptions.SpreadsheetNotFound:
-        st.error(f"❌ File '{NAMA_FILE}' tidak ditemukan! Cek penulisan nama di Drive.")
-        return None
     except Exception as e:
-        st.error(f"❌ Error GSheet Utama: {e}")
+        st.error(f"❌ Error Terdeteksi: {e}")
         return None
-
 # =====================================================================
 # 2. DATA LOADERS
 # =====================================================================
