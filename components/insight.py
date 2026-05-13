@@ -39,51 +39,71 @@ def create_modern_chart(data, y_col, color, title):
     )
     return fig
 
-# --- 2. FUNGSI UTAMA HALAMAN ---
-
-def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
-    st.title("📈 ANALITIK KONTEN")
-
-    header_names = ["Date", "Platform", "View", "Reach", "Interaction", "Profile Visit", "Link Clicks", "Follow"]
-    numeric_cols = ["View", "Reach", "Interaction", "Profile Visit", "Link Clicks", "Follow"]
-    
-    if 'preview_data' not in st.session_state: st.session_state.preview_data = None
-    if 'uploader_key' not in st.session_state: st.session_state.uploader_key = 0
-
-    df_db_main = st.session_state.get('bundle', {}).get(2, pd.DataFrame())
-
-    # --- RENDER SUMMARY & CHARTS ---
+# --- RENDER SUMMARY & CHARTS (MODERN SEPARATED GRID) ---
     if not df_db_main.empty:
         df_calc = df_db_main.copy()
-        if len(df_calc.columns) == len(header_names): df_calc.columns = header_names
-        for col in numeric_cols: df_calc[col] = pd.to_numeric(df_calc[col], errors='coerce').fillna(0)
+        if len(df_calc.columns) == len(header_names): 
+            df_calc.columns = header_names
+        
+        for col in numeric_cols: 
+            df_calc[col] = pd.to_numeric(df_calc[col], errors='coerce').fillna(0)
 
-        st.markdown(f'<div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left: 10px solid {BRAND_YELLOW};"><h2 style="margin:0; color:white; font-size:20px;">🌍 EXECUTIVE SUMMARY PERFORMA</h2></div>', unsafe_allow_html=True)
+        # 1. GRAND TOTAL (Hanya Angka - Scoreboard Utama)
+        st.markdown(f"""
+            <div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left: 10px solid {BRAND_YELLOW};">
+                <h2 style="margin:0; color:white; font-size:20px;">🌍 TOTAL PERFORMA GABUNGAN (ALL-TIME)</h2>
+            </div>
+        """, unsafe_allow_html=True)
+        
         g1, g2, g3, g4 = st.columns(4)
         g1.metric("Grand Total Views", f"{int(df_calc['View'].sum()):,}")
         g2.metric("Grand Total Reach", f"{int(df_calc['Reach'].sum()):,}")
         g3.metric("Grand Interaksi", f"{int(df_calc['Interaction'].sum()):,}")
         g4.metric("Grand Followers", f"{int(df_calc['Follow'].sum()):,}")
 
-        st.markdown("### 📊 Monthly Growth Trends")
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # 2. GRAFIK PER PLATFORM
         try:
             df_trend = df_calc.copy()
             df_trend['Date'] = pd.to_datetime(df_trend['Date'], dayfirst=True, errors='coerce')
             df_trend = df_trend.dropna(subset=['Date']).sort_values('Date')
-            df_monthly = df_trend.groupby(df_trend['Date'].dt.to_period('M')).sum(numeric_only=True).reset_index()
-            df_monthly['Date'] = df_monthly['Date'].dt.to_timestamp()
+            
+            # Grouping per Bulan dan Platform
+            df_m = df_trend.groupby([df_trend['Date'].dt.to_period('M'), 'Platform']).sum(numeric_only=True).reset_index()
+            df_m['Date'] = df_m['Date'].dt.to_timestamp()
 
-            r1_c1, r1_c2 = st.columns(2)
-            r2_c1, r2_c2 = st.columns(2)
-            with r1_c1: st.plotly_chart(create_modern_chart(df_monthly, 'View', BRAND_BLUE, "Video Views"), use_container_width=True)
-            with r1_c2: st.plotly_chart(create_modern_chart(df_monthly, 'Reach', "#636EFA", "Audience Reach"), use_container_width=True)
-            with r2_c1: st.plotly_chart(create_modern_chart(df_monthly, 'Interaction', BRAND_YELLOW, "Interactions"), use_container_width=True)
-            with r2_c2: st.plotly_chart(create_modern_chart(df_monthly, 'Follow', "#00CC96", "New Followers"), use_container_width=True)
-        except: pass
+            # --- BARIS 1: TIKTOK ANALYTICS ---
+            st.subheader("🎵 Tren Pertumbuhan TikTok")
+            df_tk = df_m[df_m['Platform'] == 'TikTok']
+            if not df_tk.empty:
+                tk_c1, tk_c2 = st.columns(2)
+                with tk_c1: 
+                    st.plotly_chart(create_modern_chart(df_tk, 'View', BRAND_BLUE, "TikTok Video Views"), use_container_width=True)
+                with tk_c2: 
+                    st.plotly_chart(create_modern_chart(df_tk, 'Follow', "#00CC96", "TikTok New Followers"), use_container_width=True)
+            else:
+                st.info("Data TikTok belum tersedia untuk grafik.")
+
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            # --- BARIS 2: INSTAGRAM ANALYTICS ---
+            st.subheader("📸 Tren Pertumbuhan Instagram")
+            df_ig = df_m[df_m['Platform'] == 'Instagram']
+            if not df_ig.empty:
+                ig_c1, ig_c2 = st.columns(2)
+                with ig_c1: 
+                    st.plotly_chart(create_modern_chart(df_ig, 'View', "#E1306C", "Instagram Views"), use_container_width=True)
+                with ig_c2: 
+                    st.plotly_chart(create_modern_chart(df_ig, 'Follow', "#833AB4", "Instagram New Followers"), use_container_width=True)
+            else:
+                st.info("Data Instagram belum tersedia untuk grafik.")
+
+        except Exception as e:
+            st.error(f"Gagal memuat grafik tren: {e}")
+            
     else:
         st.info("Database masih kosong.")
-
-    st.markdown("---")
 
     # =====================================================
     # 3. SMART IMPORTER (FIXED FOR MULTIPLE TIKTOK FILES)
