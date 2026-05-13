@@ -3,11 +3,22 @@ import datetime
 import os
 import sys
 
-import streamlit as st
-import os
-import sys
+# --- FIX IMPORT PATH (Menjaga agar aman di server Cloud) ---
+root_path = os.path.dirname(os.path.abspath(__file__))
+if root_path not in sys.path:
+    sys.path.append(root_path)
 
-# 1. IMPORT KOMPONEN
+# =====================================================================
+# 1. KONFIGURASI GLOBAL (WAJIB PALING ATAS SETELAH IMPORT DASAR)
+# =====================================================================
+st.set_page_config(
+    page_title="Digmark Command Center", 
+    layout="wide", 
+    page_icon="🚀",
+    initial_sidebar_state="expanded"
+)
+
+# 2. IMPORT KOMPONEN LOKAL
 from components.utils import fetch_all_master_data, set_bg_local
 from components.home import show_homepage
 from components.sosmed import show_sosmed_page
@@ -18,25 +29,14 @@ from components.crm import show_crm_page
 from components.dm_sosmed import show_dm_sosmed_page
 from components.ads_analytics import show_ads_analytics_page
 
-# =====================================================================
-# 1. KONFIGURASI GLOBAL (WAJIB PALING ATAS)
-# =====================================================================
-st.set_page_config(
-    page_title="Digmark Command Center", 
-    layout="wide", 
-    page_icon="🚀",
-    initial_sidebar_state="expanded"
-)
-
 # Konstanta Brand
 LOGO_URL = "https://www.dutapersadajogja.com/assets/img/logo.png"
 BRAND_BLUE = "#005696"
 BRAND_YELLOW = "#FDB813"
 
 # =====================================================================
-# 2. SISTEM LOGIN
+# 3. SISTEM LOGIN
 # =====================================================================
-
 def check_password():
     """Fungsi Login: Berhenti di sini jika belum login"""
     if st.session_state.get("password_correct"):
@@ -71,7 +71,7 @@ if not check_password():
     st.stop()
 
 # =====================================================================
-# 3. DATA ENGINE (LOGIKA SINKRONISASI)
+# 4. DATA ENGINE (LOGIKA SINKRONISASI)
 # =====================================================================
 
 # Inisialisasi Session State Halaman
@@ -86,7 +86,6 @@ if 'bundle' not in st.session_state:
     with st.spinner("Mencoba koneksi ke Google Sheets..."):
         data_nyasar = fetch_all_master_data()
         if data_nyasar is None:
-            # Jika gagal, tampilkan error dan stop agar tidak crash di bawah
             st.error("Gagal total mengambil data. Cek Logs di pojok kanan bawah Streamlit Cloud!")
             st.info("Pastikan email Service Account sudah di-Share ke Google Sheets sebagai Editor.")
             st.stop() 
@@ -95,30 +94,26 @@ if 'bundle' not in st.session_state:
             st.sidebar.success("✅ Koneksi Master Berhasil!")
 
 # =====================================================================
-# 4. ROUTER HALAMAN
+# 5. ROUTER HALAMAN & NAVIGASI
 # =====================================================================
 
 page = st.session_state.page
-bundle = st.session_state.bundle # Data yang sudah ditarik
+bundle = st.session_state.bundle 
 
 # Pasang Background Dashboard
 set_bg_local('bg.png')
 
-if st.session_state.page != "Homepage":
-    # Menggunakan st.columns agar tombolnya tidak memanjang sebesar layar
-    # Angka [1, 8] mengatur proporsi: kolom 1 kecil untuk tombol, kolom 2 kosong
+# --- LOGIKA TOMBOL KEMBALI (YANG SUDAH DIPERBAIKI) ---
+if st.session_state.page != "🏠 HOMEPAGE":
     col_back, col_space = st.columns([1, 8])
-    
     with col_back:
-        # st.button akan membuat tombol rapi di pojok kiri
         if st.button("⬅️ Kembali", use_container_width=True):
-            st.session_state.page = "Homepage"
+            st.session_state.page = "🏠 HOMEPAGE"
             st.rerun()
             
-    # Opsional: Tambahkan sedikit jarak agar tidak terlalu mepet dengan judul halaman
     st.markdown("<br>", unsafe_allow_html=True)
 
-# Logika Pemanggilan Modul Halaman
+# --- LOGIKA PEMANGGILAN HALAMAN ---
 try:
     if page == "🏠 HOMEPAGE":
         show_homepage(BRAND_BLUE, go_to_page, bundle)
@@ -148,7 +143,7 @@ except Exception as e:
     st.error(f"Terjadi kesalahan saat memuat halaman {page}: {e}")
 
 # =====================================================================
-# 5. SYSTEM RUNNER
+# 6. SYSTEM RUNNER
 # =====================================================================
 if __name__ == "__main__":
     if not st.runtime.exists():
