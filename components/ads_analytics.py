@@ -24,15 +24,44 @@ def show_ads_analytics_page(BRAND_BLUE):
     
     df_ads_tiktok_db, df_ads_meta_db, df_ads_mekari_db = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
     
-    # --- A. LOAD CRM (HITUNG LEADS & UNTUK CROSS-CHECK) ---
+    # =====================================================================
+    # 1. LOAD DATA (CRM, WA ADMIN, DAN ADS)
+    # =====================================================================
+    df_crm = pd.DataFrame()
+    df_wa = pd.DataFrame()
+    
+    total_spend_tiktok, total_clicks_tiktok, total_leads_tiktok, closing_tiktok = 0, 0, 0, 0
+    total_spend_meta, total_clicks_meta, total_leads_meta, closing_meta = 0, 0, 0, 0
+    total_spend_mekari, total_pesan_mekari = 0, 0
+    global_closing = 0
+    
+    df_ads_tiktok_db, df_ads_meta_db, df_ads_mekari_db = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+    
+    # --- A & B. LOAD WA ADMIN (SUMBER UTAMA LEADS & CLOSING) ---
     try:
-        df_crm = utils.load_database_nomor()
-        if not df_crm.empty:
-            kolom_sumber_crm = next((c for c in df_crm.columns if c.lower() in ['platform', 'sumber', 'source']), None)
-            if kolom_sumber_crm:
-                total_leads_tiktok = len(df_crm[df_crm[kolom_sumber_crm].astype(str).str.contains('Tiktok', case=False, na=False)])
-                total_leads_meta = len(df_crm[df_crm[kolom_sumber_crm].astype(str).str.contains(r'Instagram|Facebook|IG|FB|Meta', case=False, regex=True, na=False)])
-    except:
+        df_wa = utils.load_wa_admin()
+        
+        if not df_wa.empty:
+            # Cari kolom sumber masuknya prospek (sekarang kata 'asal' sudah ditambahkan!)
+            kolom_sumber_wa = next((c for c in df_wa.columns if str(c).lower() in ['platform', 'sumber', 'source', 'asal']), None)
+            
+            # 1. HITUNG TOTAL LEADS DARI WA ADMIN
+            if kolom_sumber_wa:
+                total_leads_tiktok = len(df_wa[df_wa[kolom_sumber_wa].astype(str).str.contains('Tiktok', case=False, na=False)])
+                total_leads_meta = len(df_wa[df_wa[kolom_sumber_wa].astype(str).str.contains(r'Instagram|Facebook|IG|FB|Meta', case=False, regex=True, na=False)])
+            
+            # 2. HITUNG CLOSING DARI WA ADMIN
+            status_col = next((col for col in df_wa.columns if 'status' in str(col).lower()), None)
+            if status_col:
+                # Saring hanya yang statusnya "Closing"
+                df_closing = df_wa[df_wa[status_col].astype(str).str.contains('Closing', case=False, na=False)].copy()
+                global_closing = len(df_closing)
+                
+                # Hitung Closing per Platform
+                if kolom_sumber_wa:
+                    closing_tiktok = len(df_closing[df_closing[kolom_sumber_wa].astype(str).str.contains('Tiktok', case=False, na=False)])
+                    closing_meta = len(df_closing[df_closing[kolom_sumber_wa].astype(str).str.contains(r'Instagram|Facebook|IG|FB|Meta', case=False, regex=True, na=False)])
+    except Exception as e:
         pass
 
     # --- B. LOAD WA ADMIN (AMBIL LANGSUNG DARI BUNDLE/UTILS) ---
