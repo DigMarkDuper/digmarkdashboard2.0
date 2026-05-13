@@ -3,11 +3,32 @@ import datetime
 import os
 import sys
 
-# --- FIX IMPORT PATH ---
-# Mengambil path folder utama aplikasi
+import streamlit as st
+import os
+import sys
+
+# --- DIAGNOSA STRUKTUR (Hapus nanti kalau sudah jalan) ---
+st.write("### 🔍 Diagnosa Server")
+st.write(f"Lokasi Sekarang: `{os.getcwd()}`")
+st.write(f"Isi Folder Utama: `{os.listdir('.')}`")
+
+if os.path.exists('components'):
+    st.write(f"Isi Folder Components: `{os.listdir('components')}`")
+else:
+    st.error("❌ FOLDER 'components' TIDAK DITEMUKAN!")
+
+# --- FIX PATH ---
 root_path = os.path.dirname(os.path.abspath(__file__))
 if root_path not in sys.path:
     sys.path.append(root_path)
+
+# --- MENCOBA IMPORT ---
+try:
+    from components.utils import fetch_all_master_data, set_bg_local
+    st.success("✅ Berhasil Import Utils!")
+except Exception as e:
+    st.error(f"❌ Gagal Import: {e}")
+    st.stop()
 
 # 1. IMPORT KOMPONEN
 from components.utils import fetch_all_master_data, set_bg_local
