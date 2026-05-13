@@ -18,7 +18,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. IMPORT KOMPONEN LOKAL
+import components.utils as utils
 from components.utils import fetch_all_master_data, set_bg_local
 from components.home import show_homepage
 from components.sosmed import show_sosmed_page
@@ -93,15 +93,6 @@ if 'bundle' not in st.session_state:
             st.session_state.bundle = data_nyasar
             st.sidebar.success("✅ Koneksi Master Berhasil!")
 
-# --- LOGIKA PEMANGGILAN HALAMAN ---
-try:
-    # 1. Pastikan data mentah tersedia untuk digunakan di Homepage maupun metrik lainnya
-    # Kita ambil menggunakan utils agar ter-cache dengan baik
-    df_wa = utils.load_wa_admin()      # Index 3
-    df_sos = utils.load_sosmed()      # Index 0
-    df_web = utils.load_website()     # Index 1
-    df_ins = utils.load_insight()     # Index 2 
-
 # =====================================================================
 # 5. ROUTER HALAMAN & NAVIGASI
 # =====================================================================
@@ -124,6 +115,13 @@ if st.session_state.page != "🏠 HOMEPAGE":
 
 # --- LOGIKA PEMANGGILAN HALAMAN ---
 try:
+    # 1. Pastikan data mentah tersedia untuk digunakan di Homepage maupun metrik lainnya
+    # Kita ambil menggunakan utils agar ter-cache dengan baik
+    df_wa = utils.load_wa_admin()      # Index 3
+    df_sos = utils.load_sosmed()      # Index 0
+    df_web = utils.load_website()     # Index 1
+    df_ins = utils.load_insight()     # Index 2 (PENTING untuk Target Tahunan)
+    
     if page == "🏠 HOMEPAGE":
         show_homepage(BRAND_BLUE, go_to_page, bundle)
 
