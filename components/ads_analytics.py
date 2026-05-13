@@ -9,7 +9,7 @@ def show_ads_analytics_page(BRAND_BLUE):
     st.markdown("Pantau **Cost Per Lead (CPL)**, **Customer Acquisition Cost (CAC)**, dan **ROAS** secara real-time.")
     
     # Asumsi Nilai 1 Closing
-    BIAYA_PELATIHAN = 15000000 
+    BIAYA_PELATIHAN = 12995000
     
     # =====================================================================
     # 1. LOAD DATA (CRM, WA ADMIN, DAN ADS)
@@ -333,6 +333,21 @@ def show_ads_analytics_page(BRAND_BLUE):
             st.rerun()
 
         if not df_db_mekari.empty:
+            # --- FITUR BARU: AUTO-SORT BERDASARKAN PERIODE BULAN ---
+            try:
+                # Memotong teks periode (misal: "01 Jan 2026 s/d 31 Jan 2026" diambil "01 Jan 2026" saja)
+                temp_date = df_db_mekari['Periode'].astype(str).str.split(' s/d ').str[0]
+                # Mengubah teks menjadi format waktu sungguhan (Datetime)
+                df_db_mekari['_sort_date'] = pd.to_datetime(temp_date, errors='coerce')
+                
+                # Mengurutkan tabel: Bulan terbaru di urutan paling atas (ascending=False)
+                df_db_mekari = df_db_mekari.sort_values(by='_sort_date', ascending=False, na_position='last')
+                # Membuang kolom bantuan setelah tabel berhasil diurutkan
+                df_db_mekari = df_db_mekari.drop(columns=['_sort_date'])
+            except Exception:
+                pass # Jika format tanggal ada yang aneh, sistem tetap aman dan merender tabel aslinya
+            # --------------------------------------------------------
+
             st.dataframe(df_db_mekari, use_container_width=True, hide_index=True)
             
             if st.button("🗑️ Kosongkan Riwayat", use_container_width=True, key="btn_del_mekari"):
