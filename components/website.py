@@ -39,16 +39,26 @@ def show_website_page(BRAND_BLUE):
             st.warning("⚠️ Data Website tidak ditemukan atau masih kosong di Google Sheets.")
             return
 
-        st.sidebar.markdown(f"<h3 style='color:{BRAND_BLUE};'>⚙️ Filter Area</h3>", unsafe_allow_html=True)
-        
-        # --- SIDEBAR FILTERS ---
+        # --- FILTER AREA DI HALAMAN UTAMA ---
         if 'Bulan-Deadline' in df_web.columns:
             months_web = df_web['Bulan-Deadline'].dropna().unique().tolist()
-            selected_months_web = st.sidebar.multiselect("Bulan Deadline:", options=months_web, default=months_web, key="web_bulan")
+            
+            # Menggunakan kolom agar kotak filter tidak melebar sepenuh layar
+            f1, f2, f3 = st.columns([1.5, 2, 1])
+            with f1:
+                selected_months_web = st.multiselect(
+                    "📅 Filter Bulan Deadline:", 
+                    options=months_web, 
+                    default=months_web, 
+                    key="web_bulan"
+                )
+            
             mask_web = df_web['Bulan-Deadline'].isin(selected_months_web)
             filtered_web = df_web[mask_web].copy()
         else:
             filtered_web = df_web.copy()
+
+        st.markdown("<br>", unsafe_allow_html=True)
 
         # Kolom target
         target_columns = [
@@ -73,7 +83,7 @@ def show_website_page(BRAND_BLUE):
             done_web = filtered_web['Is_Done'].sum()
             pending_web_count = total_task - done_web
 
-            # --- BAGIAN 1: KARTU KPI UTAMA (VISUAL BARU) ---
+            # --- BAGIAN 1: KARTU KPI UTAMA ---
             st.markdown('<div class="feature-header" style="margin-bottom: 10px;">📊 Status Keseluruhan</div>', unsafe_allow_html=True)
             k1, k2, k3 = st.columns(3)
             
@@ -98,7 +108,6 @@ def show_website_page(BRAND_BLUE):
 
             with col_chart:
                 st.markdown('<div class="feature-header">🍩 Rasio Penyelesaian</div>', unsafe_allow_html=True)
-                # Visualisasi Donut Chart
                 pie_data = pd.DataFrame({
                     'Status': ['Selesai (Live)', 'Pending'],
                     'Jumlah': [done_web, pending_web_count]
@@ -125,7 +134,6 @@ def show_website_page(BRAND_BLUE):
                 g_tot, g_done, g_sisa = get_pillar_metrics(filtered_web, 'Galery|Gallery')
                 l_tot, l_done, l_sisa = get_pillar_metrics(filtered_web, 'Linkedin|LinkedIn')
 
-                # Tampilan Pilar yang lebih rapi
                 p1, p2 = st.columns(2)
                 p3, p4 = st.columns(2)
 
@@ -158,7 +166,6 @@ def show_website_page(BRAND_BLUE):
                             kode = r.get('Kode Konten', 'NO-CODE')
                             judul = r.get('Judul', 'Tanpa Judul')
                             designer = r.get('Designer', 'PIC Belum Set')
-                            # Tampilkan list dengan gaya rapi
                             st.markdown(f"- **`{kode}`** | 🎨 PIC: *{designer}* | 📌 {judul}")
             else:
                 st.success("🎉 Luar biasa! Semua tugas Website di periode ini sudah tuntas dan Live!")
@@ -167,14 +174,14 @@ def show_website_page(BRAND_BLUE):
 
             # --- BAGIAN 4: TABEL MASTER ---
             st.markdown('<div class="feature-header">📂 Master Data Table</div>', unsafe_allow_html=True)
-            
-            # Styling Dataframe agar lebih bersih
             st.dataframe(
                 filtered_web[available_columns] if available_columns else filtered_web, 
                 use_container_width=True, 
                 hide_index=True,
-                height=400 # Fix tinggi agar tidak memakan layar
+                height=400
             )
+        else:
+            st.info("Pilih bulan pada filter di atas untuk menampilkan data.")
 
     except Exception as e:
         st.error(f"Kesalahan Teknis Website: {e}")
