@@ -96,6 +96,7 @@ def update_sheet_cell(sheet_index, row_index, column_name, new_value):
             st.error(f"Gagal update cell: {e}")
             return False
     return False
+
 def load_wa_admin():
     df = get_from_bundle(3)
     if not df.empty:
@@ -103,6 +104,16 @@ def load_wa_admin():
         if kolom_penting:
             df = df.dropna(subset=kolom_penting, how='all')
     return df
+
+def load_website():
+    """Mengambil data website dari bundle"""
+    df = get_from_bundle(1) # Index 1 adalah Website
+    if not df.empty and 'Deadline' in df.columns:
+        # Konversi tanggal agar bisa difilter
+        df['Tanggal Filter'] = pd.to_datetime(df['Deadline'], dayfirst=True, errors='coerce')
+        df['Bulan-Deadline'] = df['Tanggal Filter'].dt.strftime('%B %Y')
+    return df
+
 def set_bg_local(main_bg):
     """Fungsi untuk memasang background image dari file lokal menggunakan Base64"""
     import base64
