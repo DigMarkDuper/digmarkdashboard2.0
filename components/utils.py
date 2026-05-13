@@ -162,3 +162,18 @@ def sync_leads_to_crm():
 def load_database_nomor():
     """Ambil data CRM dari bundle (Index 4)"""
     return get_from_bundle(4)
+
+def get_from_bundle(idx):
+    """Fungsi sakti untuk mengambil data dari memori (bundle)"""
+    if 'bundle' not in st.session_state or st.session_state.bundle is None:
+        return pd.DataFrame() # Kembalikan tabel kosong jika data belum siap
+    return st.session_state.bundle.get(idx, pd.DataFrame()).copy()
+
+def load_wa_admin():
+    """Fungsi yang dicari oleh HOMEPAGE"""
+    df = get_from_bundle(3) # Index 3 adalah tab WA Admin
+    if not df.empty:
+        # Kita bersihkan datanya sedikit agar tidak error saat diolah di Homepage
+        if 'Tanggal Masuk' in df.columns:
+            df['Tanggal Masuk'] = pd.to_datetime(df['Tanggal Masuk'], dayfirst=True, errors='coerce')
+    return df
