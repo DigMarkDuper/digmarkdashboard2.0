@@ -128,7 +128,7 @@ try:
         show_insight_page(BRAND_BLUE, BRAND_YELLOW)
 
     elif page == "💬 WA ADMIN REPORT":
-        show_wa_report_page(BRAND_BLUE, BRAND_YELLOW)
+        show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW)
 
     elif page == "📂 DATABASE NOMOR":
         show_crm_page()
