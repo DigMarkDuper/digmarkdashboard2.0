@@ -63,64 +63,49 @@ def show_ads_analytics_page(BRAND_BLUE):
     except:
         pass
 
-    # --- C. LOAD DATA BUDGET IKLAN DARI SPREADSHEET (OPTIMASI QUOTA API) ---
+    # --- C. LOAD DATA BUDGET IKLAN ---
     try:
-        client = utils.init_connection()
-        if client:
-            master_spreadsheet = client.open("MASTER DATA DIGITAL MARKETING 2.0")
+        # Kita tarik menggunakan get_from_bundle agar aman dan tidak kena limit API
+        df_ads_tiktok_db = utils.get_from_bundle(6)
+        if not df_ads_tiktok_db.empty:
+            df_calc_tk = df_ads_tiktok_db.copy()
+            df_calc_tk.columns = [str(c).strip().lower() for c in df_calc_tk.columns]
+            col_cost_tk = next((c for c in df_calc_tk.columns if 'cost' in c), None)
+            if col_cost_tk:
+                df_calc_tk[col_cost_tk] = pd.to_numeric(df_calc_tk[col_cost_tk].astype(str).str.replace(r'[^\d.]', '', regex=True), errors='coerce').fillna(0)
+                total_spend_tiktok = df_calc_tk[col_cost_tk].sum()
 
-            # TIKTOK ADS (INDEX 6)
-            try:
-                sheet_tiktok = master_spreadsheet.get_worksheet(6)
-                records_tiktok = sheet_tiktok.get_all_records()
-                if records_tiktok:
-                    df_ads_tiktok_db = pd.DataFrame(records_tiktok)
-                    df_calc_tk = df_ads_tiktok_db.copy()
-                    df_calc_tk.columns = [str(c).strip().lower() for c in df_calc_tk.columns]
-                    col_cost_tk = next((c for c in df_calc_tk.columns if 'cost' in c), None)
-                    if col_cost_tk:
-                        df_calc_tk[col_cost_tk] = pd.to_numeric(df_calc_tk[col_cost_tk].astype(str).str.replace(r'[^\d.]', '', regex=True), errors='coerce').fillna(0)
-                        total_spend_tiktok = df_calc_tk[col_cost_tk].sum()
-            except: pass
-
-            # META ADS (INDEX 7)
-            try:
-                sheet_meta = master_spreadsheet.get_worksheet(7)
-                records_meta = sheet_meta.get_all_records()
-                if records_meta:
-                    df_ads_meta_db = pd.DataFrame(records_meta)
-                    df_calc_mt = df_ads_meta_db.copy()
-                    df_calc_mt.columns = [str(c).strip().lower() for c in df_calc_mt.columns]
-                    col_cost_mt = next((c for c in df_calc_mt.columns if 'spent' in c or 'spend' in c or 'cost' in c), None)
-                    if col_cost_mt:
-                        df_calc_mt[col_cost_mt] = pd.to_numeric(df_calc_mt[col_cost_mt].astype(str).str.replace(r'[^\d.]', '', regex=True), errors='coerce').fillna(0)
-                        total_spend_meta = df_calc_mt[col_cost_mt].sum()
-            except: pass
-
-            # MEKARI WA (INDEX 8)
-            try:
-                sheet_mekari = master_spreadsheet.get_worksheet(8)
-                records_mekari = sheet_mekari.get_all_records()
-                if records_mekari:
-                    df_ads_mekari_db = pd.DataFrame(records_mekari)
-                    df_calc_mk = df_ads_mekari_db.copy()
-                    df_calc_mk.columns = [str(c).strip().lower() for c in df_calc_mk.columns]
-                    
-                    col_cost_mk = next((c for c in df_calc_mk.columns if 'biaya' in c or 'deducted balance' in c or 'balance' in c), None)
-                    if col_cost_mk:
-                        df_calc_mk[col_cost_mk] = pd.to_numeric(df_calc_mk[col_cost_mk].astype(str).str.replace(r'[^\d.]', '', regex=True), errors='coerce').fillna(0)
-                        total_spend_mekari = df_calc_mk[col_cost_mk].sum()
-                        
-                    col_pesan_mk = next((c for c in df_calc_mk.columns if 'interaksi' in c or 'pesan' in c or 'broadcast amount' in c or 'amount' in c), None)
-                    if col_pesan_mk:
-                        df_calc_mk[col_pesan_mk] = pd.to_numeric(df_calc_mk[col_pesan_mk].astype(str).str.replace(r'[^\d.]', '', regex=True), errors='coerce').fillna(0)
-                        total_pesan_mekari = df_calc_mk[col_pesan_mk].sum()
-            except: pass
+        df_ads_meta_db = utils.get_from_bundle(7)
+        if not df_ads_meta_db.empty:
+            df_calc_mt = df_ads_meta_db.copy()
+            df_calc_mt.columns = [str(c).strip().lower() for c in df_calc_mt.columns]
+            col_cost_mt = next((c for c in df_calc_mt.columns if 'spent' in c or 'spend' in c or 'cost' in c), None)
+            if col_cost_mt:
+                df_calc_mt[col_cost_mt] = pd.to_numeric(df_calc_mt[col_cost_mt].astype(str).str.replace(r'[^\d.]', '', regex=True), errors='coerce').fillna(0)
+                total_spend_meta = df_calc_mt[col_cost_mt].sum()
     except: pass
+
+    # --- D. HITUNG MEKARI DI SINI (SEBELUM RINGKASAN GLOBAL) ---
+    df_db_mekari = utils.get_from_bundle(8)
+    
+    def force_clean_num(x):
+        if pd.isna(x) or x == '': return 0
+        s = str(x).replace('Rp', '').replace('.', '').replace(',', '').strip()
+        try: return float(s)
+        except: return 0
+
+    if not df_db_mekari.empty:
+        df_db_mekari = df_db_mekari.dropna(how='all')
+        col_biaya = next((c for c in df_db_mekari.columns if 'biaya' in str(c).lower() or 'cost' in str(c).lower()), None)
+        col_interaksi = next((c for c in df_db_mekari.columns if 'interaksi' in str(c).lower() or 'pesan' in str(c).lower()), None)
+        
+        total_spend_mekari = df_db_mekari[col_biaya].apply(force_clean_num).sum() if col_biaya else 0
+        total_pesan_mekari = pd.to_numeric(df_db_mekari[col_interaksi], errors='coerce').fillna(0).sum() if col_interaksi else 0
 
     # =====================================================================
     # 2. TAMPILAN RINGKASAN GLOBAL
     # =====================================================================
+    # SEKARANG NILAI MEKARI SUDAH MASUK!
     global_spend = total_spend_tiktok + total_spend_meta + total_spend_mekari
     global_leads = total_leads_tiktok + total_leads_meta
     global_omzet = global_closing * BIAYA_PELATIHAN 
@@ -205,6 +190,7 @@ def show_ads_analytics_page(BRAND_BLUE):
                                 st.success("✅ Berhasil masuk ke Tab TikTok.")
                                 st.balloons()
                                 st.cache_data.clear()
+                                if 'bundle' in st.session_state: del st.session_state['bundle']
                                 st.rerun()
                 except Exception as e:
                     st.error(f"Gagal memproses: {e}")
@@ -215,6 +201,7 @@ def show_ads_analytics_page(BRAND_BLUE):
                 if st.button("🗑️ Kosongkan Database TikTok", use_container_width=True, key="rst_tk"):
                     utils.init_connection().open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(6).clear()
                     st.cache_data.clear()
+                    if 'bundle' in st.session_state: del st.session_state['bundle']
                     st.rerun()
 
     # =====================================================================
@@ -259,6 +246,7 @@ def show_ads_analytics_page(BRAND_BLUE):
                                 st.success("✅ Berhasil masuk ke Tab Meta.")
                                 st.balloons()
                                 st.cache_data.clear()
+                                if 'bundle' in st.session_state: del st.session_state['bundle']
                                 st.rerun()
                 except Exception as e:
                     st.error(f"Gagal memproses: {e}")
@@ -269,32 +257,14 @@ def show_ads_analytics_page(BRAND_BLUE):
                 if st.button("🗑️ Kosongkan Database Meta", use_container_width=True, key="rst_mt"):
                     utils.init_connection().open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(7).clear()
                     st.cache_data.clear()
+                    if 'bundle' in st.session_state: del st.session_state['bundle']
                     st.rerun()
 
     # ---------------- TAB MEKARI (SMART IMPORTER) ----------------
     with tab_mekari:
         st.info("💡 **Smart Importer:** Sistem merekap file otomatis menjadi **1 Baris Struk Ringkas**.")
         
-        # 1. Dashboard Metrics
-        df_db_mekari = utils.get_from_bundle(8)
-        
-        def force_clean_num(x):
-            if pd.isna(x) or x == '': return 0
-            s = str(x).replace('Rp', '').replace('.', '').replace(',', '').strip()
-            try: return float(s)
-            except: return 0
-
-        # --- FIX 1: KEMBALIKAN PENCARI KOLOM CERDAS ---
-        if not df_db_mekari.empty:
-            df_db_mekari = df_db_mekari.dropna(how='all')
-            col_biaya = next((c for c in df_db_mekari.columns if 'biaya' in str(c).lower() or 'cost' in str(c).lower()), None)
-            col_interaksi = next((c for c in df_db_mekari.columns if 'interaksi' in str(c).lower() or 'pesan' in str(c).lower()), None)
-            
-            total_spend_mekari = df_db_mekari[col_biaya].apply(force_clean_num).sum() if col_biaya else 0
-            total_pesan_mekari = pd.to_numeric(df_db_mekari[col_interaksi], errors='coerce').fillna(0).sum() if col_interaksi else 0
-        else:
-            total_spend_mekari, total_pesan_mekari = 0, 0
-
+        # 1. Dashboard Metrics - Nilai sudah dihitung di atas, tinggal dipanggil!
         mk1, mk2 = st.columns(2)
         mk1.metric("💸 Total Spend", f"Rp {total_spend_mekari:,.0f}")
         mk2.metric("💬 Total Interaksi WA", f"{total_pesan_mekari:,.0f} Pesan")
@@ -346,10 +316,8 @@ def show_ads_analytics_page(BRAND_BLUE):
                             
                             if utils.append_sheet_rows(8, [row]):
                                 st.success("Berhasil Disimpan!")
-                                # --- FIX 2: PENGHAPUSAN CACHE YANG BENAR SAAT SAVE ---
                                 st.cache_data.clear()
-                                if 'bundle' in st.session_state:
-                                    del st.session_state['bundle']
+                                if 'bundle' in st.session_state: del st.session_state['bundle']
                                 st.rerun()
                 except Exception as e:
                     st.error(f"Gagal memproses file: {e}")
@@ -361,8 +329,7 @@ def show_ads_analytics_page(BRAND_BLUE):
         
         if col_ref2.button("🔄 Refresh", use_container_width=True, key="btn_ref_mekari"):
             st.cache_data.clear()
-            if 'bundle' in st.session_state:
-                del st.session_state['bundle']
+            if 'bundle' in st.session_state: del st.session_state['bundle']
             st.rerun()
 
         if not df_db_mekari.empty:
@@ -374,20 +341,16 @@ def show_ads_analytics_page(BRAND_BLUE):
                     sheet.clear()
                     sheet.append_row(["Tanggal Input", "Periode", "Jenis Laporan", "Total Interaksi", "Total Biaya (Rp)"])
                     st.cache_data.clear()
-                    if 'bundle' in st.session_state:
-                        del st.session_state['bundle']
+                    if 'bundle' in st.session_state: del st.session_state['bundle']
                     st.rerun()
         else:
             st.warning("⚠️ Data riwayat kosong. Jika Anda merasa sudah upload, ini berarti Header tabelnya hilang di Google Sheets.")
             
-            # --- FIX 3: TOMBOL DARURAT UNTUK MERESET FORMAT KETIKA TABEL KOSONG ---
             if st.button("🛠️ Reset & Siapkan Format Tabel (Solusi Error)", use_container_width=True, key="btn_force_reset_mekari"):
                 with st.spinner("Mereset format tabel Google Sheets..."):
                     sheet = utils.init_connection().open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(8)
                     sheet.clear()
-                    # Menulis ulang Header secara paksa agar Pandas bisa membaca tabelnya
                     sheet.append_row(["Tanggal Input", "Periode", "Jenis Laporan", "Total Interaksi", "Total Biaya (Rp)"])
                     st.cache_data.clear()
-                    if 'bundle' in st.session_state:
-                        del st.session_state['bundle']
+                    if 'bundle' in st.session_state: del st.session_state['bundle']
                     st.rerun()
