@@ -22,7 +22,6 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     # =====================================================
     # 2. GLOBAL SUMMARIES
     # =====================================================
-    st.markdown("### 📊 Ringkasan Performa Konten (Database)")
     if not df_db_main.empty:
         df_db_main = df_db_main.copy()
         if len(df_db_main.columns) == len(header_names):
@@ -30,36 +29,44 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         
         for col in numeric_cols:
             df_db_main[col] = pd.to_numeric(df_db_main[col], errors='coerce').fillna(0)
+
+        # --- A. TOTAL GABUNGAN (SEKARANG DI PALING ATAS) ---
+        st.markdown('<div style="background-color:#f0f2f6; padding:15px; border-radius:10px; margin-bottom:20px;">'
+                    '<h3 style="margin:0; color:#1E3A8A;">🌍 TOTAL PERFORMA GABUNGAN</h3>'
+                    '</div>', unsafe_allow_html=True)
         
+        # Kartu Utama yang langsung terlihat
+        g1, g2, g3, g4 = st.columns(4)
+        g1.metric("Grand Total Views", f"{int(df_db_main['View'].sum()):,}")
+        g2.metric("Grand Total Reach", f"{int(df_db_main['Reach'].sum()):,}")
+        g3.metric("Grand Interaksi", f"{int(df_db_main['Interaction'].sum()):,}")
+        g4.metric("Grand Followers", f"{int(df_db_main['Follow'].sum()):,}")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # --- B. RINCIAN PER PLATFORM (DALAM TAB) ---
+        st.markdown("### 📊 Rincian Per Platform")
         df_tk_db = df_db_main[df_db_main['Platform'] == 'TikTok']
         df_ig_db = df_db_main[df_db_main['Platform'] == 'Instagram']
 
-        tab_tk, tab_ig, tab_total = st.tabs(["🎵 TikTok", "📸 Instagram", "🌐 Total Gabungan"])
+        tab_tk, tab_ig = st.tabs(["🎵 TikTok Ads & Organic", "📸 Instagram Insights"])
         
         with tab_tk:
             c1, c2, c3, c4 = st.columns(4)
-            c1.metric("Views", f"{int(df_tk_db['View'].sum()):,}")
-            c2.metric("Reach", f"{int(df_tk_db['Reach'].sum()):,}")
-            c3.metric("Interaksi", f"{int(df_tk_db['Interaction'].sum()):,}")
-            c4.metric("Follows", f"{int(df_tk_db['Follow'].sum()):,}")
+            c1.metric("TikTok Views", f"{int(df_tk_db['View'].sum()):,}")
+            c2.metric("TikTok Reach", f"{int(df_tk_db['Reach'].sum()):,}")
+            c3.metric("TikTok Interaksi", f"{int(df_tk_db['Interaction'].sum()):,}")
+            c4.metric("TikTok Follows", f"{int(df_tk_db['Follow'].sum()):,}")
             
         with tab_ig:
             c1, c2, c3, c4 = st.columns(4)
-            c1.metric("Views", f"{int(df_ig_db['View'].sum()):,}")
-            c2.metric("Reach", f"{int(df_ig_db['Reach'].sum()):,}")
-            c3.metric("Interaksi", f"{int(df_ig_db['Interaction'].sum()):,}")
-            c4.metric("Follows", f"{int(df_ig_db['Follow'].sum()):,}")
-
-        with tab_total:
-            c1, c2, c3, c4 = st.columns(4)
-            c1.metric("Grand Views", f"{int(df_db_main['View'].sum()):,}")
-            c2.metric("Grand Reach", f"{int(df_db_main['Reach'].sum()):,}")
-            c3.metric("Grand Interaksi", f"{int(df_db_main['Interaction'].sum()):,}")
-            c4.metric("Grand Follows", f"{int(df_db_main['Follow'].sum()):,}")
+            c1.metric("IG Views", f"{int(df_ig_db['View'].sum()):,}")
+            c2.metric("IG Reach", f"{int(df_ig_db['Reach'].sum()):,}")
+            c3.metric("IG Interaksi", f"{int(df_ig_db['Interaction'].sum()):,}")
+            c4.metric("IG Follows", f"{int(df_ig_db['Follow'].sum()):,}")
+            
     else:
-        st.info("Database masih kosong.")
-
-    st.markdown("---")
+        st.info("Database masih kosong. Silakan upload data di bawah.")
 
     # =====================================================
     # 3. IMPORTER SECTION
