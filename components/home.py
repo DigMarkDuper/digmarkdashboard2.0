@@ -6,6 +6,7 @@ from database_lokasi import indo_coords # Import koordinat peta
 
 def show_homepage(BRAND_BLUE, go_to_page_func, data_loaders):
     # Kita ambil fungsi loader dari parameter agar tidak perlu import ulang
+    df_wa = utils.load_wa_admin()
     load_wa_admin = data_loaders['load_wa_admin']
     load_insight = data_loaders['load_insight']
     load_sosmed = data_loaders['load_sosmed']
