@@ -120,14 +120,15 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
 
     st.markdown("---")
 
-# ==========================================================
-# 4. PETA PERSEBARAN & GRAFIK (CLEAN & FIXED)
-# ==========================================================
+    # ==========================================================
+    # 5. PETA PERSEBARAN & GRAFIK (CLEAN & FIXED)
+    # ==========================================================
     st.markdown(f"<h3 style='color:{BRAND_BLUE}; font-size: 18px; margin-bottom: 10px; margin-top: 15px;'>🗺️ Peta Persebaran & Top Asal Prospek</h3>", unsafe_allow_html=True)
 
     try:
         # --- 1. FILTER DATA: Hanya Leads Murni ---
-        df_maps = df_wa_home.copy()
+        # PERBAIKAN: Menggunakan df_wa (variabel yang ditarik dari atas), bukan df_wa_home
+        df_maps = df_wa.copy()
         
         # Bersihkan baris kosong/hantu
         kolom_penting = [col for col in ['Tanggal Masuk', 'No Hp', 'Status'] if col in df_maps.columns]
@@ -226,4 +227,3 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
         st.error(f"Gagal memuat visualisasi peta/grafik: {e}")
     
     st.markdown("<br>", unsafe_allow_html=True)
-        
