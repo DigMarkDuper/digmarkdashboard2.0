@@ -1,30 +1,26 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import datetime
-from components.utils import init_connection, append_sheet_rows
+from components.utils import append_sheet_rows, fetch_all_master_data
 
 def show_dm_sosmed_page(BRAND_BLUE):
     st.title("📥 Input & Tracker DM Sosmed")
     st.markdown("Fitur untuk merekap calon siswa dari Instagram, TikTok, dan Facebook.")
-    
-    # --- 1. LOAD DATA ---
-    df_dm = pd.DataFrame()
-    try:
-        client = init_connection()
-        if client:
-            # Worksheet index 5 adalah DM SOSMED
-            sheet_dm = client.open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(5)
-            records_dm = sheet_dm.get_all_records()
-            if records_dm:
-                df_dm = pd.DataFrame(records_dm)
-    except Exception as e:
-        st.error(f"Gagal memuat database: {e}")
+
+    # --- 1. OPTIMIZED DATA LOADING ---
+    # Kita ambil dari bundle global agar tidak membebani koneksi baru
+    if 'bundle' not in st.session_state or st.session_state.bundle is None:
+        with st.spinner("Mengambil data awal..."):
+            st.session_state.bundle = fetch_all_master_data()
+
+    # Ambil khusus Worksheet Index 5 (DM Sosmed)
+    df_dm = st.session_state.bundle.get(5, pd.DataFrame())
 
     if not df_dm.empty:
+        # Standarisasi kolom (mencegah error jika header di gsheet berubah)
         df_dm = df_dm.fillna('')
         
-        # Penanganan Tanggal & Filter
+        # Penanganan Tanggal & Filter (Hanya dijalankan jika data ada)
         kolom_tgl = "Tanggal Masuk" if "Tanggal Masuk" in df_dm.columns else df_dm.columns[-1]
         try:
             df_dm['Bulan'] = pd.to_datetime(df_dm[kolom_tgl], errors='coerce').dt.strftime('%Y-%m')
@@ -33,7 +29,7 @@ def show_dm_sosmed_page(BRAND_BLUE):
             df_dm['Bulan'] = ''
             bulan_tersedia = []
 
-        with st.expander("🔍 Filter Data Ringkasan", expanded=True):
+        with st.expander("🔍 Filter Data Ringkasan", expanded=False): # Set False agar tidak berat saat load
             c_filt1, c_filt2 = st.columns(2)
             with c_filt1:
                 sel_bulan = st.multiselect("Pilih Bulan Masuk:", bulan_tersedia)
@@ -47,25 +43,17 @@ def show_dm_sosmed_page(BRAND_BLUE):
         if sel_plat:
             df_filtered = df_filtered[df_filtered['Platform'].isin(sel_plat)]
         
-        # --- 2. METRIK VISUAL DENGAN IKON ---
+        # --- 2. METRIK VISUAL ---
         st.markdown("### 📊 Ringkasan Performa DM")
         ig_count = len(df_filtered[df_filtered['Platform'].astype(str).str.contains('Instagram', case=False)])
         tt_count = len(df_filtered[df_filtered['Platform'].astype(str).str.contains('Tiktok', case=False)])
         fb_count = len(df_filtered[df_filtered['Platform'].astype(str).str.contains('Facebook', case=False)])
         
         m1, m2, m3, m4 = st.columns(4)
-        with m1:
-            with st.container(border=True):
-                st.markdown(f"<div style='font-size:13px; color:gray; font-weight:600; margin-bottom:5px;'>📊 TOTAL</div><div style='font-size:32px; font-weight:bold;'>{len(df_filtered)}</div>", unsafe_allow_html=True)
-        with m2:
-            with st.container(border=True):
-                st.markdown(f"<div style='display:flex; align-items:center; gap:8px; font-size:13px; color:gray; font-weight:600; margin-bottom:5px;'><img src='https://img.icons8.com/fluency/48/instagram-new.png' width='20'> INSTAGRAM</div><div style='font-size:32px; font-weight:bold;'>{ig_count}</div>", unsafe_allow_html=True)
-        with m3:
-            with st.container(border=True):
-                st.markdown(f"<div style='display:flex; align-items:center; gap:8px; font-size:13px; color:gray; font-weight:600; margin-bottom:5px;'><img src='https://img.icons8.com/color/48/tiktok--v1.png' width='20'> TIKTOK</div><div style='font-size:32px; font-weight:bold;'>{tt_count}</div>", unsafe_allow_html=True)
-        with m4:
-            with st.container(border=True):
-                st.markdown(f"<div style='display:flex; align-items:center; gap:8px; font-size:13px; color:gray; font-weight:600; margin-bottom:5px;'><img src='https://img.icons8.com/color/48/facebook-new.png' width='20'> FACEBOOK</div><div style='font-size:32px; font-weight:bold;'>{fb_count}</div>", unsafe_allow_html=True)
+        m1.metric("TOTAL", len(df_filtered))
+        m2.metric("INSTAGRAM", ig_count)
+        m3.metric("TIKTOK", tt_count)
+        m4.metric("FACEBOOK", fb_count)
 
     st.markdown("---")
 
@@ -86,22 +74,30 @@ def show_dm_sosmed_page(BRAND_BLUE):
             if not username:
                 st.warning("Username wajib diisi!")
             else:
-                with st.spinner("Menyimpan..."):
-                    # Logika Auto-Link
-                    uname_clean = username.strip().replace("@", "")
-                    link_final = f"https://{platform.lower()}.com/{uname_clean}"
-                    
-                    tgl_hari_ini = datetime.date.today().strftime("%Y-%m-%d")
-                    no_urut = len(df_dm) + 1
-                    
-                    data_dm_baru = [no_urut, platform, username, link_final, no_hp, domisili, status_dm, tag_dm, tgl_hari_ini]
-                    
-                    if append_sheet_rows(5, [data_dm_baru]):
-                        st.success("✅ Berhasil disimpan!")
-                        st.cache_data.clear()
-                        st.rerun()
+                # Logika Auto-Link
+                uname_clean = username.strip().replace("@", "")
+                link_final = f"https://{platform.lower()}.com/{uname_clean}"
+                tgl_hari_ini = datetime.date.today().strftime("%Y-%m-%d")
+                no_urut = len(df_dm) + 1
+                
+                data_dm_baru = [no_urut, platform, username, link_final, no_hp, domisili, status_dm, tag_dm, tgl_hari_ini]
+                
+                # Simpan ke Google Sheets
+                if append_sheet_rows(5, [data_dm_baru]):
+                    st.success("✅ Berhasil disimpan!")
+                    # BERSIHKAN CACHE & UPDATE BUNDLE
+                    st.cache_data.clear()
+                    st.session_state.bundle = fetch_all_master_data()
+                    st.rerun()
 
     # --- 4. TABEL DATABASE ---
     if not df_dm.empty:
-        st.markdown('<div class="feature-header">📑 Tabel Database Terkini</div>', unsafe_allow_html=True)
-        st.dataframe(df_filtered.drop(columns=['Bulan'], errors='ignore'), use_container_width=True, hide_index=True)
+        st.markdown("### 📑 Tabel Database Terkini")
+        # Menampilkan 10 data terbaru saja agar load tabel tidak berat
+        st.dataframe(df_filtered.drop(columns=['Bulan'], errors='ignore').iloc[::-1], use_container_width=True, hide_index=True)
+
+    # Tombol Refresh Manual
+    if st.button("🔄 Segarkan Data Database"):
+        st.cache_data.clear()
+        st.session_state.bundle = fetch_all_master_data()
+        st.rerun()
