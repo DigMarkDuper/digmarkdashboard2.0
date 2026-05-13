@@ -17,7 +17,7 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
     df_wa = utils.load_wa_admin()
     df_sos = utils.load_sosmed()
     df_web = utils.load_website()
-    df_ins = utils.load_insight()'
+    df_ins = utils.load_insight()
 
     # --- 1. CSS CUSTOM UNTUK TAMPILAN ---
     st.markdown("""
