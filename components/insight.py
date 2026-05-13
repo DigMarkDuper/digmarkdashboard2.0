@@ -97,14 +97,18 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
 
     st.markdown("---")
 
-    # --- 3. SMART IMPORTER (SUPPORT MULTIPLE TIKTOK FORMATS) ---
+    # =====================================================
+    # 3. SMART IMPORTER (FIXED FOR MULTIPLE TIKTOK FILES)
+    # =====================================================
     with st.expander("🚀 Ultra-Smart Importer (TikTok & Instagram)", expanded=True):
-        files = st.file_uploader("Upload CSV TikTok/IG", type=["csv"], accept_multiple_files=True, key=f"ins_v7_{st.session_state.uploader_key}")
+        files = st.file_uploader("Upload CSV TikTok/IG (Bisa multiple)", type=["csv"], accept_multiple_files=True, key=f"ins_v6_{st.session_state.uploader_key}")
         
         if files:
             all_platform_data = []
+            
             for f in files:
                 try:
+                    # Coba deteksi encoding (TikTok biasanya UTF-8 dengan BOM)
                     raw_bytes = f.getvalue()
                     content = ""
                     for enc in ["utf-8-sig", "utf-8", "latin-1"]:
@@ -115,42 +119,61 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                     
                     df_raw = pd.read_csv(io.StringIO(content))
                     sample_text = content.lower()
-                    date_col = next((c for c in df_raw.columns if "Date" in c), None)
-                    if date_col: df_raw['Date'] = df_raw[date_col].apply(universal_date_parser)
                     
+                    # Standarisasi Tanggal
+                    date_col = next((c for c in df_raw.columns if "Date" in c), None)
+                    if date_col:
+                        df_raw['Date'] = df_raw[date_col].apply(universal_date_parser)
+                    
+                    # --- LOGIKA TIKTOK OVERVIEW (Views/Likes/Shares) ---
                     if "video views" in sample_text:
-                        res = pd.DataFrame({'Date': df_raw['Date'], 'Platform': 'TikTok', 'View': df_raw.get('Video Views', 0), 'Interaction': df_raw.get('Likes', 0) + df_raw.get('Comments', 0) + df_raw.get('Shares', 0), 'Profile Visit': df_raw.get('Profile Views', 0)})
+                        res = pd.DataFrame({
+                            'Date': df_raw['Date'],
+                            'Platform': 'TikTok',
+                            'View': df_raw.get('Video Views', 0),
+                            'Interaction': df_raw.get('Likes', 0) + df_raw.get('Comments', 0) + df_raw.get('Shares', 0),
+                            'Profile Visit': df_raw.get('Profile Views', 0)
+                        })
                         all_platform_data.append(res)
+                        st.caption(f"✅ TikTok Overview Detected: {f.name}")
+
+                    # --- LOGIKA TIKTOK FOLLOWER HISTORY ---
                     elif "follower" in sample_text and "difference" in sample_text:
-                        res = pd.DataFrame({'Date': df_raw['Date'], 'Platform': 'TikTok', 'Follow': df_raw.get('Difference in followers from previous day', 0)})
+                        res = pd.DataFrame({
+                            'Date': df_raw['Date'],
+                            'Platform': 'TikTok',
+                            'Follow': df_raw.get('Difference in followers from previous day', 0)
+                        })
                         all_platform_data.append(res)
+                        st.caption(f"✅ TikTok Follower History Detected: {f.name}")
+
+                    # --- LOGIKA INSTAGRAM ---
                     else:
                         target_map = {"follows": "Follow", "interactions": "Interaction", "reach": "Reach", "views": "View", "linkclicks": "Link Clicks"}
                         found_target = next((v for k, v in target_map.items() if k in sample_text), None)
                         if found_target:
-                            res = pd.DataFrame({'Date': df_raw['Date'], 'Platform': 'Instagram', found_target: df_raw.get('Primary', 0)})
+                            res = pd.DataFrame({
+                                'Date': df_raw['Date'],
+                                'Platform': 'Instagram',
+                                found_target: df_raw.get('Primary', 0)
+                            })
                             all_platform_data.append(res)
-                except: continue
+                            st.caption(f"✅ Instagram {found_target} Detected: {f.name}")
 
+                except Exception as e:
+                    st.error(f"Error pada file {f.name}: {e}")
+
+            # PROSES MERGING (MENGGABUNGKAN FILE)
             if all_platform_data:
                 df_merged = pd.concat(all_platform_data, ignore_index=True)
+                # Group by Date & Platform untuk menyatukan baris yang sama (Smart Merge)
                 df_merged = df_merged.groupby(['Date', 'Platform']).sum(numeric_only=True).reset_index()
+                
+                # Pastikan semua kolom standar tersedia
                 for col in header_names:
                     if col not in df_merged.columns: df_merged[col] = 0
+                
                 st.session_state.preview_data = df_merged[header_names]
-
-    # --- 4. PREVIEW & SAVE ---
-    if st.session_state.preview_data is not None:
-        st.markdown("### 🔍 Preview Penggabungan Data")
-        st.dataframe(st.session_state.preview_data, use_container_width=True, hide_index=True)
-        if st.button("🚀 SIMPAN KE DATABASE", use_container_width=True):
-            if utils.append_sheet_rows(2, st.session_state.preview_data.values.tolist()):
-                st.success("🔥 Berhasil Disimpan!")
-                st.session_state.preview_data = None
-                st.session_state.uploader_key += 1
-                st.cache_data.clear()
-                st.session_state.bundle = utils.fetch_all_master_data()
-                st.rerun()
 
     # --- 5. DATABASE TABLE ---
     st.markdown("### 🗄️ Riwayat Database")
