@@ -56,8 +56,23 @@ def get_from_bundle(idx):
 
 def load_sosmed(): 
     df = get_from_bundle(0)
-    if not df.empty and 'Tanggal Deadline' in df.columns:
-        df['Tanggal Deadline'] = pd.to_datetime(df['Tanggal Deadline'], dayfirst=True, errors='coerce')
+    
+    # Pastikan data tidak kosong
+    if not df.empty:
+        # Cek apakah nama kolomnya 'Tanggal Deadline' atau cuma 'Deadline'
+        col_date = 'Tanggal Deadline' if 'Tanggal Deadline' in df.columns else ('Deadline' if 'Deadline' in df.columns else None)
+        
+        if col_date:
+            # Ubah format teks jadi format waktu sungguhan
+            df[col_date] = pd.to_datetime(df[col_date], dayfirst=True, errors='coerce')
+            
+            # --- INI BARIS YANG HILANG SEBELUMNYA ---
+            # Bikin kolom baru bernama 'Bulan-Deadline' untuk filter di Sidebar
+            df['Bulan-Deadline'] = df[col_date].dt.strftime('%B %Y')
+        else:
+            # Jika kolom tanggal tidak ditemukan sama sekali, buat kolom kosong agar tidak error
+            df['Bulan-Deadline'] = "Tanpa Tanggal"
+            
     return df
 
 def load_website():
