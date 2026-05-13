@@ -1,5 +1,10 @@
 import streamlit as st
 import datetime
+# --- FIX IMPORT PATH ---
+# Mengambil path folder utama aplikasi
+root_path = os.path.dirname(os.path.abspath(__file__))
+if root_path not in sys.path:
+    sys.path.append(root_path)
 
 # 1. IMPORT KOMPONEN
 from components.utils import fetch_all_master_data, set_bg_local
