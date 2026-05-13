@@ -60,7 +60,7 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         if len(df_calc.columns) == len(header_names): df_calc.columns = header_names
         for col in numeric_cols: df_calc[col] = pd.to_numeric(df_calc[col], errors='coerce').fillna(0)
 
-        # Header Summary
+        # Header Summary ig
         st.markdown(f'<div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left: 10px solid {BRAND_YELLOW};"><h2 style="margin:0; color:white; font-size:20px;">🌍 EXECUTIVE SUMMARY INSTAGRAM</h2></div>', unsafe_allow_html=True)
         g1, g2, g3, g4 = st.columns(4)
         g1.metric("Grand Total Views", f"{int(df_calc['View'].sum()):,}")
@@ -88,7 +88,8 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         st.info("Database masih kosong.")
 
     st.markdown("---")
-
+        # Header Summary TIKTOK
+        st.markdown(f'<div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left: 10px solid {BRAND_YELLOW};"><h2 style="margin:0; color:white; font-size:20px;">🌍 EXECUTIVE SUMMARY TIKTOK</h2></div>', unsafe_allow_html=True)
     # =====================================================
     # 3. IMPORTER SECTION
     # =====================================================
