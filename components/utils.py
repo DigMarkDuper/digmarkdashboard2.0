@@ -62,9 +62,9 @@ def fetch_all_master_data():
             2: get_df(2, "Insight"),
             3: get_df(3, "WA Admin"),
             4: get_df(4, "CRM"),
-            6: get_df(6, "TikTok Ads"),
-            7: get_df(7, "Meta Ads"),
-            8: get_df(8, "Mekari")
+            5: get_df(5, "TikTok Ads"),
+            6: get_df(6, "Meta Ads"),
+            7: get_df(7, "Mekari")
         }
         
         # Verifikasi: Jika semua dataframe kosong, berarti ada yang salah
