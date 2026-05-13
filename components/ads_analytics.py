@@ -284,10 +284,14 @@ def show_ads_analytics_page(BRAND_BLUE):
             try: return float(s)
             except: return 0
 
+        # --- FIX 1: KEMBALIKAN PENCARI KOLOM CERDAS ---
         if not df_db_mekari.empty:
             df_db_mekari = df_db_mekari.dropna(how='all')
-            total_spend_mekari = df_db_mekari['Total Biaya (Rp)'].apply(force_clean_num).sum()
-            total_pesan_mekari = pd.to_numeric(df_db_mekari['Total Interaksi'], errors='coerce').fillna(0).sum()
+            col_biaya = next((c for c in df_db_mekari.columns if 'biaya' in str(c).lower() or 'cost' in str(c).lower()), None)
+            col_interaksi = next((c for c in df_db_mekari.columns if 'interaksi' in str(c).lower() or 'pesan' in str(c).lower()), None)
+            
+            total_spend_mekari = df_db_mekari[col_biaya].apply(force_clean_num).sum() if col_biaya else 0
+            total_pesan_mekari = pd.to_numeric(df_db_mekari[col_interaksi], errors='coerce').fillna(0).sum() if col_interaksi else 0
         else:
             total_spend_mekari, total_pesan_mekari = 0, 0
 
@@ -311,22 +315,18 @@ def show_ads_analytics_page(BRAND_BLUE):
                     jenis_lap = "Tidak Dikenali"
                     col_d = None
                     
-                    # LOGIKA DETEKSI TIPE FILE MEKARI
-                    # Tipe 1: Campaign Logs (menggunakan deducted balance & broadcast amount)
                     if 'deducted balance' in df_up.columns and 'broadcast amount' in df_up.columns:
                         jenis_lap = "WA Campaign Logs"
                         up_spend = pd.to_numeric(df_up['deducted balance'], errors='coerce').fillna(0).sum()
                         up_msgs = pd.to_numeric(df_up['broadcast amount'], errors='coerce').fillna(0).sum()
                         col_d = next((c for c in df_up.columns if 'created at' in c or 'date' in c), None)
                         
-                    # Tipe 2: Billing Logs (menggunakan credit)
                     elif 'credit' in df_up.columns:
                         jenis_lap = "WA Billing Logs (Per Message)"
                         up_spend = pd.to_numeric(df_up['credit'], errors='coerce').fillna(0).sum()
-                        up_msgs = len(df_up) # Setiap baris = 1 pesan
+                        up_msgs = len(df_up)
                         col_d = next((c for c in df_up.columns if 'created_at' in c or 'date' in c), None)
 
-                    # Tampilkan hasil baca
                     if jenis_lap == "Tidak Dikenali":
                         st.error("❌ Format file tidak dikenali. Pastikan file adalah hasil export 'Billing Logs' atau 'Campaign Logs' dari Mekari.")
                     else:
@@ -346,8 +346,10 @@ def show_ads_analytics_page(BRAND_BLUE):
                             
                             if utils.append_sheet_rows(8, [row]):
                                 st.success("Berhasil Disimpan!")
+                                # --- FIX 2: PENGHAPUSAN CACHE YANG BENAR SAAT SAVE ---
                                 st.cache_data.clear()
-                                st.session_state.bundle = utils.fetch_all_master_data()
+                                if 'bundle' in st.session_state:
+                                    del st.session_state['bundle']
                                 st.rerun()
                 except Exception as e:
                     st.error(f"Gagal memproses file: {e}")
@@ -357,29 +359,35 @@ def show_ads_analytics_page(BRAND_BLUE):
         col_ref1, col_ref2 = st.columns([0.85, 0.15])
         col_ref1.markdown("### 📑 Riwayat Saldo Mekari")
         
-        # --- FIX 1: REFRESH YANG LEBIH KUAT ---
         if col_ref2.button("🔄 Refresh", use_container_width=True, key="btn_ref_mekari"):
-            st.cache_data.clear() # Bersihkan cache API Gspread
+            st.cache_data.clear()
             if 'bundle' in st.session_state:
-                del st.session_state['bundle'] # Paksa bunuh memori lama agar narik ulang
+                del st.session_state['bundle']
             st.rerun()
 
         if not df_db_mekari.empty:
             st.dataframe(df_db_mekari, use_container_width=True, hide_index=True)
             
-            # --- FIX 2: HAPUS AMAN (TETAPKAN HEADER) ---
             if st.button("🗑️ Kosongkan Riwayat", use_container_width=True, key="btn_del_mekari"):
                 with st.spinner("Mengosongkan data..."):
                     sheet = utils.init_connection().open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(8)
-                    sheet.clear() # Hapus semua isi
-                    
-                    # WAJIB TULIS ULANG HEADER agar Pandas tidak buta saat data baru masuk!
-                    # Sesuaikan nama header ini dengan yang biasa Mas pakai di Tab 8
+                    sheet.clear()
                     sheet.append_row(["Tanggal Input", "Periode", "Jenis Laporan", "Total Interaksi", "Total Biaya (Rp)"])
-                    
                     st.cache_data.clear()
                     if 'bundle' in st.session_state:
                         del st.session_state['bundle']
                     st.rerun()
         else:
-            st.warning("Data riwayat di Spreadsheet belum terbaca atau masih kosong.")
+            st.warning("⚠️ Data riwayat kosong. Jika Anda merasa sudah upload, ini berarti Header tabelnya hilang di Google Sheets.")
+            
+            # --- FIX 3: TOMBOL DARURAT UNTUK MERESET FORMAT KETIKA TABEL KOSONG ---
+            if st.button("🛠️ Reset & Siapkan Format Tabel (Solusi Error)", use_container_width=True, key="btn_force_reset_mekari"):
+                with st.spinner("Mereset format tabel Google Sheets..."):
+                    sheet = utils.init_connection().open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(8)
+                    sheet.clear()
+                    # Menulis ulang Header secara paksa agar Pandas bisa membaca tabelnya
+                    sheet.append_row(["Tanggal Input", "Periode", "Jenis Laporan", "Total Interaksi", "Total Biaya (Rp)"])
+                    st.cache_data.clear()
+                    if 'bundle' in st.session_state:
+                        del st.session_state['bundle']
+                    st.rerun()
