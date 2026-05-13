@@ -87,49 +87,50 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                 
                 # --- FUNGSI UNTUK MEMBUAT GRAFIK MODERN ---
                 def create_modern_chart(data, y_col, color, title):
-                    fig = px.area(data, x='Date', y=y_col, title=title)
+                    # Kita gunakan splines agar garis melengkung lembut (Smooth)
+                    fig = px.area(data, x='Date', y=y_col, title=f"<b>{title}</b>")
+                    
                     fig.update_traces(
-                        line_color=color, 
-                        fillcolor=color, 
-                        opacity=0.2,
+                        line=dict(width=3, color=color), # Garis utama tipis & tegas
+                        fillcolor='rgba' + str(tuple(list(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + [0.15])), # Gradasi transparan
                         mode='lines+markers',
-                        # PERBAIKAN DI SINI: borderwidth diganti menjadi line={'width': 2, 'color': 'white'}
                         marker=dict(
-                            size=8, 
-                            color=color, # Titik mengikuti warna utama
-                            line=dict(width=2, color='white') # Garis tepi putih yang Mas inginkan
-                        )
+                            size=10, 
+                            color='white', 
+                            line=dict(width=3, color=color) # Titik "Donut" yang modern
+                        ),
+                        hovertemplate="<b>%{y:,.0f}</b><extra></extra>" # Tooltip bersih
                     )
+                    
                     fig.update_layout(
                         height=280,
-                        margin=dict(l=10, r=10, t=50, b=10),
+                        margin=dict(l=10, r=10, t=60, b=10),
                         xaxis_title="",
                         yaxis_title="",
                         template="plotly_white",
                         hovermode="x unified",
-                        title_font=dict(size=16, color="#333", family="Arial Black"),
-                        yaxis=dict(showgrid=True, gridcolor='#F0F0F0'),
-                        xaxis=dict(showgrid=False, tickformat="%b %Y")
+                        # Font Style
+                        font=dict(family="Inter, sans-serif", size=12, color="#4B5563"),
+                        title_font=dict(size=18, color="#111827"),
+                        # Menghilangkan Garis Frame (Clean Look)
+                        xaxis=dict(
+                            showgrid=False, 
+                            showline=False, 
+                            zeroline=False,
+                            tickformat="%b %Y"
+                        ),
+                        yaxis=dict(
+                            showgrid=True, 
+                            gridcolor='#F3F4F6', # Garis bantu sangat tipis
+                            showline=False, 
+                            zeroline=False,
+                            tickformat=",", # Pemisah ribuan otomatis
+                        ),
+                        # Background Transparan
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        plot_bgcolor='rgba(0,0,0,0)',
                     )
                     return fig
-
-                # Layout Grid 2x2
-                r1_c1, r1_c2 = st.columns(2)
-                r2_c1, r2_c2 = st.columns(2)
-
-                with r1_c1:
-                    st.plotly_chart(create_modern_chart(df_monthly, 'View', BRAND_BLUE, "📈 Video Views"), use_container_width=True)
-                with r1_c2:
-                    st.plotly_chart(create_modern_chart(df_monthly, 'Reach', "#636EFA", "👥 Audience Reach"), use_container_width=True)
-                with r2_c1:
-                    st.plotly_chart(create_modern_chart(df_monthly, 'Interaction', BRAND_YELLOW, "🔥 Interactions"), use_container_width=True)
-                with r2_c2:
-                    st.plotly_chart(create_modern_chart(df_monthly, 'Follow', "#00CC96", "🚀 New Followers"), use_container_width=True)
-            else:
-                st.warning("⚠️ Data ditemukan, namun format tanggal di database tidak valid. Pastikan formatnya Tgl/Bln/Thn.")
-                
-        except Exception as e:
-            st.error(f"Gagal merender grafik: {e}")
 
         # Rincian per Platform dalam Tab
         st.markdown("### 📱 Breakdown Per Platform")
