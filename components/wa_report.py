@@ -11,7 +11,7 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
         # Tarik data dengan aman menggunakan engine baru kita
         df_wa = utils.load_wa_admin()
         
-        # --- [PERBAIKAN LOGIKA] PEMBERSIHAN BARIS HANTU ---
+        # --- PEMBERSIHAN BARIS HANTU ---
         kolom_penting = [col for col in ['Tanggal Masuk', 'No Hp', 'Status'] if col in df_wa.columns]
         if kolom_penting:
             df_wa = df_wa.dropna(subset=kolom_penting, how='all')
@@ -91,8 +91,10 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                 st.markdown('<div class="feature-header">🏷️ Mekari Tag Status Breakdown</div>', unsafe_allow_html=True)
                 if 'Mekari Tag' in df_full_tags.columns:
                     df_full_tags['Mekari Tag'] = df_full_tags['Mekari Tag'].astype(str).str.strip()
-                    mekari_summary = df_full_tags['Mekari Tag'].value_counts().reset_index()
-                    mekari_summary.columns = ['Tag', 'Jumlah']
+                    mekari_vc = df_full_tags['Mekari Tag'].value_counts()
+                    # FIX PANDAS: Pembuatan dataframe aman
+                    mekari_summary = pd.DataFrame({'Tag': mekari_vc.index, 'Jumlah': mekari_vc.values})
+                    
                     fig_mekari = px.pie(
                         mekari_summary, names='Tag', values='Jumlah', hole=0.4, 
                         color_discrete_sequence=px.colors.qualitative.Bold
@@ -108,7 +110,9 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                     df_full_tags[kolom_kat] = df_full_tags[kolom_kat].astype(str).str.strip()
                     df_full_tags[kolom_kat] = df_full_tags[kolom_kat].replace(['', 'nan', 'None', 'NaN'], 'Lainnya')
                     
-                    kat_counts = df_full_tags[kolom_kat].value_counts().reset_index()
+                    kat_vc = df_full_tags[kolom_kat].value_counts()
+                    # FIX PANDAS: Pembuatan dataframe aman
+                    kat_counts = pd.DataFrame({kolom_kat: kat_vc.index, 'count': kat_vc.values})
                     
                     kat_color_map = {
                         "Persyaratan": "#BBF7D0",
@@ -118,7 +122,6 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                         "Partnership": "#E9D5FF",
                         "Lainnya": "#E5E7EB"
                     }
-                    
                     kat_order = ["Persyaratan", "Biaya", "Pendaftaran", "Loker", "Partnership", "Lainnya"]
                     
                     fig_kat = px.bar(
@@ -131,13 +134,11 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
 
                 # 6. DISTRIBUSI STATUS INTERNAL
                 st.markdown('<div class="feature-header">📊 Distribusi Status Prospek (Internal Status)</div>', unsafe_allow_html=True)
-                
                 status_order = [
                     "Belum Terupdate", "No Response", "Follow Up", "Daftar", "Interview", 
                     "Closing", "Sales Progress", "Withdraw", "Lainnya",
                     "Not Eligible", "Double Chat", "Closed - Not Interested", "Partnership"
                 ]
-                
                 color_map = {
                     "Belum Terupdate": "#F3F4F6", "No Response": "#FDE68A", "Follow Up": "#BFDBFE",
                     "Daftar": "#BBF7D0", "Interview": "#E9D5FF", "Closing": "#BBF7D0",
@@ -147,15 +148,15 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                 
                 if 'Status' in df_full_tags.columns:
                     df_full_tags['Status'] = df_full_tags['Status'].astype(str).str.strip()
-                    status_summary = df_full_tags['Status'].value_counts().reset_index()
-                    status_summary.columns = ['Status', 'Jumlah']
+                    status_vc = df_full_tags['Status'].value_counts()
+                    # FIX PANDAS: Pembuatan dataframe aman
+                    status_summary = pd.DataFrame({'Status': status_vc.index, 'Jumlah': status_vc.values})
                     
                     fig_status = px.bar(
                         status_summary, x='Jumlah', y='Status', orientation='h',
                         category_orders={"Status": status_order}, color='Status',
                         color_discrete_map=color_map, text_auto=True
                     )
-                    
                     fig_status.update_layout(showlegend=False, height=550, paper_bgcolor='white', plot_bgcolor='white', yaxis_title="")
                     st.plotly_chart(fig_status, use_container_width=True)
                 
@@ -181,8 +182,10 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                 with c2:
                     st.markdown('<div class="feature-header">🌐 Sumber Prospek</div>', unsafe_allow_html=True)
                     if 'Sumber (Ads/Organik/Sales)' in df_wa.columns:
-                        sumber_counts = df_wa['Sumber (Ads/Organik/Sales)'].value_counts().reset_index()
-                        sumber_counts.columns = ['Sumber', 'Jumlah']
+                        sumber_vc = df_wa['Sumber (Ads/Organik/Sales)'].value_counts()
+                        # FIX PANDAS: Pembuatan dataframe aman (Ini yang error sebelumnya!)
+                        sumber_counts = pd.DataFrame({'Sumber': sumber_vc.index, 'Jumlah': sumber_vc.values})
+                        
                         fig_sumber = px.pie(sumber_counts, names='Sumber', values='Jumlah', hole=0.4, color_discrete_sequence=[BRAND_BLUE, BRAND_YELLOW, "#003A66"])
                         fig_sumber.update_traces(textinfo='label+percent')
                         st.plotly_chart(fig_sumber, use_container_width=True)
@@ -190,9 +193,11 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                 # 8. MAPPING ASAL (TREEMAP)
                 st.markdown('<div class="feature-header">📍 Sebaran Domisili Prospek (TreeMap)</div>', unsafe_allow_html=True)
                 if 'Asal' in df_wa.columns:
-                    asal_counts = df_wa['Asal'].value_counts().reset_index()
-                    asal_counts.columns = ['Asal', 'Jumlah']
+                    asal_vc = df_wa['Asal'].value_counts()
+                    # FIX PANDAS: Pembuatan dataframe aman
+                    asal_counts = pd.DataFrame({'Asal': asal_vc.index, 'Jumlah': asal_vc.values})
                     df_asal_filtered = asal_counts[asal_counts['Asal'].str.strip() != '']
+                    
                     if not df_asal_filtered.empty:
                         fig_asal = px.treemap(
                             df_asal_filtered, path=[px.Constant("Seluruh Wilayah"), 'Asal'], values='Jumlah',
@@ -207,7 +212,6 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                 # 9. DATA DETAIL SUKSES CLOSING & SALES PROGRESS
                 col_closing, col_sales = st.columns(2)
                 
-                # --- KOLOM KIRI: DATA CLOSING ---
                 with col_closing:
                     st.markdown('<div class="feature-header">🎉 Detail Sukses Closing</div>', unsafe_allow_html=True)
                     df_closing = df_wa[df_wa['Status'].str.contains('Closing', case=False, na=False)].copy()
@@ -224,7 +228,6 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                     else:
                         st.info("Belum ada data siswa yang berstatus Closing.")
                         
-                # --- KOLOM KANAN: DATA SALES PROGRESS ---
                 with col_sales:
                     st.markdown('<div class="feature-header">⏳ Detail Sales Progress</div>', unsafe_allow_html=True)
                     df_sales = df_wa[df_wa['Status'].str.contains('Sales Progress', case=False, na=False)].copy()
@@ -247,17 +250,13 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                 
                 with col_refresh:
                     if st.button("🔄 Refresh & Tarik Data Terbaru", use_container_width=True, key="refresh_wa_admin"):
-                        # Pembersihan Cache yang Kuat (Anti Memory Trap)
                         st.cache_data.clear()
                         if 'bundle' in st.session_state:
                             del st.session_state['bundle']
-                            
-                        # Hapus Memori Filter
                         if 'wa_bulan' in st.session_state:
                             del st.session_state['wa_bulan']
                         if 'wa_search' in st.session_state:
                             del st.session_state['wa_search']
-                            
                         st.rerun()
                         
                 st.dataframe(df_wa, use_container_width=True, hide_index=True)
@@ -269,4 +268,4 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
             st.warning("⚠️ Data WA Admin masih kosong. Pastikan Google Sheets Anda sudah terisi.")
             
     except Exception as e:
-        st.error(f"Kesalahan Teknis: {e}")
+        st.error(f"Kesalahan Teknis WA Report: {e}")
