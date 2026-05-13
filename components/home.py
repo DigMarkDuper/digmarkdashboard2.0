@@ -149,9 +149,62 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
 
     except Exception as e:
         st.error(f"Gagal memuat metrik: {e}")
+    # --- 5. ANNUAL TARGET TRACKING (YEAR-TO-DATE) ---
+    try:
+        st.markdown('<div style="font-weight: 800; margin-top: 20px; margin-bottom: 15px;">🎯 2026 ANNUAL TARGET PROGRESS</div>', unsafe_allow_html=True)
+        
+        # Data Target Tahunan Mas
+        targets = {
+            "Total View": 10000000,
+            "Total Reach": 2400000,
+            "Link Click": 24000,
+            "Engagement": 40000
+        }
 
+        # A. Tarik Data Pencapaian (Dari Tab Insight/Index 2)
+        # Kita asumsikan df_insight sudah di-load di bagian atas
+        actual = { "Total View": 0, "Total Reach": 0, "Link Click": 0, "Engagement": 0 }
+        
+        if not df_ins.empty:
+            # Sesuaikan nama kolom dengan yang ada di Google Sheets Insight Mas
+            col_map = {
+                "Total View": ["Views", "Video Views", "Impressions"],
+                "Total Reach": ["Reach", "Akun Unik"],
+                "Link Click": ["Link Clicks", "Clicks", "Tap Link"],
+                "Engagement": ["Engagement", "Interaksi", "Likes"]
+            }
+            
+            for key, col_names in col_map.items():
+                target_col = next((c for c in df_ins.columns if c in col_names), None)
+                if target_col:
+                    # Ambil total kumulatif sepanjang tahun ini
+                    actual[key] = pd.to_numeric(df_ins[target_col], errors='coerce').sum()
+
+        # B. Render Progress Bar
+        cols = st.columns(2) # Kita bagi 2 baris agar rapi
+        
+        for i, (label, target_val) in enumerate(targets.items()):
+            current_val = actual[label]
+            progress = min(current_val / target_val, 1.0) # Maksimal 100%
+            
+            with cols[i % 2]:
+                with st.container(border=True):
+                    # Header Metrik
+                    c_label, c_val = st.columns([0.6, 0.4])
+                    c_label.markdown(f"**{label}**")
+                    c_val.markdown(f"<div style='text-align:right; font-size:12px;'>{current_val:,.0f} / {target_val:,.0f}</div>", unsafe_allow_html=True)
+                    
+                    # Progress Bar Warna Biru LPK
+                    st.progress(progress)
+                    
+                    # Persentase
+                    st.markdown(f"<div style='font-size:10px; color:gray;'>Tercapai: <b>{progress*100:.1f}%</b></div>", unsafe_allow_html=True)
+
+    except Exception as e:
+        st.error(f"Gagal memuat Target Tahunan: {e}")
+    
     # ==========================================================
-    # 5. PETA PERSEBARAN & GRAFIK (CLEAN & FIXED)
+    # 6. PETA PERSEBARAN & GRAFIK (CLEAN & FIXED)
     # ==========================================================
     st.markdown(f"<h3 style='color:{BRAND_BLUE}; font-size: 18px; margin-bottom: 10px; margin-top: 15px;'>🗺️ Peta Persebaran & Top Asal Prospek</h3>", unsafe_allow_html=True)
 
