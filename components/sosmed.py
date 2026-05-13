@@ -26,16 +26,28 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
         filtered_df = df[mask].copy()
 
         if not filtered_df.empty:
-            # --- LOGIKA PERHITUNGAN ---
+            # --- LOGIKA PERHITUNGAN (VERSI FIX) ---
+            is_done = filtered_df['PROSES'].astype(str).str.upper() == 'DONE'
+            
+            # 2. Fungsi pembantu untuk cek apakah kolom "Belum Di-post"
+            # Menganggap hutang jika: kolom kosong, False, atau bukan "V"
+            def is_not_posted(column_name):
+                return ~filtered_df[column_name].astype(str).str.upper().isin(['V', 'TRUE', '1', 'YES', 'CHECKED'])
+
+            # 3. Hitung Produksi
             v_mask = filtered_df['Output'].str.contains('Video', case=False, na=False)
             v_total = len(filtered_df[v_mask])
-            v_done = len(filtered_df[v_mask & (filtered_df['PROSES'] == 'DONE')])
+            v_done = len(filtered_df[v_mask & is_done])
+            
             d_total = len(filtered_df[~v_mask])
-            d_done = len(filtered_df[~v_mask & (filtered_df['PROSES'] == 'DONE')])
+            d_done = len(filtered_df[~v_mask & is_done])
 
-            ig_p = len(filtered_df[(filtered_df['PROSES'] == 'DONE') & (filtered_df['IG'] == False)])
-            tt_p = len(filtered_df[(filtered_df['PROSES'] == 'DONE') & (filtered_df['TIKTOK'] == False)])
-            yt_p = len(filtered_df[(filtered_df['PROSES'] == 'DONE') & (v_mask) & (filtered_df['YT'] == False)])
+            # 4. Hitung Hutang Post (Hanya yang Produksinya sudah DONE tapi belum di-post)
+            ig_p = len(filtered_df[is_done & is_not_posted('IG')])
+            tt_p = len(filtered_df[is_done & is_not_posted('TIKTOK')])
+            
+            # Khusus YT, hanya hitung jika Output-nya adalah Video
+            yt_p = len(filtered_df[is_done & v_mask & is_not_posted('YT')])
 
             # --- BARIS 1: METRIK ---
             st.markdown('<div class="feature-header">📊 Produksi & Realisasi</div>', unsafe_allow_html=True)
