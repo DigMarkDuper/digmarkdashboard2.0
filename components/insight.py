@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import io
 from datetime import datetime
-from components.utils import fetch_all_master_data, append_sheet_rows
+import components.utils as utils
 
 def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     st.title("📈 ANALITIK KONTEN")
@@ -16,18 +16,34 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     if 'uploader_key' not in st.session_state:
         st.session_state.uploader_key = 0
 
-    # FORCE RELOAD: Pastikan bundle ditarik terbaru jika tidak ada
-    if 'bundle' not in st.session_state or st.session_state.bundle is None:
-        st.session_state.bundle = fetch_all_master_data()
-
     # Ambil data dari bundle (Index 2 adalah Insight)
-    df_db_main = st.session_state.bundle.get(2, pd.DataFrame()) if st.session_state.bundle else pd.DataFrame()
+    df_db_main = st.session_state.get('bundle', {}).get(2, pd.DataFrame())
+
+    # --- FUNGSI SAKTI PENYERAGAM TANGGAL ---
+    def universal_date_parser(d_str):
+        if pd.isna(d_str) or d_str == "": return ""
+        d_str = str(d_str).strip()
+        formats_to_try = [
+            '%d-%m-%Y', '%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y',
+            '%B %d, %Y', '%b %d, %Y', '%B %d', '%b %d'
+        ]
+        for fmt in formats_to_try:
+            try:
+                dt_obj = datetime.strptime(d_str, fmt)
+                if dt_obj.year == 1900: 
+                    dt_obj = dt_obj.replace(year=datetime.now().year)
+                return dt_obj.strftime('%d/%m/%Y')
+            except: continue
+        try:
+            dt_pd = pd.to_datetime(d_str, errors='coerce')
+            if not pd.isna(dt_pd): return dt_pd.strftime('%d/%m/%Y')
+        except: pass
+        return d_str
 
     # =====================================================
-    # 2. GLOBAL SUMMARIES (UTAMA & PALING ATAS)
+    # 2. GLOBAL SUMMARIES (PINDAH KE ATAS)
     # =====================================================
     if not df_db_main.empty:
-        # Bersihkan data agar perhitungan matematis akurat
         df_calc = df_db_main.copy()
         if len(df_calc.columns) == len(header_names):
             df_calc.columns = header_names
@@ -35,11 +51,11 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         for col in numeric_cols:
             df_calc[col] = pd.to_numeric(df_calc[col], errors='coerce').fillna(0)
 
-        # --- A. TOTAL GABUNGAN (HIGHLIGHT UTAMA) ---
+        # Highlight Total Gabungan
         st.markdown(f"""
             <div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left: 10px solid {BRAND_YELLOW};">
                 <h2 style="margin:0; color:white; font-size:20px;">🌍 TOTAL PERFORMA GABUNGAN (ALL-TIME)</h2>
-                <p style="margin:0; color:white; opacity:0.8; font-size:12px;">Rekapitulasi data dari TikTok dan Instagram</p>
+                <p style="margin:0; color:white; opacity:0.8; font-size:12px;">Data akumulasi dari TikTok & Instagram</p>
             </div>
         """, unsafe_allow_html=True)
         
@@ -51,29 +67,26 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # --- B. RINCIAN PER PLATFORM (TAB) ---
+        # Rincian per Platform dalam Tab
         st.markdown("### 📊 Rincian Per Platform")
         df_tk_db = df_calc[df_calc['Platform'] == 'TikTok']
         df_ig_db = df_calc[df_calc['Platform'] == 'Instagram']
 
         tab_tk, tab_ig = st.tabs(["🎵 TikTok Insights", "📸 Instagram Insights"])
-        
         with tab_tk:
             c1, c2, c3, c4 = st.columns(4)
             c1.metric("TikTok Views", f"{int(df_tk_db['View'].sum()):,}")
             c2.metric("TikTok Reach", f"{int(df_tk_db['Reach'].sum()):,}")
             c3.metric("TikTok Interaksi", f"{int(df_tk_db['Interaction'].sum()):,}")
             c4.metric("TikTok Follows", f"{int(df_tk_db['Follow'].sum()):,}")
-            
         with tab_ig:
             c1, c2, c3, c4 = st.columns(4)
             c1.metric("IG Views", f"{int(df_ig_db['View'].sum()):,}")
             c2.metric("IG Reach", f"{int(df_ig_db['Reach'].sum()):,}")
             c3.metric("IG Interaksi", f"{int(df_ig_db['Interaction'].sum()):,}")
             c4.metric("IG Follows", f"{int(df_ig_db['Follow'].sum()):,}")
-            
     else:
-        st.warning("⚠️ Database Insight masih kosong di Google Sheets (Tab Index 2).")
+        st.info("Database masih kosong.")
 
     st.markdown("---")
 
@@ -81,12 +94,7 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     # 3. IMPORTER SECTION
     # =====================================================
     with st.expander("🚀 Ultra-Smart Importer (TikTok & Instagram)", expanded=False):
-        files = st.file_uploader(
-            "Upload CSV Insight", 
-            type=["csv"], 
-            accept_multiple_files=True, 
-            key=f"ins_v4_{st.session_state.uploader_key}"
-        )
+        files = st.file_uploader("Upload CSV Insight", type=["csv"], accept_multiple_files=True, key=f"ins_v4_{st.session_state.uploader_key}")
         
         if files:
             all_processed = []
@@ -109,15 +117,7 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                     if "videoviews" in sample or "followerhistory" in f.name.lower():
                         df_tk = pd.read_csv(io.StringIO("\n".join(content)))
                         res_tk = pd.DataFrame()
-                        
-                        def parse_tk_date(d_str):
-                            try:
-                                dt_obj = pd.to_datetime(d_str, format='%B %d', errors='coerce')
-                                if pd.isna(dt_obj): dt_obj = pd.to_datetime(d_str, errors='coerce')
-                                return dt_obj.replace(year=current_year).strftime('%d-%m-%Y')
-                            except: return d_str
-
-                        res_tk['Date'] = df_tk['Date'].apply(parse_tk_date)
+                        res_tk['Date'] = df_tk['Date'].apply(universal_date_parser)
                         res_tk['Platform'] = 'TikTok'
                         res_tk['View'] = df_tk.get('Video Views', 0)
                         res_tk['Reach'] = df_tk.get('Video Views', 0)
@@ -142,7 +142,7 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                                 if "date" in line.lower() and "primary" in line.lower():
                                     skip = i; break
                             df_ig = pd.read_csv(io.StringIO("\n".join(content[skip:])))
-                            df_ig['Date'] = pd.to_datetime(df_ig['Date'].astype(str).str.split('T').str[0]).dt.strftime('%d-%m-%Y')
+                            df_ig['Date'] = df_ig['Date'].astype(str).str.split('T').str[0].apply(universal_date_parser)
                             ig_frames.append(df_ig[['Date', 'Primary']].rename(columns={'Primary': target}))
                             logs.append(f"✅ Instagram {target} ({f.name})")
                 except Exception as e:
@@ -170,17 +170,18 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         
         if st.button("🚀 KONFIRMASI SIMPAN KE GOOGLE SHEETS", use_container_width=True):
             final_list = df_p[header_names].values.tolist()
-            if append_sheet_rows(2, final_list):
+            if utils.append_sheet_rows(2, final_list):
                 st.success("🔥 Data Berhasil Dicatat!")
                 st.session_state.preview_data = None 
                 st.session_state.uploader_key += 1 
                 st.cache_data.clear()
-                st.session_state.bundle = fetch_all_master_data()
+                st.session_state.bundle = utils.fetch_all_master_data()
                 st.rerun()
 
     # =====================================================
     # 5. DATABASE TABLE
     # =====================================================
+    st.markdown("---")
     st.markdown("### 🗄️ Riwayat Database")
     
     if not df_db_main.empty:
@@ -190,11 +191,11 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         try:
             df_show['Date'] = pd.to_datetime(df_show['Date'], dayfirst=True, errors='coerce')
             df_show = df_show.sort_values(by='Date', ascending=False)
-            df_show['Date'] = df_show['Date'].dt.strftime('%d-%m-%Y')
+            df_show['Date'] = df_show['Date'].dt.strftime('%d %b %Y')
         except: pass
         st.dataframe(df_show, use_container_width=True, hide_index=True)
 
     if st.button("🔄 Segarkan Data Insight", use_container_width=True):
         st.cache_data.clear()
-        st.session_state.bundle = fetch_all_master_data()
+        st.session_state.bundle = utils.fetch_all_master_data()
         st.rerun()
