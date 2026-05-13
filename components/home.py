@@ -74,14 +74,15 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
 
     st.markdown("---")
 
-    # --- 4. EXECUTIVE SUMMARY ---
+    # --- 4. EXECUTIVE SUMMARY (UPDATED) ---
     try:
         # Logic Waktu
         sekarang = datetime.datetime.now()
         bulan_ini = sekarang.month
         tahun_ini = sekarang.year
+        BIAYA_PELATIHAN = 15000000 
 
-        # A. Hitung Leads & Closing
+        # A. Hitung Leads & Closing Bulan Ini
         total_leads, total_closing = 0, 0
         if not df_wa.empty:
             df_wa['tgl_p'] = pd.to_datetime(df_wa['Tanggal Masuk'], dayfirst=True, errors='coerce')
@@ -92,33 +93,42 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
             if status_col:
                 total_closing = len(df_current[df_current[status_col].astype(str).str.contains('Closing', case=False, na=False)])
 
-        # B. Render KPI
-        st.markdown('<div style="font-weight: 800; margin-bottom: 15px;">📊 RINGKASAN PERFORMA BULAN INI</div>', unsafe_allow_html=True)
-        k1, k2, k3 = st.columns(3)
+        # Hitung Rasio Konversi & Estimasi Omzet
+        conv_rate = (total_closing / total_leads * 100) if total_leads > 0 else 0
+        estimasi_omzet = total_closing * BIAYA_PELATIHAN
 
-        def render_kpi(icon, title, value):
+        # B. Render KPI
+        st.markdown('<div style="font-weight: 800; margin-bottom: 15px;">📊 EXECUTIVE SNAPSHOT (BULAN INI)</div>', unsafe_allow_html=True)
+        k1, k2, k3, k4 = st.columns(4) # Menjadi 4 Kolom
+
+        def render_kpi(icon, title, value, subtext=""):
             st.markdown(f"""
                 <div class="kpi-card">
                     <div style="font-size: 24px;">{icon}</div>
                     <div>
                         <div style="font-size: 11px; color: #6B7280; font-weight: 600;">{title}</div>
                         <div style="font-size: 18px; font-weight: 800; color: #111827;">{value}</div>
+                        <div style="font-size: 10px; color: #059669; font-weight: 600;">{subtext}</div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
 
-        with k1: render_kpi("🎯", "Closing / Leads", f"{total_closing} / {total_leads}")
-        with k2: 
+        with k1: 
+            render_kpi("🎯", "Closing / Leads", f"{total_closing} / {total_leads}", f"Conv: {conv_rate:.1f}%")
+        
+        with k2:
+            render_kpi("💰", "Estimasi Omzet", f"Rp {estimasi_omzet:,.0f}".replace(",", "."), "Berdasarkan Closing")
+
+        with k3: 
             sos_pend = len(df_sos[df_sos['PROSES'].astype(str).str.upper() != 'DONE']) if not df_sos.empty and 'PROSES' in df_sos.columns else 0
-            render_kpi("📱", "Hutang Sosmed", f"{sos_pend} Task")
-        with k3:
+            render_kpi("📱", "Hutang Sosmed", f"{sos_pend} Task", "Status Non-Done")
+
+        with k4:
             web_pend = len(df_web[~df_web['Status Post'].astype(str).str.upper().isin(['DONE', 'V', '1'])]) if not df_web.empty and 'Status Post' in df_web.columns else 0
-            render_kpi("🌐", "Hutang Web", f"{web_pend} Page")
+            render_kpi("🌐", "Hutang Web", f"{web_pend} Page", "Status Pending")
 
     except Exception as e:
         st.error(f"Gagal memuat metrik: {e}")
-
-    st.markdown("---")
 
     # ==========================================================
     # 5. PETA PERSEBARAN & GRAFIK (CLEAN & FIXED)
