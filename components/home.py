@@ -187,25 +187,62 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
                     # Pastikan data diubah ke angka dan jumlahkan
                     actual[key] = pd.to_numeric(df_ins[target_col], errors='coerce').fillna(0).sum()
 
-        # B. Render Progress Bar
-        cols = st.columns(2) # Kita bagi 2 baris agar rapi
+        # B. Render Annual Target (Speedometer Style)
+        st.markdown('<div style="font-weight: 800; margin-top: 20px; margin-bottom: 15px;">🎯 2026 ANNUAL TARGET PROGRESS</div>', unsafe_allow_html=True)
+        
+        cols = st.columns(2) # Grid 2x2
         
         for i, (label, target_val) in enumerate(targets.items()):
             current_val = actual[label]
-            progress = min(current_val / target_val, 1.0) # Maksimal 100%
+            # Hitung persentase untuk indikator warna
+            percentage = (current_val / target_val * 100) if target_val > 0 else 0
             
             with cols[i % 2]:
                 with st.container(border=True):
-                    # Header Metrik
-                    c_label, c_val = st.columns([0.6, 0.4])
-                    c_label.markdown(f"**{label}**")
-                    c_val.markdown(f"<div style='text-align:right; font-size:12px;'>{current_val:,.0f} / {target_val:,.0f}</div>", unsafe_allow_html=True)
+                    # Membuat Gauge Chart menggunakan Plotly
+                    import plotly.graph_objects as go
                     
-                    # Progress Bar Warna Biru LPK
-                    st.progress(progress)
+                    fig = go.Figure(go.Indicator(
+                        mode = "gauge+number",
+                        value = current_val,
+                        domain = {'x': [0, 1], 'y': [0, 1]},
+                        title = {'text': f"<b>{label}</b>", 'font': {'size': 16}},
+                        number = {'suffix': "", 'valueformat': ",.0f", 'font': {'size': 20}},
+                        gauge = {
+                            'axis': {'range': [None, target_val], 'tickwidth': 1, 'tickcolor': "darkblue"},
+                            'bar': {'color': BRAND_BLUE}, # Warna Biru LPK
+                            'bgcolor': "white",
+                            'borderwidth': 2,
+                            'bordercolor': "#f0f2f6",
+                            'steps': [
+                                {'range': [0, target_val * 0.3], 'color': '#fee2e2'}, # Merah muda (Warning)
+                                {'range': [target_val * 0.3, target_val * 0.7], 'color': '#fef3c7'}, # Kuning muda (On Track)
+                                {'range': [target_val * 0.7, target_val], 'color': '#dcfce7'} # Hijau muda (Goal Near)
+                            ],
+                            'threshold': {
+                                'line': {'color': "red", 'width': 4},
+                                'thickness': 0.75,
+                                'value': target_val
+                            }
+                        }
+                    ))
+
+                    fig.update_layout(
+                        height=220, 
+                        margin=dict(l=20, r=20, t=50, b=20),
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        font={'color': "#1e3a8a", 'family': "Arial"}
+                    )
+
+                    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
                     
-                    # Persentase
-                    st.markdown(f"<div style='font-size:10px; color:gray;'>Tercapai: <b>{progress*100:.1f}%</b></div>", unsafe_allow_html=True)
+                    # Label Persentase di bawah chart
+                    st.markdown(f"""
+                        <div style="text-align:center; margin-top:-30px; padding-bottom:10px;">
+                            <span style="font-size:14px; color:#6b7280;">Progress: </span>
+                            <span style="font-size:16px; font-weight:800; color:{BRAND_BLUE};">{percentage:.1f}%</span>
+                        </div>
+                    """, unsafe_allow_html=True)
 
     except Exception as e:
         st.error(f"Gagal memuat Target Tahunan: {e}")
