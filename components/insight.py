@@ -8,7 +8,7 @@ import components.utils as utils
 def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     st.title("📈 ANALITIK KONTEN")
 
-    # 1. SETUP VARIABLE & SESSION STATE
+    # 1. SETUP VARIABLE
     header_names = ["Date", "Platform", "View", "Reach", "Interaction", "Profile Visit", "Link Clicks", "Follow"]
     numeric_cols = ["View", "Reach", "Interaction", "Profile Visit", "Link Clicks", "Follow"]
     
@@ -17,22 +17,17 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     if 'uploader_key' not in st.session_state:
         st.session_state.uploader_key = 0
 
-    # Ambil data dari bundle (Index 2 adalah Insight)
+    # Ambil data
     df_db_main = st.session_state.get('bundle', {}).get(2, pd.DataFrame())
 
-    # --- FUNGSI SAKTI PENYERAGAM TANGGAL ---
     def universal_date_parser(d_str):
         if pd.isna(d_str) or d_str == "": return ""
         d_str = str(d_str).strip()
-        formats_to_try = [
-            '%d-%m-%Y', '%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y',
-            '%B %d, %Y', '%b %d, %Y', '%B %d', '%b %d'
-        ]
-        for fmt in formats_to_try:
+        formats = ['%d-%m-%Y', '%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y', '%B %d, %Y', '%b %d, %Y', '%B %d', '%b %d']
+        for fmt in formats:
             try:
                 dt_obj = datetime.strptime(d_str, fmt)
-                if dt_obj.year == 1900: 
-                    dt_obj = dt_obj.replace(year=datetime.now().year)
+                if dt_obj.year == 1900: dt_obj = dt_obj.replace(year=datetime.now().year)
                 return dt_obj.strftime('%d/%m/%Y')
             except: continue
         try:
@@ -41,117 +36,56 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         except: pass
         return d_str
 
-    # =====================================================
-    # 2. GLOBAL SUMMARIES & MODERN TREND GRID
-    # =====================================================
+    def create_modern_chart(data, y_col, color, title):
+        fig = px.area(data, x='Date', y=y_col, title=f"<b>{title}</b>", line_shape='spline')
+        fig.update_traces(
+            line=dict(width=3, color=color),
+            fillcolor='rgba' + str(tuple(list(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + [0.15])),
+            mode='lines+markers',
+            marker=dict(size=10, color='white', line=dict(width=3, color=color)),
+            hovertemplate="<b>%{y:,.0f}</b><extra></extra>"
+        )
+        fig.update_layout(
+            height=280, margin=dict(l=10, r=10, t=60, b=10),
+            template="plotly_white", hovermode="x unified",
+            xaxis=dict(showgrid=False, tickformat="%b %Y"),
+            yaxis=dict(showgrid=True, gridcolor='#F3F4F6', tickformat=","),
+            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+        )
+        return fig
+
+    # 2. RENDER DASHBOARD
     if not df_db_main.empty:
         df_calc = df_db_main.copy()
-        if len(df_calc.columns) == len(header_names):
-            df_calc.columns = header_names
-        
-        for col in numeric_cols:
-            df_calc[col] = pd.to_numeric(df_calc[col], errors='coerce').fillna(0)
+        if len(df_calc.columns) == len(header_names): df_calc.columns = header_names
+        for col in numeric_cols: df_calc[col] = pd.to_numeric(df_calc[col], errors='coerce').fillna(0)
 
-        # A. Highlight Total Gabungan
-        st.markdown(f"""
-            <div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left: 10px solid {BRAND_YELLOW};">
-                <h2 style="margin:0; color:white; font-size:20px;">🌍 EXECUTIVE SUMMARY PERFORMA</h2>
-                <p style="margin:0; color:white; opacity:0.8; font-size:12px;">Akumulasi pertumbuhan seluruh platform digital LPK</p>
-            </div>
-        """, unsafe_allow_html=True)
-        
+        # Header Summary
+        st.markdown(f'<div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left: 10px solid {BRAND_YELLOW};"><h2 style="margin:0; color:white; font-size:20px;">🌍 EXECUTIVE SUMMARY PERFORMA</h2></div>', unsafe_allow_html=True)
         g1, g2, g3, g4 = st.columns(4)
         g1.metric("Grand Total Views", f"{int(df_calc['View'].sum()):,}")
         g2.metric("Grand Total Reach", f"{int(df_calc['Reach'].sum()):,}")
         g3.metric("Grand Interaksi", f"{int(df_calc['Interaction'].sum()):,}")
         g4.metric("Grand Followers", f"{int(df_calc['Follow'].sum()):,}")
 
-        st.markdown("---")
-
-        # B. MODERN TREND GRID (4 GRAFIK SEKALIGUS)
+        # Charts Grid
         st.markdown("### 📊 Monthly Growth Trends")
         try:
             df_trend = df_calc.copy()
-            
-            # PAKSA: Ubah kolom Date menjadi datetime dengan berbagai kemungkinan format
             df_trend['Date'] = pd.to_datetime(df_trend['Date'], dayfirst=True, errors='coerce')
-            
-            # Buang data yang tanggalnya benar-benar tidak bisa dibaca (NaT)
-            df_trend = df_trend.dropna(subset=['Date'])
-            
-            if not df_trend.empty:
-                # Grouping Bulanan: Pastikan diurutkan berdasarkan waktu
-                df_trend = df_trend.sort_values('Date')
-                df_monthly = df_trend.groupby(df_trend['Date'].dt.to_period('M')).sum(numeric_only=True).reset_index()
-                df_monthly['Date'] = df_monthly['Date'].dt.to_timestamp()
-                
-                # --- FUNGSI UNTUK MEMBUAT GRAFIK MODERN ---
-                def create_modern_chart(data, y_col, color, title):
-                    # Kita gunakan splines agar garis melengkung lembut (Smooth)
-                    fig = px.area(data, x='Date', y=y_col, title=f"<b>{title}</b>")
-                    
-                    fig.update_traces(
-                        line=dict(width=3, color=color), # Garis utama tipis & tegas
-                        fillcolor='rgba' + str(tuple(list(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + [0.15])), # Gradasi transparan
-                        mode='lines+markers',
-                        marker=dict(
-                            size=10, 
-                            color='white', 
-                            line=dict(width=3, color=color) # Titik "Donut" yang modern
-                        ),
-                        hovertemplate="<b>%{y:,.0f}</b><extra></extra>" # Tooltip bersih
-                    )
-                    
-                    fig.update_layout(
-                        height=280,
-                        margin=dict(l=10, r=10, t=60, b=10),
-                        xaxis_title="",
-                        yaxis_title="",
-                        template="plotly_white",
-                        hovermode="x unified",
-                        # Font Style
-                        font=dict(family="Inter, sans-serif", size=12, color="#4B5563"),
-                        title_font=dict(size=18, color="#111827"),
-                        # Menghilangkan Garis Frame (Clean Look)
-                        xaxis=dict(
-                            showgrid=False, 
-                            showline=False, 
-                            zeroline=False,
-                            tickformat="%b %Y"
-                        ),
-                        yaxis=dict(
-                            showgrid=True, 
-                            gridcolor='#F3F4F6', # Garis bantu sangat tipis
-                            showline=False, 
-                            zeroline=False,
-                            tickformat=",", # Pemisah ribuan otomatis
-                        ),
-                        # Background Transparan
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        plot_bgcolor='rgba(0,0,0,0)',
-                    )
-                    return fig
+            df_trend = df_trend.dropna(subset=['Date']).sort_values('Date')
+            df_monthly = df_trend.groupby(df_trend['Date'].dt.to_period('M')).sum(numeric_only=True).reset_index()
+            df_monthly['Date'] = df_monthly['Date'].dt.to_timestamp()
 
-        # Rincian per Platform dalam Tab
-        st.markdown("### 📱 Breakdown Per Platform")
-        df_tk_db = df_calc[df_calc['Platform'] == 'TikTok']
-        df_ig_db = df_calc[df_calc['Platform'] == 'Instagram']
-
-        tab_tk, tab_ig = st.tabs(["🎵 TikTok Analytics", "📸 Instagram Insights"])
-        with tab_tk:
-            c1, c2, c3, c4 = st.columns(4)
-            c1.metric("TikTok Views", f"{int(df_tk_db['View'].sum()):,}")
-            c2.metric("TikTok Reach", f"{int(df_tk_db['Reach'].sum()):,}")
-            c3.metric("TikTok Interaksi", f"{int(df_tk_db['Interaction'].sum()):,}")
-            c4.metric("TikTok Follows", f"{int(df_tk_db['Follow'].sum()):,}")
-        with tab_ig:
-            c1, c2, c3, c4 = st.columns(4)
-            c1.metric("IG Views", f"{int(df_ig_db['View'].sum()):,}")
-            c2.metric("IG Reach", f"{int(df_ig_db['Reach'].sum()):,}")
-            c3.metric("IG Interaksi", f"{int(df_ig_db['Interaction'].sum()):,}")
-            c4.metric("IG Follows", f"{int(df_ig_db['Follow'].sum()):,}")
+            r1_c1, r1_c2 = st.columns(2)
+            r2_c1, r2_c2 = st.columns(2)
+            with r1_c1: st.plotly_chart(create_modern_chart(df_monthly, 'View', BRAND_BLUE, "Video Views"), use_container_width=True)
+            with r1_c2: st.plotly_chart(create_modern_chart(df_monthly, 'Reach', "#636EFA", "Audience Reach"), use_container_width=True)
+            with r2_c1: st.plotly_chart(create_modern_chart(df_monthly, 'Interaction', BRAND_YELLOW, "Interactions"), use_container_width=True)
+            with r2_c2: st.plotly_chart(create_modern_chart(df_monthly, 'Follow', "#00CC96", "New Followers"), use_container_width=True)
+        except: pass
     else:
-        st.info("Database masih kosong. Silakan unggah laporan bulanan di bawah.")
+        st.info("Database masih kosong.")
 
     st.markdown("---")
 
