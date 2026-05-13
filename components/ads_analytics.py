@@ -12,7 +12,7 @@ def show_ads_analytics_page(BRAND_BLUE):
     BIAYA_PELATIHAN = 12995000
     
     # =====================================================================
-    # 1. LOAD DATA (CRM, WA ADMIN, DAN ADS)
+    # 1. LOAD DATA (HANYA DARI WA ADMIN & ADS)
     # =====================================================================
     df_crm = pd.DataFrame()
     df_wa = pd.DataFrame()
@@ -20,81 +20,42 @@ def show_ads_analytics_page(BRAND_BLUE):
     total_spend_tiktok, total_clicks_tiktok, total_leads_tiktok, closing_tiktok = 0, 0, 0, 0
     total_spend_meta, total_clicks_meta, total_leads_meta, closing_meta = 0, 0, 0, 0
     total_spend_mekari, total_pesan_mekari = 0, 0
+    
+    global_leads = 0
     global_closing = 0
     
     df_ads_tiktok_db, df_ads_meta_db, df_ads_mekari_db = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
     
-    # =====================================================================
-    # 1. LOAD DATA (CRM, WA ADMIN, DAN ADS)
-    # =====================================================================
-    df_crm = pd.DataFrame()
-    df_wa = pd.DataFrame()
-    
-    total_spend_tiktok, total_clicks_tiktok, total_leads_tiktok, closing_tiktok = 0, 0, 0, 0
-    total_spend_meta, total_clicks_meta, total_leads_meta, closing_meta = 0, 0, 0, 0
-    total_spend_mekari, total_pesan_mekari = 0, 0
-    global_closing = 0
-    
-    df_ads_tiktok_db, df_ads_meta_db, df_ads_mekari_db = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
-    
-    # --- A & B. LOAD WA ADMIN (SUMBER UTAMA LEADS & CLOSING) ---
+    # --- A. LOAD WA ADMIN (SINKRONISASI TOTAL DENGAN HALAMAN WA ADMIN) ---
     try:
         df_wa = utils.load_wa_admin()
         
         if not df_wa.empty:
-            # Cari kolom sumber masuknya prospek (sekarang kata 'asal' sudah ditambahkan!)
-            kolom_sumber_wa = next((c for c in df_wa.columns if str(c).lower() in ['platform', 'sumber', 'source', 'asal']), None)
+            # 1. HITUNG GLOBAL LEADS & CLOSING (Persis seperti logika WA Admin)
+            global_leads = len(df_wa)
             
-            # 1. HITUNG TOTAL LEADS DARI WA ADMIN
+            status_col = next((col for col in df_wa.columns if 'status' in str(col).lower()), None)
+            if status_col:
+                df_closing = df_wa[df_wa[status_col].astype(str).str.contains('Closing', case=False, na=False)].copy()
+                global_closing = len(df_closing)
+            else:
+                df_closing = pd.DataFrame()
+
+            # 2. HITUNG RINCIAN PLATFORM (Hanya cari di kolom 'Sumber' atau 'Platform', hindari 'Asal')
+            kolom_sumber_wa = next((c for c in df_wa.columns if str(c).lower() in ['sumber', 'platform', 'source']), None)
+            
             if kolom_sumber_wa:
                 total_leads_tiktok = len(df_wa[df_wa[kolom_sumber_wa].astype(str).str.contains('Tiktok', case=False, na=False)])
                 total_leads_meta = len(df_wa[df_wa[kolom_sumber_wa].astype(str).str.contains(r'Instagram|Facebook|IG|FB|Meta', case=False, regex=True, na=False)])
-            
-            # 2. HITUNG CLOSING DARI WA ADMIN
-            status_col = next((col for col in df_wa.columns if 'status' in str(col).lower()), None)
-            if status_col:
-                # Saring hanya yang statusnya "Closing"
-                df_closing = df_wa[df_wa[status_col].astype(str).str.contains('Closing', case=False, na=False)].copy()
-                global_closing = len(df_closing)
                 
-                # Hitung Closing per Platform
-                if kolom_sumber_wa:
+                if not df_closing.empty:
                     closing_tiktok = len(df_closing[df_closing[kolom_sumber_wa].astype(str).str.contains('Tiktok', case=False, na=False)])
                     closing_meta = len(df_closing[df_closing[kolom_sumber_wa].astype(str).str.contains(r'Instagram|Facebook|IG|FB|Meta', case=False, regex=True, na=False)])
     except Exception as e:
         pass
 
-    # --- B. LOAD WA ADMIN (AMBIL LANGSUNG DARI BUNDLE/UTILS) ---
+    # --- B. LOAD DATA BUDGET IKLAN DARI SPREADSHEET ---
     try:
-        df_wa = utils.load_wa_admin()
-        if not df_wa.empty:
-            status_col = next((col for col in df_wa.columns if 'Status' in str(col)), None)
-            if status_col:
-                df_closing = df_wa[df_wa[status_col].astype(str).str.contains('Closing', case=False, na=False)].copy()
-                global_closing = len(df_closing)
-                
-                kolom_sumber_wa = next((c for c in df_closing.columns if c.lower() in ['platform', 'sumber', 'source']), None)
-                if kolom_sumber_wa:
-                    closing_tiktok = len(df_closing[df_closing[kolom_sumber_wa].astype(str).str.contains('Tiktok', case=False, na=False)])
-                    closing_meta = len(df_closing[df_closing[kolom_sumber_wa].astype(str).str.contains(r'Instagram|Facebook|IG|FB|Meta', case=False, regex=True, na=False)])
-                else:
-                    hp_wa = next((c for c in df_closing.columns if 'hp' in c.lower() or 'phone' in c.lower()), None)
-                    hp_crm = next((c for c in df_crm.columns if 'hp' in c.lower() or 'phone' in c.lower()), None)
-                    sumber_crm = next((c for c in df_crm.columns if c.lower() in ['platform', 'sumber', 'source']), None)
-                    if hp_wa and hp_crm and sumber_crm and not df_crm.empty:
-                        df_closing['clean_hp'] = df_closing[hp_wa].astype(str).str.replace(r'\D', '', regex=True)
-                        df_crm_clean = df_crm.copy()
-                        df_crm_clean['clean_hp'] = df_crm_clean[hp_crm].astype(str).str.replace(r'\D', '', regex=True)
-                        df_merged = pd.merge(df_closing, df_crm_clean[['clean_hp', sumber_crm]], on='clean_hp', how='left')
-                        
-                        closing_tiktok = len(df_merged[df_merged[sumber_crm].astype(str).str.contains('Tiktok', case=False, na=False)])
-                        closing_meta = len(df_merged[df_merged[sumber_crm].astype(str).str.contains(r'Instagram|Facebook|IG|FB|Meta', case=False, regex=True, na=False)])
-    except:
-        pass
-
-    # --- C. LOAD DATA BUDGET IKLAN ---
-    try:
-        # Kita tarik menggunakan get_from_bundle agar aman dan tidak kena limit API
         df_ads_tiktok_db = utils.get_from_bundle(6)
         if not df_ads_tiktok_db.empty:
             df_calc_tk = df_ads_tiktok_db.copy()
@@ -114,7 +75,7 @@ def show_ads_analytics_page(BRAND_BLUE):
                 total_spend_meta = df_calc_mt[col_cost_mt].sum()
     except: pass
 
-    # --- D. HITUNG MEKARI DI SINI (SEBELUM RINGKASAN GLOBAL) ---
+    # --- C. HITUNG MEKARI ---
     df_db_mekari = utils.get_from_bundle(8)
     
     def force_clean_num(x):
@@ -134,11 +95,10 @@ def show_ads_analytics_page(BRAND_BLUE):
     # =====================================================================
     # 2. TAMPILAN RINGKASAN GLOBAL
     # =====================================================================
-    # SEKARANG NILAI MEKARI SUDAH MASUK!
     global_spend = total_spend_tiktok + total_spend_meta + total_spend_mekari
-    global_leads = total_leads_tiktok + total_leads_meta
     global_omzet = global_closing * BIAYA_PELATIHAN 
     
+    # Perhitungan rasio aman dari error (dibagi nol)
     global_cpl = global_spend / global_leads if global_leads > 0 else 0
     global_cac = global_spend / global_closing if global_closing > 0 else 0
     global_roas = (global_omzet / global_spend) if global_spend > 0 else 0
@@ -150,7 +110,8 @@ def show_ads_analytics_page(BRAND_BLUE):
             st.markdown(f"<div style='font-size:12px; color:gray; font-weight:800; margin-bottom:5px;'>💸 TOTAL SPEND</div><div style='font-size:24px; font-weight:bold; color:#8B0000;'>Rp {global_spend:,.0f}</div>", unsafe_allow_html=True)
     with g2:
         with st.container(border=True):
-            st.markdown(f"<div style='font-size:12px; color:gray; font-weight:800; margin-bottom:5px;'>👥 LEADS CRM</div><div style='font-size:24px; font-weight:bold;'>{global_leads}</div>", unsafe_allow_html=True)
+            # Angka Leads ini sekarang 100% mengambil dari len(df_wa)
+            st.markdown(f"<div style='font-size:12px; color:gray; font-weight:800; margin-bottom:5px;'>👥 LEADS GLOBAL</div><div style='font-size:24px; font-weight:bold;'>{global_leads}</div>", unsafe_allow_html=True)
     with g3:
         with st.container(border=True):
             st.markdown(f"<div style='font-size:12px; color:gray; font-weight:800; margin-bottom:5px;'>🎓 TOTAL CLOSING</div><div style='font-size:24px; font-weight:bold; color:#006400;'>{global_closing} Siswa</div>", unsafe_allow_html=True)
@@ -162,9 +123,9 @@ def show_ads_analytics_page(BRAND_BLUE):
             st.markdown(f"<div style='font-size:12px; color:gray; font-weight:800; margin-bottom:5px;'>🚀 ROAS (KEUNTUNGAN)</div><div style='font-size:24px; font-weight:bold; color:#1E3A8A;'>{global_roas:,.1f}x Lipat</div>", unsafe_allow_html=True)
 
     if global_roas > 0:
-        st.success(f"🔥 **Status Bisnis:** Dengan total investasi pengadaan prospek & perawatan leads **Rp {global_spend:,.0f}**, kamu menghasilkan omzet kotor **Rp {global_omzet:,.0f}**. Nilai investasimu kembali **{global_roas:,.1f} kali lipat**!")
+        st.success(f"🔥 **Status Bisnis:** Dengan total investasi **Rp {global_spend:,.0f}**, kamu menghasilkan omzet kotor **Rp {global_omzet:,.0f}**. Nilai investasimu kembali **{global_roas:,.1f} kali lipat**!")
     elif global_spend > 0 and global_closing == 0:
-        st.error("⚠️ **Peringatan:** Saldo (Iklan/Mekari) sudah digunakan, namun belum ada siswa yang Closing. Segera evaluasi materi iklan atau proses follow-up CS!")
+        st.error("⚠️ **Peringatan:** Saldo sudah digunakan, namun belum ada siswa yang Closing. Segera evaluasi materi iklan atau follow-up CS!")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
