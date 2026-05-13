@@ -74,7 +74,7 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
 
     st.markdown("---")
 
-    # --- 4. EXECUTIVE SUMMARY (UPDATED) ---
+    # --- 4. EXECUTIVE SUMMARY (FILTERED BY MONTH) ---
     try:
         # Logic Waktu
         sekarang = datetime.datetime.now()
@@ -93,13 +93,42 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
             if status_col:
                 total_closing = len(df_current[df_current[status_col].astype(str).str.contains('Closing', case=False, na=False)])
 
-        # Hitung Rasio Konversi & Estimasi Omzet
+        # B. FILTER HUTANG SOSMED (BULAN INI SAJA)
+        sos_pend = 0
+        if not df_sos.empty and 'PROSES' in df_sos.columns:
+            # Cari kolom tanggal (Tanggal Deadline atau Deadline)
+            col_tgl_sos = 'Tanggal Deadline' if 'Tanggal Deadline' in df_sos.columns else ('Deadline' if 'Deadline' in df_sos.columns else None)
+            if col_tgl_sos:
+                df_sos['tgl_conv'] = pd.to_datetime(df_sos[col_tgl_sos], dayfirst=True, errors='coerce')
+                # Filter: Status belum DONE DAN Jatuh tempo bulan ini
+                df_sos_current = df_sos[
+                    (df_sos['PROSES'].astype(str).str.upper() != 'DONE') & 
+                    (df_sos['tgl_conv'].dt.month == bulan_ini) & 
+                    (df_sos['tgl_conv'].dt.year == tahun_ini)
+                ]
+                sos_pend = len(df_sos_current)
+
+        # C. FILTER HUTANG WEB (BULAN INI SAJA)
+        web_pend = 0
+        if not df_web.empty and 'Status Post' in df_web.columns:
+            # Cari kolom tanggal (Deadline atau Tanggal Deadline)
+            col_tgl_web = 'Deadline' if 'Deadline' in df_web.columns else ('Tanggal Deadline' if 'Tanggal Deadline' in df_web.columns else None)
+            if col_tgl_web:
+                df_web['tgl_conv'] = pd.to_datetime(df_web[col_tgl_web], dayfirst=True, errors='coerce')
+                # Filter: Status belum DONE DAN Jatuh tempo bulan ini
+                df_web_current = df_web[
+                    (~df_web['Status Post'].astype(str).str.upper().isin(['DONE', 'V', '1'])) & 
+                    (df_web['tgl_conv'].dt.month == bulan_ini) & 
+                    (df_web['tgl_conv'].dt.year == tahun_ini)
+                ]
+                web_pend = len(df_web_current)
+
+        # --- Render KPI Card Tetap Sama ---
         conv_rate = (total_closing / total_leads * 100) if total_leads > 0 else 0
         estimasi_omzet = total_closing * BIAYA_PELATIHAN
 
-        # B. Render KPI
-        st.markdown('<div style="font-weight: 800; margin-bottom: 15px;">📊 EXECUTIVE SNAPSHOT (BULAN INI)</div>', unsafe_allow_html=True)
-        k1, k2, k3, k4 = st.columns(4) # Menjadi 4 Kolom
+        st.markdown('<div style="font-weight: 800; margin-bottom: 15px;">📊 EXECUTIVE SNAPSHOT (MEI 2026)</div>', unsafe_allow_html=True)
+        k1, k2, k3, k4 = st.columns(4)
 
         def render_kpi(icon, title, value, subtext=""):
             st.markdown(f"""
@@ -113,19 +142,10 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
                 </div>
             """, unsafe_allow_html=True)
 
-        with k1: 
-            render_kpi("🎯", "Closing / Leads", f"{total_closing} / {total_leads}", f"Conv: {conv_rate:.1f}%")
-        
-        with k2:
-            render_kpi("💰", "Estimasi Omzet", f"Rp {estimasi_omzet:,.0f}".replace(",", "."), "Berdasarkan Closing")
-
-        with k3: 
-            sos_pend = len(df_sos[df_sos['PROSES'].astype(str).str.upper() != 'DONE']) if not df_sos.empty and 'PROSES' in df_sos.columns else 0
-            render_kpi("📱", "Hutang Sosmed", f"{sos_pend} Task", "Status Non-Done")
-
-        with k4:
-            web_pend = len(df_web[~df_web['Status Post'].astype(str).str.upper().isin(['DONE', 'V', '1'])]) if not df_web.empty and 'Status Post' in df_web.columns else 0
-            render_kpi("🌐", "Hutang Web", f"{web_pend} Page", "Status Pending")
+        with k1: render_kpi("🎯", "Closing / Leads", f"{total_closing} / {total_leads}", f"Conv: {conv_rate:.1f}%")
+        with k2: render_kpi("💰", "Estimasi Omzet", f"Rp {estimasi_omzet:,.0f}".replace(",", "."), "Bulan Ini")
+        with k3: render_kpi("📱", "Hutang Sosmed", f"{sos_pend} Task", "Deadline Bulan Ini")
+        with k4: render_kpi("🌐", "Hutang Web", f"{web_pend} Page", "Deadline Bulan Ini")
 
     except Exception as e:
         st.error(f"Gagal memuat metrik: {e}")
