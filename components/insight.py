@@ -72,54 +72,59 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         st.markdown("### 📊 Monthly Growth Trends")
         try:
             df_trend = df_calc.copy()
+            
+            # PAKSA: Ubah kolom Date menjadi datetime dengan berbagai kemungkinan format
             df_trend['Date'] = pd.to_datetime(df_trend['Date'], dayfirst=True, errors='coerce')
+            
+            # Buang data yang tanggalnya benar-benar tidak bisa dibaca (NaT)
             df_trend = df_trend.dropna(subset=['Date'])
             
-            # Grouping Bulanan
-            df_monthly = df_trend.groupby(df_trend['Date'].dt.to_period('M')).sum(numeric_only=True).reset_index()
-            df_monthly['Date'] = df_monthly['Date'].dt.to_timestamp()
-            
-            # --- FUNGSI UNTUK MEMBUAT GRAFIK MODERN ---
-            def create_modern_chart(data, y_col, color, title):
-                fig = px.area(data, x='Date', y=y_col, title=title)
-                fig.update_traces(
-                    line_color=color, 
-                    fillcolor=color, 
-                    opacity=0.3,
-                    mode='lines+markers',
-                    marker=dict(size=6, borderwidth=2, color='white')
-                )
-                fig.update_layout(
-                    height=250,
-                    margin=dict(l=20, r=20, t=40, b=20),
-                    xaxis_title="",
-                    yaxis_title="",
-                    template="plotly_white",
-                    hovermode="x unified",
-                    font=dict(size=10),
-                    title_font=dict(size=14, color="#333"),
-                    yaxis=dict(showgrid=True, gridcolor='#F0F0F0'),
-                    xaxis=dict(showgrid=False)
-                )
-                return fig
+            if not df_trend.empty:
+                # Grouping Bulanan: Pastikan diurutkan berdasarkan waktu
+                df_trend = df_trend.sort_values('Date')
+                df_monthly = df_trend.groupby(df_trend['Date'].dt.to_period('M')).sum(numeric_only=True).reset_index()
+                df_monthly['Date'] = df_monthly['Date'].dt.to_timestamp()
+                
+                # --- FUNGSI UNTUK MEMBUAT GRAFIK MODERN ---
+                def create_modern_chart(data, y_col, color, title):
+                    fig = px.area(data, x='Date', y=y_col, title=title)
+                    fig.update_traces(
+                        line_color=color, 
+                        fillcolor=color, 
+                        opacity=0.2,
+                        mode='lines+markers',
+                        marker=dict(size=8, borderwidth=2, color='white')
+                    )
+                    fig.update_layout(
+                        height=280,
+                        margin=dict(l=10, r=10, t=50, b=10),
+                        xaxis_title="",
+                        yaxis_title="",
+                        template="plotly_white",
+                        hovermode="x unified",
+                        title_font=dict(size=16, color="#333", family="Arial Black"),
+                        yaxis=dict(showgrid=True, gridcolor='#F0F0F0'),
+                        xaxis=dict(showgrid=False, tickformat="%b %Y") # Format bulan singkat (Jan 2026)
+                    )
+                    return fig
 
-            # Layout Grid 2x2
-            row1_col1, row1_col2 = st.columns(2)
-            row2_col1, row2_col2 = st.columns(2)
+                # Layout Grid 2x2
+                r1_c1, r1_c2 = st.columns(2)
+                r2_c1, r2_c2 = st.columns(2)
 
-            with row1_col1:
-                st.plotly_chart(create_modern_chart(df_monthly, 'View', BRAND_BLUE, "📈 Video Views Growth"), use_container_width=True)
-            with row1_col2:
-                st.plotly_chart(create_modern_chart(df_monthly, 'Reach', "#636EFA", "👥 Audience Reach"), use_container_width=True)
-            with row2_col1:
-                st.plotly_chart(create_modern_chart(df_monthly, 'Interaction', BRAND_YELLOW, "🔥 Total Interactions"), use_container_width=True)
-            with row2_col2:
-                st.plotly_chart(create_modern_chart(df_monthly, 'Follow', "#00CC96", "🚀 New Followers"), use_container_width=True)
-
-        except Exception:
-            st.info("Visualisasi tren akan muncul otomatis setelah data bulanan tersedia.")
-
-        st.markdown("<br>", unsafe_allow_html=True)
+                with r1_c1:
+                    st.plotly_chart(create_modern_chart(df_monthly, 'View', BRAND_BLUE, "📈 Video Views"), use_container_width=True)
+                with r1_c2:
+                    st.plotly_chart(create_modern_chart(df_monthly, 'Reach', "#636EFA", "👥 Audience Reach"), use_container_width=True)
+                with r2_c1:
+                    st.plotly_chart(create_modern_chart(df_monthly, 'Interaction', BRAND_YELLOW, "🔥 Interactions"), use_container_width=True)
+                with r2_c2:
+                    st.plotly_chart(create_modern_chart(df_monthly, 'Follow', "#00CC96", "🚀 New Followers"), use_container_width=True)
+            else:
+                st.warning("⚠️ Data ditemukan, namun format tanggal di database tidak valid. Pastikan formatnya Tgl/Bln/Thn.")
+                
+        except Exception as e:
+            st.error(f"Gagal merender grafik: {e}")
 
         # Rincian per Platform dalam Tab
         st.markdown("### 📱 Breakdown Per Platform")
