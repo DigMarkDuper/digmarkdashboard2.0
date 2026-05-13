@@ -97,6 +97,11 @@ def update_sheet_cell(sheet_index, row_index, column_name, new_value):
             return False
     return False
 
+def load_insight():
+    """Fungsi pembantu untuk ambil data insight"""
+    return get_from_bundle(2) # Index 2 biasanya untuk Insight
+
+
 def load_wa_admin():
     df = get_from_bundle(3)
     if not df.empty:
