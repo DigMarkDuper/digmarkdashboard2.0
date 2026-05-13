@@ -122,3 +122,43 @@ def set_bg_local(main_bg):
             bin_str = base64.b64encode(f.read()).decode()
         st.markdown(f"""<style>.stApp {{ background-image: url("data:image/png;base64,{bin_str}"); background-size: cover; background-attachment: fixed; }}</style>""", unsafe_allow_html=True)
     except: pass
+
+def sync_leads_to_crm():
+    """
+    Logika untuk memindahkan data dari WA Admin (Tab 3) 
+    ke Database Nomor/CRM (Tab 4) secara otomatis.
+    """
+    try:
+        df_wa = load_wa_admin()
+        df_crm = load_database_nomor()
+        
+        if df_wa.empty:
+            return False, "Data WA Admin kosong."
+
+        # Ambil daftar nomor yang sudah ada di CRM agar tidak duplikat
+        existing_numbers = set()
+        if not df_crm.empty and 'No Hp' in df_crm.columns:
+            existing_numbers = set(df_crm['No Hp'].astype(str).unique())
+
+        # Filter data baru yang belum ada di CRM
+        new_leads = df_wa[~df_wa['No Hp'].astype(str).isin(existing_numbers)]
+        
+        if new_leads.empty:
+            return True, "Semua data sudah sinkron."
+
+        # Siapkan data untuk dikirim ke Tab Index 4 (CRM)
+        # Sesuaikan kolom ini dengan struktur tabel CRM Mas
+        rows_to_add = new_leads[['Tanggal Masuk', 'Nama', 'No Hp', 'Asal']].values.tolist()
+        
+        success = append_sheet_rows(4, rows_to_add)
+        if success:
+            return True, f"Berhasil sinkronisasi {len(rows_to_add)} data baru."
+        else:
+            return False, "Gagal saat menulis ke Google Sheets."
+            
+    except Exception as e:
+        return False, f"Error: {e}"
+
+def load_database_nomor():
+    """Ambil data CRM dari bundle (Index 4)"""
+    return get_from_bundle(4)
