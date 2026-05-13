@@ -43,16 +43,9 @@ def fetch_all_master_data():
                 print(f"Gagal tarik tab {idx}: {e}")
                 return pd.DataFrame()
         
-        # Tarik data satu per satu dengan santai
-        return {
-            0: get_df(0), 
-            1: get_df(1), 
-            2: get_df(2), 
-            3: get_df(3),
-            4: get_df(4), 
-            6: get_df(6), 
-            7: get_df(7), 
-            8: get_df(8)
+       return {
+            0: get_df(0), 1: get_df(1), 2: get_df(2), 3: get_df(3),
+            4: get_df(4), 6: get_df(6), 7: get_df(7), 8: get_df(8)
         }
     except Exception as e:
         st.error(f"Gagal Sinkronisasi Master Data: {e}")
