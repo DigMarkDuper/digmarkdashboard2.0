@@ -93,7 +93,12 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                         fillcolor=color, 
                         opacity=0.2,
                         mode='lines+markers',
-                        marker=dict(size=8, borderwidth=2, color='white')
+                        # PERBAIKAN DI SINI: borderwidth diganti menjadi line={'width': 2, 'color': 'white'}
+                        marker=dict(
+                            size=8, 
+                            color=color, # Titik mengikuti warna utama
+                            line=dict(width=2, color='white') # Garis tepi putih yang Mas inginkan
+                        )
                     )
                     fig.update_layout(
                         height=280,
@@ -104,7 +109,7 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                         hovermode="x unified",
                         title_font=dict(size=16, color="#333", family="Arial Black"),
                         yaxis=dict(showgrid=True, gridcolor='#F0F0F0'),
-                        xaxis=dict(showgrid=False, tickformat="%b %Y") # Format bulan singkat (Jan 2026)
+                        xaxis=dict(showgrid=False, tickformat="%b %Y")
                     )
                     return fig
 
