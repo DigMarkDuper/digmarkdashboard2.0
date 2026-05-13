@@ -24,7 +24,7 @@ from components.home import show_homepage
 from components.sosmed import show_sosmed_page
 from components.website import show_website_page
 from components.insight import show_insight_page
-from components.wa_report import show_wa_report_page
+from components.wa_admin import show_wa_admin_page
 from components.crm import show_crm_page
 from components.dm_sosmed import show_dm_sosmed_page
 from components.ads_analytics import show_ads_analytics_page
