@@ -5,54 +5,38 @@ import plotly.express as px
 from datetime import datetime
 import components.utils as utils
 
-# --- 1. FUNGSI PEMBANTU (DI LUAR FUNGSI UTAMA AGAR RAPI) ---
+# --- 1. FUNGSI PEMBANTU ---
 
 def universal_date_parser(d_str):
-    if pd.isna(d_str) or d_str == "": 
-        return ""
+    if pd.isna(d_str) or d_str == "": return ""
     d_str = str(d_str).strip()
-    formats = ['%d-%m-%Y', '%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y', '%B %d, %Y', '%b %d, %Y', '%B %d', '%b %d']
+    # Format TikTok: "January 1", Format IG: "2026-01-01"
+    formats = ['%B %d', '%b %d', '%d-%m-%Y', '%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y', '%B %d, %Y']
     for fmt in formats:
         try:
             dt_obj = datetime.strptime(d_str, fmt)
+            # Jika tahun 1900 (tidak ada tahun di CSV), set ke 2026 atau tahun berjalan
             if dt_obj.year == 1900: 
-                dt_obj = dt_obj.replace(year=datetime.now().year)
+                dt_obj = dt_obj.replace(year=2026) # Sesuai target tahun Anda
             return dt_obj.strftime('%d/%m/%Y')
-        except: 
-            continue
-    try:
-        dt_pd = pd.to_datetime(d_str, errors='coerce')
-        if not pd.isna(dt_pd): 
-            return dt_pd.strftime('%d/%m/%Y')
-    except: 
-        pass
+        except: continue
     return d_str
 
 def create_modern_chart(data, y_col, color, title):
-    # Menggunakan line_shape='spline' agar garis melengkung halus (Modern Look)
     fig = px.area(data, x='Date', y=y_col, title=f"<b>{title}</b>", line_shape='spline')
-    
     fig.update_traces(
         line=dict(width=3, color=color),
         fillcolor='rgba' + str(tuple(list(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + [0.15])),
         mode='lines+markers',
-        marker=dict(
-            size=10, 
-            color='white', 
-            line=dict(width=3, color=color)
-        ),
+        marker=dict(size=10, color='white', line=dict(width=3, color=color)),
         hovertemplate="<b>%{y:,.0f}</b><extra></extra>"
     )
-    
     fig.update_layout(
-        height=280, 
-        margin=dict(l=10, r=10, t=60, b=10),
-        template="plotly_white", 
-        hovermode="x unified",
+        height=280, margin=dict(l=10, r=10, t=60, b=10),
+        template="plotly_white", hovermode="x unified",
         xaxis=dict(showgrid=False, tickformat="%b %Y"),
         yaxis=dict(showgrid=True, gridcolor='#F3F4F6', tickformat=","),
-        paper_bgcolor='rgba(0,0,0,0)', 
-        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
     )
     return fig
 
@@ -61,148 +45,123 @@ def create_modern_chart(data, y_col, color, title):
 def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     st.title("📈 ANALITIK KONTEN")
 
-    # Setup Variable
     header_names = ["Date", "Platform", "View", "Reach", "Interaction", "Profile Visit", "Link Clicks", "Follow"]
     numeric_cols = ["View", "Reach", "Interaction", "Profile Visit", "Link Clicks", "Follow"]
     
-    if 'preview_data' not in st.session_state:
-        st.session_state.preview_data = None
-    if 'uploader_key' not in st.session_state:
-        st.session_state.uploader_key = 0
+    if 'preview_data' not in st.session_state: st.session_state.preview_data = None
+    if 'uploader_key' not in st.session_state: st.session_state.uploader_key = 0
 
-    # Ambil data dari bundle
     df_db_main = st.session_state.get('bundle', {}).get(2, pd.DataFrame())
 
-    # RENDER DASHBOARD
+    # --- RENDER DASHBOARD (SAMARIES & CHARTS) ---
     if not df_db_main.empty:
         df_calc = df_db_main.copy()
-        if len(df_calc.columns) == len(header_names): 
-            df_calc.columns = header_names
-        
-        for col in numeric_cols: 
-            df_calc[col] = pd.to_numeric(df_calc[col], errors='coerce').fillna(0)
+        if len(df_calc.columns) == len(header_names): df_calc.columns = header_names
+        for col in numeric_cols: df_calc[col] = pd.to_numeric(df_calc[col], errors='coerce').fillna(0)
 
-        # Header Summary
-        st.markdown(f"""
-            <div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left: 10px solid {BRAND_YELLOW};">
-                <h2 style="margin:0; color:white; font-size:20px;">🌍 EXECUTIVE SUMMARY PERFORMA</h2>
-            </div>
-        """, unsafe_allow_html=True)
-        
+        st.markdown(f'<div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left: 10px solid {BRAND_YELLOW};"><h2 style="margin:0; color:white; font-size:20px;">🌍 EXECUTIVE SUMMARY PERFORMA</h2></div>', unsafe_allow_html=True)
         g1, g2, g3, g4 = st.columns(4)
         g1.metric("Grand Total Views", f"{int(df_calc['View'].sum()):,}")
         g2.metric("Grand Total Reach", f"{int(df_calc['Reach'].sum()):,}")
         g3.metric("Grand Interaksi", f"{int(df_calc['Interaction'].sum()):,}")
         g4.metric("Grand Followers", f"{int(df_calc['Follow'].sum()):,}")
 
-        # Charts Grid
         st.markdown("### 📊 Monthly Growth Trends")
         try:
             df_trend = df_calc.copy()
             df_trend['Date'] = pd.to_datetime(df_trend['Date'], dayfirst=True, errors='coerce')
             df_trend = df_trend.dropna(subset=['Date']).sort_values('Date')
-            
-            # Resample ke bulanan
             df_monthly = df_trend.groupby(df_trend['Date'].dt.to_period('M')).sum(numeric_only=True).reset_index()
             df_monthly['Date'] = df_monthly['Date'].dt.to_timestamp()
 
             r1_c1, r1_c2 = st.columns(2)
             r2_c1, r2_c2 = st.columns(2)
-            
-            with r1_c1: 
-                st.plotly_chart(create_modern_chart(df_monthly, 'View', BRAND_BLUE, "Video Views"), use_container_width=True)
-            with r1_c2: 
-                st.plotly_chart(create_modern_chart(df_monthly, 'Reach', "#636EFA", "Audience Reach"), use_container_width=True)
-            with r2_c1: 
-                st.plotly_chart(create_modern_chart(df_monthly, 'Interaction', BRAND_YELLOW, "Interactions"), use_container_width=True)
-            with r2_c2: 
-                st.plotly_chart(create_modern_chart(df_monthly, 'Follow', "#00CC96", "New Followers"), use_container_width=True)
-        except: 
-            st.info("Visualisasi tren akan muncul setelah data bulanan tersedia.")
+            with r1_c1: st.plotly_chart(create_modern_chart(df_monthly, 'View', BRAND_BLUE, "Video Views"), use_container_width=True)
+            with r1_c2: st.plotly_chart(create_modern_chart(df_monthly, 'Reach', "#636EFA", "Audience Reach"), use_container_width=True)
+            with r2_c1: st.plotly_chart(create_modern_chart(df_monthly, 'Interaction', BRAND_YELLOW, "Interactions"), use_container_width=True)
+            with r2_c2: st.plotly_chart(create_modern_chart(df_monthly, 'Follow', "#00CC96", "New Followers"), use_container_width=True)
+        except: pass
     else:
         st.info("Database masih kosong.")
 
     st.markdown("---")
 
-    # --- 3. IMPORTER SECTION ---
-    with st.expander("🚀 Ultra-Smart Importer (TikTok & Instagram)", expanded=False):
-        files = st.file_uploader("Upload CSV Insight", type=["csv"], accept_multiple_files=True, key=f"ins_v4_{st.session_state.uploader_key}")
+    # =====================================================
+    # 3. SMART IMPORTER (FIXED FOR TIKTOK OVERVIEW)
+    # =====================================================
+    with st.expander("🚀 Ultra-Smart Importer (TikTok & Instagram)", expanded=True):
+        files = st.file_uploader("Upload CSV TikTok/IG", type=["csv"], accept_multiple_files=True, key=f"ins_v5_{st.session_state.uploader_key}")
         
         if files:
-            all_processed = []
-            ig_frames = []
-            logs = []
-            current_year = datetime.now().year
-
+            all_platform_data = [] # List untuk menampung df tiap file
+            
             for f in files:
                 try:
-                    raw_bytes = f.getvalue()
-                    content = []
-                    for enc in ["utf-8", "utf-8-sig", "utf-16", "latin-1"]:
-                        try:
-                            content = raw_bytes.decode(enc).splitlines()
-                            break
-                        except: continue
+                    raw_content = f.getvalue().decode("utf-8-sig")
+                    df_raw = pd.read_csv(io.StringIO(raw_content))
                     
-                    sample = "\n".join(content[:10]).lower().replace('"', '').replace('\x00', '').replace(' ', '')
+                    # 1. STANDARISASI KOLOM TANGGAL
+                    date_col = next((c for c in df_raw.columns if "Date" in c), None)
+                    if not date_col: continue
+                    df_raw['Date'] = df_raw[date_col].apply(universal_date_parser)
                     
-                    if "videoviews" in sample or "followerhistory" in f.name.lower():
-                        df_tk = pd.read_csv(io.StringIO("\n".join(content)))
-                        res_tk = pd.DataFrame()
-                        res_tk['Date'] = df_tk['Date'].apply(universal_date_parser)
-                        res_tk['Platform'] = 'TikTok'
-                        res_tk['View'] = df_tk.get('Video Views', 0)
-                        res_tk['Reach'] = df_tk.get('Video Views', 0)
-                        res_tk['Interaction'] = df_tk.get('Likes', 0) + df_tk.get('Comments', 0) + df_tk.get('Shares', 0)
-                        res_tk['Profile Visit'] = df_tk.get('Profile Views', 0)
-                        res_tk['Link Clicks'] = 0; res_tk['Follow'] = 0
-                        all_processed.append(res_tk)
-                        logs.append(f"✅ TikTok ({f.name})")
+                    # 2. IDENTIFIKASI PLATFORM & METRIK
+                    sample_text = raw_content.lower()
+                    
+                    # --- LOGIKA TIKTOK (Overview.csv) ---
+                    if "video views" in sample_text or "shares" in sample_text:
+                        res = pd.DataFrame({
+                            'Date': df_raw['Date'],
+                            'Platform': 'TikTok',
+                            'View': df_raw.get('Video Views', 0),
+                            'Reach': df_raw.get('Video Views', 0), # Proxy untuk Reach
+                            'Interaction': df_raw.get('Likes', 0) + df_raw.get('Comments', 0) + df_raw.get('Shares', 0),
+                            'Profile Visit': df_raw.get('Profile Views', 0),
+                            'Link Clicks': 0,
+                            'Follow': df_raw.get('Followers', 0) # Jika ada kolom followers
+                        })
+                        all_platform_data.append(res)
+                        st.caption(f"✅ TikTok Overview Detected: {f.name}")
+
+                    # --- LOGIKA INSTAGRAM ---
                     else:
-                        target = ""
-                        if "follows" in sample: target = "Follow"
-                        elif "interactions" in sample: target = "Interaction"
-                        elif "profilevisits" in sample: target = "Profile Visit"
-                        elif "reach" in sample: target = "Reach"
-                        elif "views" in sample: target = "View"
-                        elif "linkclicks" in sample: target = "Link Clicks"
+                        target_map = {"follows": "Follow", "interactions": "Interaction", "reach": "Reach", "views": "View"}
+                        found_target = next((v for k, v in target_map.items() if k in sample_text), None)
                         
-                        if target:
-                            skip = 0
-                            for i, line in enumerate(content):
-                                if "date" in line.lower() and "primary" in line.lower():
-                                    skip = i; break
-                            df_ig = pd.read_csv(io.StringIO("\n".join(content[skip:])))
-                            df_ig['Date'] = df_ig['Date'].astype(str).str.split('T').str[0].apply(universal_date_parser)
-                            ig_frames.append(df_ig[['Date', 'Primary']].rename(columns={'Primary': target}))
-                            logs.append(f"✅ Instagram {target} ({f.name})")
+                        if found_target:
+                            res = pd.DataFrame({
+                                'Date': df_raw['Date'],
+                                'Platform': 'Instagram',
+                                found_target: df_raw.get('Primary', 0)
+                            })
+                            all_platform_data.append(res)
+                            st.caption(f"✅ Instagram {found_target} Detected: {f.name}")
+
                 except Exception as e:
-                    logs.append(f"❌ Error {f.name}: {e}")
+                    st.error(f"Error pada file {f.name}: {e}")
 
-            if ig_frames:
-                m_ig = ig_frames[0]
-                for d in ig_frames[1:]: 
-                    m_ig = pd.merge(m_ig, d, on='Date', how='outer')
-                m_ig['Platform'] = 'Instagram'
-                for c in numeric_cols:
-                    if c not in m_ig.columns: m_ig[c] = 0
-                all_processed.append(m_ig.fillna(0))
-
-            if all_processed:
-                st.session_state.preview_data = pd.concat(all_processed, ignore_index=True)
-            for l in logs: 
-                st.caption(l)
+            # 4. SMART MERGE: Gabungkan semua file berdasarkan Tanggal & Platform
+            if all_platform_data:
+                df_merged = pd.concat(all_platform_data, ignore_index=True)
+                # Group by Date & Platform untuk menjumlahkan metrik jika user upload file terpisah
+                df_merged = df_merged.groupby(['Date', 'Platform']).sum(numeric_only=True).reset_index()
+                
+                # Pastikan semua kolom header ada
+                for col in header_names:
+                    if col not in df_merged.columns: df_merged[col] = 0
+                
+                st.session_state.preview_data = df_merged[header_names]
 
     # --- 4. PREVIEW & SAVE ---
     if st.session_state.preview_data is not None:
-        st.markdown("### 🔍 Preview Data Baru")
+        st.markdown("### 🔍 Preview Penggabungan Data")
         st.dataframe(st.session_state.preview_data, use_container_width=True, hide_index=True)
-        if st.button("🚀 KONFIRMASI SIMPAN KE GOOGLE SHEETS", use_container_width=True):
-            final_list = st.session_state.preview_data[header_names].values.tolist()
+        if st.button("🚀 SIMPAN SEMUA KE DATABASE", use_container_width=True):
+            final_list = st.session_state.preview_data.values.tolist()
             if utils.append_sheet_rows(2, final_list):
-                st.success("🔥 Data Berhasil Dicatat!")
-                st.session_state.preview_data = None 
-                st.session_state.uploader_key += 1 
+                st.success("🔥 Data Berhasil Digabungkan & Disimpan!")
+                st.session_state.preview_data = None
+                st.session_state.uploader_key += 1
                 st.cache_data.clear()
                 st.session_state.bundle = utils.fetch_all_master_data()
                 st.rerun()
@@ -210,18 +169,8 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     # --- 5. DATABASE TABLE ---
     st.markdown("### 🗄️ Riwayat Database")
     if not df_db_main.empty:
-        df_show = df_db_main.dropna(how='all').copy()
-        if len(df_show.columns) == len(header_names): 
-            df_show.columns = header_names
-        try:
-            df_show['SortDate'] = pd.to_datetime(df_show['Date'], dayfirst=True, errors='coerce')
-            df_show = df_show.sort_values(by='SortDate', ascending=False).drop(columns=['SortDate'])
-            df_show['Date'] = pd.to_datetime(df_show['Date'], dayfirst=True, errors='coerce').dt.strftime('%d %b %Y')
-        except: 
-            pass
+        df_show = df_db_main.copy()
+        if len(df_show.columns) == len(header_names): df_show.columns = header_names
+        df_show['SortDate'] = pd.to_datetime(df_show['Date'], dayfirst=True, errors='coerce')
+        df_show = df_show.sort_values(by='SortDate', ascending=False).drop(columns=['SortDate'])
         st.dataframe(df_show, use_container_width=True, hide_index=True)
-
-    if st.button("🔄 Segarkan Data", use_container_width=True):
-        st.cache_data.clear()
-        st.session_state.bundle = utils.fetch_all_master_data()
-        st.rerun()
