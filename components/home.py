@@ -163,23 +163,29 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
         }
 
         # A. Tarik Data Pencapaian (Dari Tab Insight/Index 2)
-        # Kita asumsikan df_insight sudah di-load di bagian atas
         actual = { "Total View": 0, "Total Reach": 0, "Link Click": 0, "Engagement": 0 }
         
         if not df_ins.empty:
-            # Sesuaikan nama kolom dengan yang ada di Google Sheets Insight Mas
+            # Sesuaikan dengan nama kolom hasil standarisasi di insight.py
+            # Perhatikan: "View", "Reach", "Link Clicks", dan "Interaction"
             col_map = {
-                "Total View": ["Views", "Video Views", "Impressions"],
-                "Total Reach": ["Reach", "Akun Unik"],
-                "Link Click": ["Link Clicks", "Clicks", "Tap Link"],
-                "Engagement": ["Engagement", "Interaksi", "Likes"]
+                "Total View": ["View", "Views", "Video Views"],
+                "Total Reach": ["Reach", "Reach"],
+                "Link Click": ["Link Clicks", "Link Click", "Clicks"],
+                "Engagement": ["Interaction", "Engagement", "Interaksi"]
             }
             
+            # Gunakan header yang sudah kita standarisasi di insight.py (jika jumlah kolom cocok)
+            header_insight = ["Date", "Platform", "View", "Reach", "Interaction", "Profile Visit", "Link Clicks", "Follow"]
+            if len(df_ins.columns) == len(header_insight):
+                df_ins.columns = header_insight
+            
             for key, col_names in col_map.items():
+                # Mencari kolom yang cocok dari list col_names
                 target_col = next((c for c in df_ins.columns if c in col_names), None)
                 if target_col:
-                    # Ambil total kumulatif sepanjang tahun ini
-                    actual[key] = pd.to_numeric(df_ins[target_col], errors='coerce').sum()
+                    # Pastikan data diubah ke angka dan jumlahkan
+                    actual[key] = pd.to_numeric(df_ins[target_col], errors='coerce').fillna(0).sum()
 
         # B. Render Progress Bar
         cols = st.columns(2) # Kita bagi 2 baris agar rapi
