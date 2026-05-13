@@ -150,8 +150,12 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
             st.plotly_chart(fig_map, use_container_width=True)
         else:
             st.info("💡 Data lokasi tersedia, tapi koordinat belum terpetakan.")
-            
-if st.session_state.bundle is None:
+
+bundle_data = st.session_state.get('bundle')
+
+if bundle_data is None:
     st.error("❌ Data Bundle Kosong! Cek Koneksi Google Sheets & Secrets.")
 else:
-    st.sidebar.success(f"✅ Data Master Terhubung: {len(st.session_state.bundle)} Tab")
+    # Cek jumlah tab yang berhasil ditarik
+    jumlah_tab = len(bundle_data)
+    st.sidebar.success(f"✅ Data Master Terhubung: {jumlah_tab} Tab")
