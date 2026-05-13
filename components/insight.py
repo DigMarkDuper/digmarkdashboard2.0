@@ -42,7 +42,7 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         return d_str
 
     # =====================================================
-    # 2. GLOBAL SUMMARIES & TREND LINE (PALING ATAS)
+    # 2. GLOBAL SUMMARIES & MODERN TREND GRID
     # =====================================================
     if not df_db_main.empty:
         df_calc = df_db_main.copy()
@@ -55,8 +55,8 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         # A. Highlight Total Gabungan
         st.markdown(f"""
             <div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left: 10px solid {BRAND_YELLOW};">
-                <h2 style="margin:0; color:white; font-size:20px;">🌍 TOTAL PERFORMA GABUNGAN (ALL-TIME)</h2>
-                <p style="margin:0; color:white; opacity:0.8; font-size:12px;">Data akumulasi dari TikTok & Instagram</p>
+                <h2 style="margin:0; color:white; font-size:20px;">🌍 EXECUTIVE SUMMARY PERFORMA</h2>
+                <p style="margin:0; color:white; opacity:0.8; font-size:12px;">Akumulasi pertumbuhan seluruh platform digital LPK</p>
             </div>
         """, unsafe_allow_html=True)
         
@@ -68,47 +68,65 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
 
         st.markdown("---")
 
-        # B. GRAFIK TREN BULANAN (FITUR BARU)
-        st.markdown("### 📈 Tren Pertumbuhan Bulanan")
+        # B. MODERN TREND GRID (4 GRAFIK SEKALIGUS)
+        st.markdown("### 📊 Monthly Growth Trends")
         try:
             df_trend = df_calc.copy()
             df_trend['Date'] = pd.to_datetime(df_trend['Date'], dayfirst=True, errors='coerce')
             df_trend = df_trend.dropna(subset=['Date'])
             
-            # Kelompokkan per bulan
+            # Grouping Bulanan
             df_monthly = df_trend.groupby(df_trend['Date'].dt.to_period('M')).sum(numeric_only=True).reset_index()
             df_monthly['Date'] = df_monthly['Date'].dt.to_timestamp()
             
-            # Pilihan Metrik untuk Grafik
-            metric_choice = st.selectbox("Pilih Metrik Grafik:", ["View", "Reach", "Interaction", "Follow"])
-            
-            fig_trend = px.line(
-                df_monthly, 
-                x='Date', 
-                y=metric_choice,
-                markers=True,
-                line_shape="spline",
-                color_discrete_sequence=[BRAND_BLUE]
-            )
-            fig_trend.update_layout(
-                xaxis_title="Bulan", 
-                yaxis_title=f"Total {metric_choice}",
-                hovermode="x unified",
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)'
-            )
-            st.plotly_chart(fig_trend, use_container_width=True)
-        except Exception as e:
-            st.info("Grafik tren akan muncul setelah data tanggal terisi dengan benar.")
+            # --- FUNGSI UNTUK MEMBUAT GRAFIK MODERN ---
+            def create_modern_chart(data, y_col, color, title):
+                fig = px.area(data, x='Date', y=y_col, title=title)
+                fig.update_traces(
+                    line_color=color, 
+                    fillcolor=color, 
+                    opacity=0.3,
+                    mode='lines+markers',
+                    marker=dict(size=6, borderwidth=2, color='white')
+                )
+                fig.update_layout(
+                    height=250,
+                    margin=dict(l=20, r=20, t=40, b=20),
+                    xaxis_title="",
+                    yaxis_title="",
+                    template="plotly_white",
+                    hovermode="x unified",
+                    font=dict(size=10),
+                    title_font=dict(size=14, color="#333"),
+                    yaxis=dict(showgrid=True, gridcolor='#F0F0F0'),
+                    xaxis=dict(showgrid=False)
+                )
+                return fig
+
+            # Layout Grid 2x2
+            row1_col1, row1_col2 = st.columns(2)
+            row2_col1, row2_col2 = st.columns(2)
+
+            with row1_col1:
+                st.plotly_chart(create_modern_chart(df_monthly, 'View', BRAND_BLUE, "📈 Video Views Growth"), use_container_width=True)
+            with row1_col2:
+                st.plotly_chart(create_modern_chart(df_monthly, 'Reach', "#636EFA", "👥 Audience Reach"), use_container_width=True)
+            with row2_col1:
+                st.plotly_chart(create_modern_chart(df_monthly, 'Interaction', BRAND_YELLOW, "🔥 Total Interactions"), use_container_width=True)
+            with row2_col2:
+                st.plotly_chart(create_modern_chart(df_monthly, 'Follow', "#00CC96", "🚀 New Followers"), use_container_width=True)
+
+        except Exception:
+            st.info("Visualisasi tren akan muncul otomatis setelah data bulanan tersedia.")
 
         st.markdown("<br>", unsafe_allow_html=True)
 
         # Rincian per Platform dalam Tab
-        st.markdown("### 📊 Rincian Per Platform")
+        st.markdown("### 📱 Breakdown Per Platform")
         df_tk_db = df_calc[df_calc['Platform'] == 'TikTok']
         df_ig_db = df_calc[df_calc['Platform'] == 'Instagram']
 
-        tab_tk, tab_ig = st.tabs(["🎵 TikTok Insights", "📸 Instagram Insights"])
+        tab_tk, tab_ig = st.tabs(["🎵 TikTok Analytics", "📸 Instagram Insights"])
         with tab_tk:
             c1, c2, c3, c4 = st.columns(4)
             c1.metric("TikTok Views", f"{int(df_tk_db['View'].sum()):,}")
@@ -122,7 +140,7 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
             c3.metric("IG Interaksi", f"{int(df_ig_db['Interaction'].sum()):,}")
             c4.metric("IG Follows", f"{int(df_ig_db['Follow'].sum()):,}")
     else:
-        st.info("Database masih kosong.")
+        st.info("Database masih kosong. Silakan unggah laporan bulanan di bawah.")
 
     st.markdown("---")
 
@@ -225,13 +243,13 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         if len(df_show.columns) == len(header_names):
             df_show.columns = header_names
         try:
-            df_show['Date'] = pd.to_datetime(df_show['Date'], dayfirst=True, errors='coerce')
-            df_show = df_show.sort_values(by='Date', ascending=False)
-            df_show['Date'] = df_show['Date'].dt.strftime('%d %b %Y')
+            # Sortir berdasarkan tanggal asli (Hidden) agar urutan tabel benar
+            df_show['SortDate'] = pd.to_datetime(df_show['Date'], dayfirst=True, errors='coerce')
+            df_show = df_show.sort_values(by='SortDate', ascending=False).drop(columns=['SortDate'])
         except: pass
         st.dataframe(df_show, use_container_width=True, hide_index=True)
 
-    if st.button("🔄 Segarkan Data Insight", use_container_width=True):
+    if st.button("🔄 Segarkan Seluruh Data Master", use_container_width=True):
         st.cache_data.clear()
         st.session_state.bundle = utils.fetch_all_master_data()
         st.rerun()
