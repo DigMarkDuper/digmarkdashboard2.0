@@ -4,6 +4,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import base64
 import datetime
+import time  
 
 # =====================================================================
 # 1. KONEKSI & ENGINE DATA
@@ -24,7 +25,6 @@ def init_connection():
         return None
 
 @st.cache_data(ttl=600)
-@st.cache_data(ttl=600)
 def fetch_all_master_data():
     client = init_connection()
     if not client: return None
@@ -33,8 +33,7 @@ def fetch_all_master_data():
         
         def get_df(idx):
             try:
-                # Polisi Tidur: Jeda 1.5 detik sebelum menarik tab baru
-                # Ini mengamankan kuota API Google Sheets kita
+                # Polisi Tidur: Jeda 1.5 detik agar aman dari Limit API Google
                 time.sleep(1.5) 
                 
                 data = master.get_worksheet(idx).get_all_records()
@@ -63,64 +62,59 @@ def fetch_all_master_data():
 # =====================================================================
 
 def get_from_bundle(idx):
-    """Ambil data dari session state bundle"""
+    """Ambil data dari session state bundle. Jika kosong, tarik ulang."""
     if 'bundle' not in st.session_state or st.session_state.bundle is None:
         st.session_state.bundle = fetch_all_master_data()
+        
+    # Jika gagal ditarik (masih None), kembalikan tabel kosong agar tidak crash
+    if st.session_state.bundle is None:
+        return pd.DataFrame()
+        
     return st.session_state.bundle.get(idx, pd.DataFrame()).copy()
 
 def load_sosmed(): 
     df = get_from_bundle(0)
-    
-    # Pastikan data tidak kosong
     if not df.empty:
-        # Cek apakah nama kolomnya 'Tanggal Deadline' atau cuma 'Deadline'
         col_date = 'Tanggal Deadline' if 'Tanggal Deadline' in df.columns else ('Deadline' if 'Deadline' in df.columns else None)
-        
         if col_date:
-            # Ubah format teks jadi format waktu sungguhan
             df[col_date] = pd.to_datetime(df[col_date], dayfirst=True, errors='coerce')
-            
-            # --- INI BARIS YANG HILANG SEBELUMNYA ---
-            # Bikin kolom baru bernama 'Bulan-Deadline' untuk filter di Sidebar
             df['Bulan-Deadline'] = df[col_date].dt.strftime('%B %Y')
         else:
-            # Jika kolom tanggal tidak ditemukan sama sekali, buat kolom kosong agar tidak error
             df['Bulan-Deadline'] = "Tanpa Tanggal"
-            
     return df
 
 def load_website():
-    """Mengambil data website dan menyiapkan filter tanggal"""
-    df = get_from_bundle(1) # Index 1 adalah Website
-    
+    df = get_from_bundle(1)
     if not df.empty:
-        # Cek toleransi nama kolom (kadang 'Deadline', kadang 'Tanggal Deadline')
         col_date = 'Deadline' if 'Deadline' in df.columns else ('Tanggal Deadline' if 'Tanggal Deadline' in df.columns else None)
-        
         if col_date:
-            # Konversi ke format waktu
             df['Tanggal Filter'] = pd.to_datetime(df[col_date], dayfirst=True, errors='coerce')
-            
-            # --- INI BARIS YANG HILANG (Pencipta Kolom Filter) ---
             df['Bulan-Deadline'] = df['Tanggal Filter'].dt.strftime('%B %Y')
         else:
-            # Jika kolom tanggal tidak ada di Google Sheets
             df['Bulan-Deadline'] = "Tanpa Tanggal"
     return df
 
-def load_insight(): return get_from_bundle(2)
+def load_insight(): 
+    return get_from_bundle(2)
 
 def load_wa_admin(): 
     df = get_from_bundle(3)
     if not df.empty:
+        # Bersihkan baris hantu
         kolom_penting = [col for col in ['Tanggal Masuk', 'No Hp', 'Status'] if col in df.columns]
-        if kolom_penting: df = df.dropna(subset=kolom_penting, how='all')
+        if kolom_penting: 
+            df = df.dropna(subset=kolom_penting, how='all')
+            
+        # Format Tanggal Masuk
+        if 'Tanggal Masuk' in df.columns:
+            df['Tanggal Masuk'] = pd.to_datetime(df['Tanggal Masuk'], dayfirst=True, errors='coerce')
     return df
 
-def load_database_nomor(): return get_from_bundle(4)
+def load_database_nomor(): 
+    return get_from_bundle(4)
 
 # =====================================================================
-# 3. WRITE OPERATIONS (FUNGSI SIMPAN)
+# 3. WRITE OPERATIONS (FUNGSI SIMPAN & SINKRONISASI)
 # =====================================================================
 
 def append_sheet_rows(sheet_index, all_data_list):
@@ -153,23 +147,8 @@ def update_sheet_cell(sheet_index, row_index, column_name, new_value):
         except: return False
     return False
 
-# =====================================================================
-# 4. VISUAL COMPONENTS
-# =====================================================================
-
-def set_bg_local(main_bg):
-    """Background Base64"""
-    try:
-        with open(main_bg, "rb") as f:
-            bin_str = base64.b64encode(f.read()).decode()
-        st.markdown(f"""<style>.stApp {{ background-image: url("data:image/png;base64,{bin_str}"); background-size: cover; background-attachment: fixed; }}</style>""", unsafe_allow_html=True)
-    except: pass
-
 def sync_leads_to_crm():
-    """
-    Logika untuk memindahkan data dari WA Admin (Tab 3) 
-    ke Database Nomor/CRM (Tab 4) secara otomatis.
-    """
+    """Logika memindahkan data WA Admin (3) ke CRM (4) secara otomatis."""
     try:
         df_wa = load_wa_admin()
         df_crm = load_database_nomor()
@@ -177,19 +156,15 @@ def sync_leads_to_crm():
         if df_wa.empty:
             return False, "Data WA Admin kosong."
 
-        # Ambil daftar nomor yang sudah ada di CRM agar tidak duplikat
         existing_numbers = set()
         if not df_crm.empty and 'No Hp' in df_crm.columns:
             existing_numbers = set(df_crm['No Hp'].astype(str).unique())
 
-        # Filter data baru yang belum ada di CRM
         new_leads = df_wa[~df_wa['No Hp'].astype(str).isin(existing_numbers)]
         
         if new_leads.empty:
             return True, "Semua data sudah sinkron."
 
-        # Siapkan data untuk dikirim ke Tab Index 4 (CRM)
-        # Sesuaikan kolom ini dengan struktur tabel CRM Mas
         rows_to_add = new_leads[['Tanggal Masuk', 'Nama', 'No Hp', 'Asal']].values.tolist()
         
         success = append_sheet_rows(4, rows_to_add)
@@ -201,21 +176,14 @@ def sync_leads_to_crm():
     except Exception as e:
         return False, f"Error: {e}"
 
-def load_database_nomor():
-    """Ambil data CRM dari bundle (Index 4)"""
-    return get_from_bundle(4)
+# =====================================================================
+# 4. VISUAL COMPONENTS
+# =====================================================================
 
-def get_from_bundle(idx):
-    """Fungsi sakti untuk mengambil data dari memori (bundle)"""
-    if 'bundle' not in st.session_state or st.session_state.bundle is None:
-        return pd.DataFrame() # Kembalikan tabel kosong jika data belum siap
-    return st.session_state.bundle.get(idx, pd.DataFrame()).copy()
-
-def load_wa_admin():
-    """Fungsi yang dicari oleh HOMEPAGE"""
-    df = get_from_bundle(3) # Index 3 adalah tab WA Admin
-    if not df.empty:
-        # Kita bersihkan datanya sedikit agar tidak error saat diolah di Homepage
-        if 'Tanggal Masuk' in df.columns:
-            df['Tanggal Masuk'] = pd.to_datetime(df['Tanggal Masuk'], dayfirst=True, errors='coerce')
-    return df
+def set_bg_local(main_bg):
+    """Background Base64"""
+    try:
+        with open(main_bg, "rb") as f:
+            bin_str = base64.b64encode(f.read()).decode()
+        st.markdown(f"""<style>.stApp {{ background-image: url("data:image/png;base64,{bin_str}"); background-size: cover; background-attachment: fixed; }}</style>""", unsafe_allow_html=True)
+    except: pass
