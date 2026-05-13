@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import io
+import plotly.express as px
 from datetime import datetime
 import components.utils as utils
 
@@ -41,7 +42,7 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         return d_str
 
     # =====================================================
-    # 2. GLOBAL SUMMARIES (PINDAH KE ATAS)
+    # 2. GLOBAL SUMMARIES & TREND LINE (PALING ATAS)
     # =====================================================
     if not df_db_main.empty:
         df_calc = df_db_main.copy()
@@ -51,7 +52,7 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         for col in numeric_cols:
             df_calc[col] = pd.to_numeric(df_calc[col], errors='coerce').fillna(0)
 
-        # Highlight Total Gabungan
+        # A. Highlight Total Gabungan
         st.markdown(f"""
             <div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left: 10px solid {BRAND_YELLOW};">
                 <h2 style="margin:0; color:white; font-size:20px;">🌍 TOTAL PERFORMA GABUNGAN (ALL-TIME)</h2>
@@ -64,6 +65,41 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         g2.metric("Grand Total Reach", f"{int(df_calc['Reach'].sum()):,}")
         g3.metric("Grand Interaksi", f"{int(df_calc['Interaction'].sum()):,}")
         g4.metric("Grand Followers", f"{int(df_calc['Follow'].sum()):,}")
+
+        st.markdown("---")
+
+        # B. GRAFIK TREN BULANAN (FITUR BARU)
+        st.markdown("### 📈 Tren Pertumbuhan Bulanan")
+        try:
+            df_trend = df_calc.copy()
+            df_trend['Date'] = pd.to_datetime(df_trend['Date'], dayfirst=True, errors='coerce')
+            df_trend = df_trend.dropna(subset=['Date'])
+            
+            # Kelompokkan per bulan
+            df_monthly = df_trend.groupby(df_trend['Date'].dt.to_period('M')).sum(numeric_only=True).reset_index()
+            df_monthly['Date'] = df_monthly['Date'].dt.to_timestamp()
+            
+            # Pilihan Metrik untuk Grafik
+            metric_choice = st.selectbox("Pilih Metrik Grafik:", ["View", "Reach", "Interaction", "Follow"])
+            
+            fig_trend = px.line(
+                df_monthly, 
+                x='Date', 
+                y=metric_choice,
+                markers=True,
+                line_shape="spline",
+                color_discrete_sequence=[BRAND_BLUE]
+            )
+            fig_trend.update_layout(
+                xaxis_title="Bulan", 
+                yaxis_title=f"Total {metric_choice}",
+                hovermode="x unified",
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)'
+            )
+            st.plotly_chart(fig_trend, use_container_width=True)
+        except Exception as e:
+            st.info("Grafik tren akan muncul setelah data tanggal terisi dengan benar.")
 
         st.markdown("<br>", unsafe_allow_html=True)
 
