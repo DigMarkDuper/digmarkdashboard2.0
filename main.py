@@ -153,9 +153,11 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
 
 bundle_data = st.session_state.get('bundle')
 
-if bundle_data is None:
-    st.error("❌ Data Bundle Kosong! Cek Koneksi Google Sheets & Secrets.")
-else:
-    # Cek jumlah tab yang berhasil ditarik
-    jumlah_tab = len(bundle_data)
-    st.sidebar.success(f"✅ Data Master Terhubung: {jumlah_tab} Tab")
+if 'bundle' not in st.session_state:
+    with st.spinner("Mencoba koneksi ke Google Sheets..."):
+        data_nyasar = fetch_all_master_data()
+        if data_nyasar is None:
+            st.error("Gagal total. Cek Logs di pojok kanan bawah Streamlit Cloud!")
+        else:
+            st.session_state.bundle = data_nyasar
+            st.success("Koneksi Berhasil!")
