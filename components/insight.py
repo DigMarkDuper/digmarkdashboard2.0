@@ -16,40 +16,47 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     if 'uploader_key' not in st.session_state:
         st.session_state.uploader_key = 0
 
+    # FORCE RELOAD: Pastikan bundle ditarik terbaru jika tidak ada
+    if 'bundle' not in st.session_state or st.session_state.bundle is None:
+        st.session_state.bundle = fetch_all_master_data()
+
     # Ambil data dari bundle (Index 2 adalah Insight)
-    df_db_main = st.session_state.get('bundle', {}).get(2, pd.DataFrame())
+    df_db_main = st.session_state.bundle.get(2, pd.DataFrame()) if st.session_state.bundle else pd.DataFrame()
 
     # =====================================================
-    # 2. GLOBAL SUMMARIES
+    # 2. GLOBAL SUMMARIES (UTAMA & PALING ATAS)
     # =====================================================
     if not df_db_main.empty:
-        df_db_main = df_db_main.copy()
-        if len(df_db_main.columns) == len(header_names):
-            df_db_main.columns = header_names
+        # Bersihkan data agar perhitungan matematis akurat
+        df_calc = df_db_main.copy()
+        if len(df_calc.columns) == len(header_names):
+            df_calc.columns = header_names
         
         for col in numeric_cols:
-            df_db_main[col] = pd.to_numeric(df_db_main[col], errors='coerce').fillna(0)
+            df_calc[col] = pd.to_numeric(df_calc[col], errors='coerce').fillna(0)
 
-        # --- A. TOTAL GABUNGAN (SEKARANG DI PALING ATAS) ---
-        st.markdown('<div style="background-color:#f0f2f6; padding:15px; border-radius:10px; margin-bottom:20px;">'
-                    '<h3 style="margin:0; color:#1E3A8A;">🌍 TOTAL PERFORMA GABUNGAN</h3>'
-                    '</div>', unsafe_allow_html=True)
+        # --- A. TOTAL GABUNGAN (HIGHLIGHT UTAMA) ---
+        st.markdown(f"""
+            <div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left: 10px solid {BRAND_YELLOW};">
+                <h2 style="margin:0; color:white; font-size:20px;">🌍 TOTAL PERFORMA GABUNGAN (ALL-TIME)</h2>
+                <p style="margin:0; color:white; opacity:0.8; font-size:12px;">Rekapitulasi data dari TikTok dan Instagram</p>
+            </div>
+        """, unsafe_allow_html=True)
         
-        # Kartu Utama yang langsung terlihat
         g1, g2, g3, g4 = st.columns(4)
-        g1.metric("Grand Total Views", f"{int(df_db_main['View'].sum()):,}")
-        g2.metric("Grand Total Reach", f"{int(df_db_main['Reach'].sum()):,}")
-        g3.metric("Grand Interaksi", f"{int(df_db_main['Interaction'].sum()):,}")
-        g4.metric("Grand Followers", f"{int(df_db_main['Follow'].sum()):,}")
+        g1.metric("Grand Total Views", f"{int(df_calc['View'].sum()):,}")
+        g2.metric("Grand Total Reach", f"{int(df_calc['Reach'].sum()):,}")
+        g3.metric("Grand Interaksi", f"{int(df_calc['Interaction'].sum()):,}")
+        g4.metric("Grand Followers", f"{int(df_calc['Follow'].sum()):,}")
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # --- B. RINCIAN PER PLATFORM (DALAM TAB) ---
+        # --- B. RINCIAN PER PLATFORM (TAB) ---
         st.markdown("### 📊 Rincian Per Platform")
-        df_tk_db = df_db_main[df_db_main['Platform'] == 'TikTok']
-        df_ig_db = df_db_main[df_db_main['Platform'] == 'Instagram']
+        df_tk_db = df_calc[df_calc['Platform'] == 'TikTok']
+        df_ig_db = df_calc[df_calc['Platform'] == 'Instagram']
 
-        tab_tk, tab_ig = st.tabs(["🎵 TikTok Ads & Organic", "📸 Instagram Insights"])
+        tab_tk, tab_ig = st.tabs(["🎵 TikTok Insights", "📸 Instagram Insights"])
         
         with tab_tk:
             c1, c2, c3, c4 = st.columns(4)
@@ -66,12 +73,14 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
             c4.metric("IG Follows", f"{int(df_ig_db['Follow'].sum()):,}")
             
     else:
-        st.info("Database masih kosong. Silakan upload data di bawah.")
+        st.warning("⚠️ Database Insight masih kosong di Google Sheets (Tab Index 2).")
+
+    st.markdown("---")
 
     # =====================================================
     # 3. IMPORTER SECTION
     # =====================================================
-    with st.expander("🚀 Ultra-Smart Importer (TikTok & Instagram)", expanded=True):
+    with st.expander("🚀 Ultra-Smart Importer (TikTok & Instagram)", expanded=False):
         files = st.file_uploader(
             "Upload CSV Insight", 
             type=["csv"], 
@@ -97,7 +106,6 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                     
                     sample = "\n".join(content[:10]).lower().replace('"', '').replace('\x00', '').replace(' ', '')
                     
-                    # LOGIKA TIKTOK
                     if "videoviews" in sample or "followerhistory" in f.name.lower():
                         df_tk = pd.read_csv(io.StringIO("\n".join(content)))
                         res_tk = pd.DataFrame()
@@ -119,7 +127,6 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                         all_processed.append(res_tk)
                         logs.append(f"✅ TikTok ({f.name})")
 
-                    # LOGIKA INSTAGRAM
                     else:
                         target = ""
                         if "follows" in sample: target = "Follow"
@@ -159,10 +166,6 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     if st.session_state.preview_data is not None:
         df_p = st.session_state.preview_data
         st.markdown("### 🔍 Preview Data Baru")
-        
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Total Views Baru", f"{int(df_p['View'].sum()):,}")
-        
         st.dataframe(df_p, use_container_width=True, hide_index=True)
         
         if st.button("🚀 KONFIRMASI SIMPAN KE GOOGLE SHEETS", use_container_width=True):
@@ -178,7 +181,6 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     # =====================================================
     # 5. DATABASE TABLE
     # =====================================================
-    st.markdown("---")
     st.markdown("### 🗄️ Riwayat Database")
     
     if not df_db_main.empty:
