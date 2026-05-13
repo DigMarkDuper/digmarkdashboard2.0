@@ -187,9 +187,7 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
                     # Pastikan data diubah ke angka dan jumlahkan
                     actual[key] = pd.to_numeric(df_ins[target_col], errors='coerce').fillna(0).sum()
 
-        # B. Render Annual Target (Speedometer Style)
-        st.markdown('<div style="font-weight: 800; margin-top: 20px; margin-bottom: 15px;">🎯 2026 ANNUAL TARGET PROGRESS</div>', unsafe_allow_html=True)
-        
+        # B. Render Annual Target (Speedometer Style)    
         cols = st.columns(2) # Grid 2x2
         
         for i, (label, target_val) in enumerate(targets.items()):
