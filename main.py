@@ -104,12 +104,19 @@ bundle = st.session_state.bundle # Data yang sudah ditarik
 # Pasang Background Dashboard
 set_bg_local('bg.png')
 
-# Sidebar Navigation (Kembali ke Beranda)
-if page != "🏠 HOMEPAGE":
-    if st.sidebar.button("⬅️ KEMBALI KE BERANDA", use_container_width=True):
-        go_to_page("🏠 HOMEPAGE")
-        st.rerun()
-    st.sidebar.markdown("---")
+if st.session_state.page != "Homepage":
+    # Menggunakan st.columns agar tombolnya tidak memanjang sebesar layar
+    # Angka [1, 8] mengatur proporsi: kolom 1 kecil untuk tombol, kolom 2 kosong
+    col_back, col_space = st.columns([1, 8])
+    
+    with col_back:
+        # st.button akan membuat tombol rapi di pojok kiri
+        if st.button("⬅️ Kembali", use_container_width=True):
+            st.session_state.page = "Homepage"
+            st.rerun()
+            
+    # Opsional: Tambahkan sedikit jarak agar tidak terlalu mepet dengan judul halaman
+    st.markdown("<br>", unsafe_allow_html=True)
 
 # Logika Pemanggilan Modul Halaman
 try:
