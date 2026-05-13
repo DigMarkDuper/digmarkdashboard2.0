@@ -94,8 +94,15 @@ def load_website():
             df['Bulan-Deadline'] = "Tanpa Tanggal"
     return df
 
-def load_insight(): 
-    return get_from_bundle(2)
+def load_insight():
+    try:
+        data = fetch_all_master_data()
+        if data and len(data) > 2:
+            return data[2]
+        return pd.DataFrame()
+    except Exception as e:
+        st.error(f"Gagal load_insight: {e}")
+        return pd.DataFrame()
 
 def load_wa_admin(): 
     df = get_from_bundle(3)
