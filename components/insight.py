@@ -15,9 +15,8 @@ def universal_date_parser(d_str):
     for fmt in formats:
         try:
             dt_obj = datetime.strptime(d_str, fmt)
-            # Jika tahun 1900 (tidak ada tahun di CSV), set ke 2026 atau tahun berjalan
             if dt_obj.year == 1900: 
-                dt_obj = dt_obj.replace(year=2026) # Sesuai target tahun Anda
+                dt_obj = dt_obj.replace(year=2026) # Target Tahun 2026
             return dt_obj.strftime('%d/%m/%Y')
         except: continue
     return d_str
@@ -53,7 +52,7 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
 
     df_db_main = st.session_state.get('bundle', {}).get(2, pd.DataFrame())
 
-    # --- RENDER DASHBOARD (SAMARIES & CHARTS) ---
+    # --- RENDER SUMMARY & CHARTS ---
     if not df_db_main.empty:
         df_calc = df_db_main.copy()
         if len(df_calc.columns) == len(header_names): df_calc.columns = header_names
@@ -87,49 +86,59 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     st.markdown("---")
 
     # =====================================================
-    # 3. SMART IMPORTER (FIXED FOR TIKTOK OVERVIEW)
+    # 3. SMART IMPORTER (FIXED FOR MULTIPLE TIKTOK FILES)
     # =====================================================
     with st.expander("🚀 Ultra-Smart Importer (TikTok & Instagram)", expanded=True):
-        files = st.file_uploader("Upload CSV TikTok/IG", type=["csv"], accept_multiple_files=True, key=f"ins_v5_{st.session_state.uploader_key}")
+        files = st.file_uploader("Upload CSV TikTok/IG (Bisa multiple)", type=["csv"], accept_multiple_files=True, key=f"ins_v6_{st.session_state.uploader_key}")
         
         if files:
-            all_platform_data = [] # List untuk menampung df tiap file
+            all_platform_data = []
             
             for f in files:
                 try:
-                    raw_content = f.getvalue().decode("utf-8-sig")
-                    df_raw = pd.read_csv(io.StringIO(raw_content))
+                    # Coba deteksi encoding (TikTok biasanya UTF-8 dengan BOM)
+                    raw_bytes = f.getvalue()
+                    content = ""
+                    for enc in ["utf-8-sig", "utf-8", "latin-1"]:
+                        try:
+                            content = raw_bytes.decode(enc)
+                            break
+                        except: continue
                     
-                    # 1. STANDARISASI KOLOM TANGGAL
+                    df_raw = pd.read_csv(io.StringIO(content))
+                    sample_text = content.lower()
+                    
+                    # Standarisasi Tanggal
                     date_col = next((c for c in df_raw.columns if "Date" in c), None)
-                    if not date_col: continue
-                    df_raw['Date'] = df_raw[date_col].apply(universal_date_parser)
+                    if date_col:
+                        df_raw['Date'] = df_raw[date_col].apply(universal_date_parser)
                     
-                    # 2. IDENTIFIKASI PLATFORM & METRIK
-                    sample_text = raw_content.lower()
-                    
-                    # --- LOGIKA TIKTOK (Overview.csv) ---
-                    if "video views" in sample_text or "shares" in sample_text:
-                        # TikTok Overview tidak punya data Reach Unik per hari
-                        # Kita set Reach ke 0 agar data tidak 'bohong' atau menyesatkan
+                    # --- LOGIKA TIKTOK OVERVIEW (Views/Likes/Shares) ---
+                    if "video views" in sample_text:
                         res = pd.DataFrame({
                             'Date': df_raw['Date'],
                             'Platform': 'TikTok',
                             'View': df_raw.get('Video Views', 0),
-                            'Reach': 0, # Diubah menjadi 0 karena data unik reach tidak ada di file ini
                             'Interaction': df_raw.get('Likes', 0) + df_raw.get('Comments', 0) + df_raw.get('Shares', 0),
-                            'Profile Visit': df_raw.get('Profile Views', 0),
-                            'Link Clicks': 0,
-                            'Follow': 0 # Data follow biasanya ada di file 'Followers' terpisah
+                            'Profile Visit': df_raw.get('Profile Views', 0)
                         })
                         all_platform_data.append(res)
-                        st.caption(f"✅ TikTok Overview Detected: {f.name} (Reach set to 0 for accuracy)")
+                        st.caption(f"✅ TikTok Overview Detected: {f.name}")
+
+                    # --- LOGIKA TIKTOK FOLLOWER HISTORY ---
+                    elif "follower" in sample_text and "difference" in sample_text:
+                        res = pd.DataFrame({
+                            'Date': df_raw['Date'],
+                            'Platform': 'TikTok',
+                            'Follow': df_raw.get('Difference in followers from previous day', 0)
+                        })
+                        all_platform_data.append(res)
+                        st.caption(f"✅ TikTok Follower History Detected: {f.name}")
 
                     # --- LOGIKA INSTAGRAM ---
                     else:
-                        target_map = {"follows": "Follow", "interactions": "Interaction", "reach": "Reach", "views": "View"}
+                        target_map = {"follows": "Follow", "interactions": "Interaction", "reach": "Reach", "views": "View", "linkclicks": "Link Clicks"}
                         found_target = next((v for k, v in target_map.items() if k in sample_text), None)
-                        
                         if found_target:
                             res = pd.DataFrame({
                                 'Date': df_raw['Date'],
@@ -142,13 +151,13 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                 except Exception as e:
                     st.error(f"Error pada file {f.name}: {e}")
 
-            # 4. SMART MERGE: Gabungkan semua file berdasarkan Tanggal & Platform
+            # PROSES MERGING (MENGGABUNGKAN FILE)
             if all_platform_data:
                 df_merged = pd.concat(all_platform_data, ignore_index=True)
-                # Group by Date & Platform untuk menjumlahkan metrik jika user upload file terpisah
+                # Group by Date & Platform untuk menyatukan baris yang sama (Smart Merge)
                 df_merged = df_merged.groupby(['Date', 'Platform']).sum(numeric_only=True).reset_index()
                 
-                # Pastikan semua kolom header ada
+                # Pastikan semua kolom standar tersedia
                 for col in header_names:
                     if col not in df_merged.columns: df_merged[col] = 0
                 
@@ -176,3 +185,8 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         df_show['SortDate'] = pd.to_datetime(df_show['Date'], dayfirst=True, errors='coerce')
         df_show = df_show.sort_values(by='SortDate', ascending=False).drop(columns=['SortDate'])
         st.dataframe(df_show, use_container_width=True, hide_index=True)
+
+    if st.button("🔄 Segarkan Data", use_container_width=True):
+        st.cache_data.clear()
+        st.session_state.bundle = utils.fetch_all_master_data()
+        st.rerun()
