@@ -86,10 +86,10 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         except: pass
     else:
         st.info("Database masih kosong.")
-
-    st.markdown("---")
         # Header Summary TIKTOK
         st.markdown(f'<div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left: 10px solid {BRAND_YELLOW};"><h2 style="margin:0; color:white; font-size:20px;">🌍 EXECUTIVE SUMMARY TIKTOK</h2></div>', unsafe_allow_html=True)
+    st.markdown("---")
+        
     # =====================================================
     # 3. IMPORTER SECTION
     # =====================================================
