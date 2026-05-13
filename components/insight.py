@@ -61,7 +61,7 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         for col in numeric_cols: df_calc[col] = pd.to_numeric(df_calc[col], errors='coerce').fillna(0)
 
         # Header Summary
-        st.markdown(f'<div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left: 10px solid {BRAND_YELLOW};"><h2 style="margin:0; color:white; font-size:20px;">🌍 EXECUTIVE SUMMARY PERFORMA</h2></div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left: 10px solid {BRAND_YELLOW};"><h2 style="margin:0; color:white; font-size:20px;">🌍 EXECUTIVE SUMMARY INSTAGRAM</h2></div>', unsafe_allow_html=True)
         g1, g2, g3, g4 = st.columns(4)
         g1.metric("Grand Total Views", f"{int(df_calc['View'].sum()):,}")
         g2.metric("Grand Total Reach", f"{int(df_calc['Reach'].sum()):,}")
