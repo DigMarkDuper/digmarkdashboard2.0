@@ -76,9 +76,22 @@ def load_sosmed():
     return df
 
 def load_website():
-    df = get_from_bundle(1)
-    if not df.empty and 'Deadline' in df.columns:
-        df['Tanggal Filter'] = pd.to_datetime(df['Deadline'], dayfirst=True, errors='coerce')
+    """Mengambil data website dan menyiapkan filter tanggal"""
+    df = get_from_bundle(1) # Index 1 adalah Website
+    
+    if not df.empty:
+        # Cek toleransi nama kolom (kadang 'Deadline', kadang 'Tanggal Deadline')
+        col_date = 'Deadline' if 'Deadline' in df.columns else ('Tanggal Deadline' if 'Tanggal Deadline' in df.columns else None)
+        
+        if col_date:
+            # Konversi ke format waktu
+            df['Tanggal Filter'] = pd.to_datetime(df[col_date], dayfirst=True, errors='coerce')
+            
+            # --- INI BARIS YANG HILANG (Pencipta Kolom Filter) ---
+            df['Bulan-Deadline'] = df['Tanggal Filter'].dt.strftime('%B %Y')
+        else:
+            # Jika kolom tanggal tidak ada di Google Sheets
+            df['Bulan-Deadline'] = "Tanpa Tanggal"
     return df
 
 def load_insight(): return get_from_bundle(2)
