@@ -356,16 +356,30 @@ def show_ads_analytics_page(BRAND_BLUE):
         st.markdown("---")
         col_ref1, col_ref2 = st.columns([0.85, 0.15])
         col_ref1.markdown("### 📑 Riwayat Saldo Mekari")
+        
+        # --- FIX 1: REFRESH YANG LEBIH KUAT ---
         if col_ref2.button("🔄 Refresh", use_container_width=True, key="btn_ref_mekari"):
-            st.cache_data.clear()
-            st.session_state.bundle = utils.fetch_all_master_data()
+            st.cache_data.clear() # Bersihkan cache API Gspread
+            if 'bundle' in st.session_state:
+                del st.session_state['bundle'] # Paksa bunuh memori lama agar narik ulang
             st.rerun()
 
         if not df_db_mekari.empty:
             st.dataframe(df_db_mekari, use_container_width=True, hide_index=True)
+            
+            # --- FIX 2: HAPUS AMAN (TETAPKAN HEADER) ---
             if st.button("🗑️ Kosongkan Riwayat", use_container_width=True, key="btn_del_mekari"):
-                utils.init_connection().open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(8).clear()
-                st.cache_data.clear()
-                st.rerun()
+                with st.spinner("Mengosongkan data..."):
+                    sheet = utils.init_connection().open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(8)
+                    sheet.clear() # Hapus semua isi
+                    
+                    # WAJIB TULIS ULANG HEADER agar Pandas tidak buta saat data baru masuk!
+                    # Sesuaikan nama header ini dengan yang biasa Mas pakai di Tab 8
+                    sheet.append_row(["Tanggal Input", "Periode", "Jenis Laporan", "Total Interaksi", "Total Biaya (Rp)"])
+                    
+                    st.cache_data.clear()
+                    if 'bundle' in st.session_state:
+                        del st.session_state['bundle']
+                    st.rerun()
         else:
             st.warning("Data riwayat di Spreadsheet belum terbaca atau masih kosong.")
