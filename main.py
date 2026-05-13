@@ -93,6 +93,15 @@ if 'bundle' not in st.session_state:
             st.session_state.bundle = data_nyasar
             st.sidebar.success("✅ Koneksi Master Berhasil!")
 
+# --- LOGIKA PEMANGGILAN HALAMAN ---
+try:
+    # 1. Pastikan data mentah tersedia untuk digunakan di Homepage maupun metrik lainnya
+    # Kita ambil menggunakan utils agar ter-cache dengan baik
+    df_wa = utils.load_wa_admin()      # Index 3
+    df_sos = utils.load_sosmed()      # Index 0
+    df_web = utils.load_website()     # Index 1
+    df_ins = utils.load_insight()     # Index 2 
+
 # =====================================================================
 # 5. ROUTER HALAMAN & NAVIGASI
 # =====================================================================
