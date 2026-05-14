@@ -38,7 +38,7 @@ def check_password():
     if st.session_state.get("password_correct"):
         return True
     utils.set_bg_local('bg.png')
-        st.markdown(f"""
+            st.markdown(f"""
         <style>
         
         /* 1. Kunci background pada level container tertinggi */
