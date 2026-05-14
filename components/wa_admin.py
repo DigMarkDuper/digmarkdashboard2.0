@@ -87,14 +87,24 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
 
                 st.markdown("---")
 
-                # 4. MEKARI TAG STATUS BREAKDOWN (PIE CHART)
+            # 4. MEKARI TAG STATUS BREAKDOWN (PIE CHART)
                 st.markdown('<div class="feature-header">🏷️ Mekari Tag Status Breakdown</div>', unsafe_allow_html=True)
+                
                 if 'Mekari Tag' in df_full_tags.columns:
+                    # 1. Pembersihan & Perhitungan Data
                     df_full_tags['Mekari Tag'] = df_full_tags['Mekari Tag'].astype(str).str.strip()
                     mekari_vc = df_full_tags['Mekari Tag'].value_counts()
-                    # FIX PANDAS: Pembuatan dataframe aman
+                    
+                    # 2. Buat Dataframe Ringkasan (PENTING: Agar px.pie bisa baca)
+                    mekari_summary = pd.DataFrame({
+                        'Tag': mekari_vc.index, 
+                        'Jumlah': mekari_vc.values
+                    })
+                    
+                    # 3. Formulasi Warna Modern (Deep Blue, Teal, & Amber)
                     modern_colors = ['#1E3A8A', '#3B82F6', '#06B6D4', '#10B981', '#6366F1', '#F59E0B']
 
+                    # 4. Inisialisasi Donut Chart (Sleek Style)
                     fig_mekari = px.pie(
                         mekari_summary, 
                         names='Tag', 
@@ -103,19 +113,31 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                         color_discrete_sequence=modern_colors
                     )
                 
+                    # 5. Styling Traces
                     fig_mekari.update_traces(
                         textinfo='percent', 
                         textposition='outside',
                         marker=dict(line=dict(color='#FFFFFF', width=2))
                     )
                 
+                    # 6. Styling Layout Command Center
                     fig_mekari.update_layout(
                         height=450, 
                         showlegend=True,
-                        legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.1),
+                        legend=dict(
+                            orientation="v", 
+                            yanchor="middle", 
+                            y=0.5, 
+                            xanchor="left", 
+                            x=1.1
+                        ),
                         margin=dict(t=30, b=30, l=0, r=100),
                         paper_bgcolor='rgba(0,0,0,0)',
                         plot_bgcolor='rgba(0,0,0,0)',
+                    )
+                    
+                    # 7. Render ke Streamlit
+                    st.plotly_chart(fig_mekari, use_container_width=True)
 
                 # 5. KATEGORI PESAN MASUK
                 st.markdown('<div class="feature-header">🗂️ Kategori Intensi Pesan</div>', unsafe_allow_html=True)
