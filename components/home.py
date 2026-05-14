@@ -580,49 +580,49 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
             st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
             
             # B. GRAFIK TREEMAP
-            # --- SECTION HEADER: TREEMAP DISTRIBUTION ---
-                TREE_ICON = "https://cdn-icons-png.flaticon.com/512/1632/1632602.png" # Ikon Chart/Hierarchy
-            
-                st.markdown(f"""
+        # --- SECTION HEADER: TREEMAP DISTRIBUTION ---
+            TREE_ICON = "https://cdn-icons-png.flaticon.com/512/1632/1632602.png" # Ikon Chart/Hierarchy
+        
+            st.markdown(f"""
+                <div style="
+                    display: flex; 
+                    align-items: center; 
+                    gap: 12px; 
+                    background: rgba(241, 245, 249, 0.8); 
+                    padding: 10px 15px; 
+                    border-radius: 10px; 
+                    margin-top: 20px;
+                    margin-bottom: 15px; 
+                    border-left: 6px solid {BRAND_BLUE};
+                    border: 1px solid #E2E8F0;
+                ">
                     <div style="
+                        background: white; 
+                        padding: 6px; 
+                        border-radius: 8px; 
                         display: flex; 
                         align-items: center; 
-                        gap: 12px; 
-                        background: rgba(241, 245, 249, 0.8); 
-                        padding: 10px 15px; 
-                        border-radius: 10px; 
-                        margin-top: 20px;
-                        margin-bottom: 15px; 
-                        border-left: 6px solid {BRAND_BLUE};
-                        border: 1px solid #E2E8F0;
+                        justify-content: center;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
                     ">
+                        <img src="{TREE_ICON}" width="20">
+                    </div>
+                    <div>
                         <div style="
-                            background: white; 
-                            padding: 6px; 
-                            border-radius: 8px; 
-                            display: flex; 
-                            align-items: center; 
-                            justify-content: center;
-                            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                            color: #1E293B; 
+                            font-size: 13px; 
+                            font-weight: 800; 
+                            text-transform: uppercase; 
+                            letter-spacing: 0.5px;
                         ">
-                            <img src="{TREE_ICON}" width="20">
+                            📍 Sebaran Domisili Prospek <span style="color: {BRAND_BLUE};">(TREEMAP)</span>
                         </div>
-                        <div>
-                            <div style="
-                                color: #1E293B; 
-                                font-size: 13px; 
-                                font-weight: 800; 
-                                text-transform: uppercase; 
-                                letter-spacing: 0.5px;
-                            ">
-                                📍 Sebaran Domisili Prospek <span style="color: {BRAND_BLUE};">(TREEMAP)</span>
-                            </div>
-                            <div style="color: #64748B; font-size: 9px; font-weight: 600; text-transform: uppercase;">
-                                Hierarchical Visualization of Lead Locations
-                            </div>
+                        <div style="color: #64748B; font-size: 9px; font-weight: 600; text-transform: uppercase;">
+                            Hierarchical Visualization of Lead Locations
                         </div>
                     </div>
-                """, unsafe_allow_html=True)
+                </div>
+            """, unsafe_allow_html=True)
                 
             with st.container(border=True):       
                 if not asal_counts.empty:
