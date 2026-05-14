@@ -17,7 +17,7 @@ def show_dm_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
 
     df_dm = st.session_state.dm_data_cache
 
-    # --- 2. SUMMARY METRICS ---
+    # --- 2. SUMMARY METRICS (MODERN LOOK WITH ICONS) ---
     if not df_dm.empty:
         df_calc = df_dm.copy()
         kolom_plat = 'Platform' if 'Platform' in df_calc.columns else df_calc.columns[1]
@@ -27,10 +27,40 @@ def show_dm_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
         fb_count = len(df_calc[df_calc[kolom_plat].astype(str).str.contains('Facebook', case=False)])
 
         m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Total Prospek", len(df_calc))
-        m2.metric("Instagram", ig_count)
-        m3.metric("TikTok", tt_count)
-        m4.metric("Facebook", fb_count)
+        
+        # Style Card Custom
+        card_style = """
+            <div style='background-color: rgba(255,255,255,0.5); padding: 15px; border-radius: 10px; border: 1px solid #e6e9ef;'>
+                <div style='display: flex; align-items: center; gap: 10px; color: #6b7280; font-size: 12px; font-weight: 600; text-transform: uppercase;'>
+                    {icon} {label}
+                </div>
+                <div style='font-size: 28px; font-weight: 800; color: #1f2937; margin-top: 5px;'>{value}</div>
+            </div>
+        """
+
+        with m1:
+            st.markdown(card_style.format(icon="📊", label="TOTAL PROSPEK", value=len(df_calc)), unsafe_allow_html=True)
+        
+        with m2:
+            st.markdown(card_style.format(
+                icon="<img src='https://img.icons8.com/fluency/48/instagram-new.png' width='18'>", 
+                label="INSTAGRAM", 
+                value=ig_count
+            ), unsafe_allow_html=True)
+            
+        with m3:
+            st.markdown(card_style.format(
+                icon="<img src='https://img.icons8.com/color/48/tiktok--v1.png' width='18'>", 
+                label="TIKTOK", 
+                value=tt_count
+            ), unsafe_allow_html=True)
+            
+        with m4:
+            st.markdown(card_style.format(
+                icon="<img src='https://img.icons8.com/color/48/facebook-new.png' width='18'>", 
+                label="FACEBOOK", 
+                value=fb_count
+            ), unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
 
