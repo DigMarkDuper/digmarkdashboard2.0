@@ -581,54 +581,54 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
             
     # B. GRAFIK TREEMAP
     # --- SECTION HEADER: TREEMAP DISTRIBUTION (CONSISTENT STYLE) ---
-        TREE_ICON = "https://cdn-icons-png.flaticon.com/512/1632/1632602.png" 
-    
-        st.markdown(f"""
-            <div style="
-                display: flex; 
-                align-items: center; 
-                gap: 15px; 
-                background: linear-gradient(90deg, {BRAND_BLUE} 0%, #1e3a8a 100%); 
-                padding: 12px 20px; 
-                border-radius: 12px; 
-                margin-top: 25px;
-                margin-bottom: 20px; 
-                border-left: 10px solid {BRAND_YELLOW}; 
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            ">
+            TREE_ICON = "https://cdn-icons-png.flaticon.com/512/1632/1632602.png" 
+        
+            st.markdown(f"""
                 <div style="
-                    background: rgba(255, 255, 255, 0.2); 
-                    padding: 8px; 
-                    border-radius: 8px; 
                     display: flex; 
                     align-items: center; 
-                    justify-content: center;
+                    gap: 15px; 
+                    background: linear-gradient(90deg, {BRAND_BLUE} 0%, #1e3a8a 100%); 
+                    padding: 12px 20px; 
+                    border-radius: 12px; 
+                    margin-top: 25px;
+                    margin-bottom: 20px; 
+                    border-left: 10px solid {BRAND_YELLOW}; 
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
                 ">
-                    <img src="{TREE_ICON}" width="25">
-                </div>
-                <div>
-                    <h2 style="
-                        margin: 0; 
-                        color: white; 
-                        font-size: 16px; 
-                        font-weight: 800; 
-                        letter-spacing: 1.5px; 
-                        text-transform: uppercase;
+                    <div style="
+                        background: rgba(255, 255, 255, 0.2); 
+                        padding: 8px; 
+                        border-radius: 8px; 
+                        display: flex; 
+                        align-items: center; 
+                        justify-content: center;
                     ">
-                        📍 Sebaran Domisili Prospek <span style="color: {BRAND_YELLOW};">(TREEMAP)</span>
-                    </h2>
-                    <p style="
-                        margin: 0; 
-                        color: rgba(255, 255, 255, 0.7); 
-                        font-size: 10px; 
-                        font-weight: 600; 
-                        text-transform: uppercase;
-                    ">
-                        Hierarchical Visualization of Lead Locations & Origin
-                    </p>
+                        <img src="{TREE_ICON}" width="25">
+                    </div>
+                    <div>
+                        <h2 style="
+                            margin: 0; 
+                            color: white; 
+                            font-size: 16px; 
+                            font-weight: 800; 
+                            letter-spacing: 1.5px; 
+                            text-transform: uppercase;
+                        ">
+                            📍 Sebaran Domisili Prospek <span style="color: {BRAND_YELLOW};">(TREEMAP)</span>
+                        </h2>
+                        <p style="
+                            margin: 0; 
+                            color: rgba(255, 255, 255, 0.7); 
+                            font-size: 10px; 
+                            font-weight: 600; 
+                            text-transform: uppercase;
+                        ">
+                            Hierarchical Visualization of Lead Locations & Origin
+                        </p>
+                    </div>
                 </div>
-            </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
                 
             with st.container(border=True):       
                 if not asal_counts.empty:
