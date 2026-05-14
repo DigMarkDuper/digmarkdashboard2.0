@@ -168,7 +168,7 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                 conversion_rate = (total_closing / total_leads * 100) if total_leads > 0 else 0
                 
                 # --- SUB-HEADER: REAL-TIME LEAD HEALTH CHECK ---
-                HEALTH_ICON = "https://cdn-icons-png.flaticon.com/512/1006/1006450.png" # Ikon Pulse/Real-Time
+                HEALTH_ICON = "https://cdn-icons-png.flaticon.com/512/3208/3208757.png" # Ikon Pulse/Real-Time
             
                 st.markdown(f"""
                     <div style="
