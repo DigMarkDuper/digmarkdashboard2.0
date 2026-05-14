@@ -5,8 +5,60 @@ import datetime
 import components.utils as utils
 
 def show_ads_analytics_page(BRAND_BLUE):
-    st.title("📈 Ads & Budget Analytics (ROI Engine)")
-    st.markdown("Pantau **Cost Per Lead (CPL)**, **Customer Acquisition Cost (CAC)**, dan **ROAS** secara real-time.")
+    # 1. Gunakan Ikon Ads/Target yang relevan dari GitHub Mas atau URL Premium
+    ADS_ICON = "https://cdn-icons-png.flaticon.com/512/3228/3228286.png" # Ikon Target/Ads Analytics
+
+    # 2. Render Header Ads & Budget Analytics
+    st.markdown(f"""
+        <div style="
+            display: flex; 
+            align-items: center; 
+            gap: 20px; 
+            background: linear-gradient(90deg, #1e40af 0%, {BRAND_BLUE} 100%); 
+            padding: 20px 30px; 
+            border-radius: 18px; 
+            margin-bottom: 35px; 
+            border-left: 14px solid {BRAND_YELLOW}; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        ">
+            <div style="
+                background: rgba(255, 255, 255, 0.15); 
+                backdrop-filter: blur(10px);
+                padding: 12px; 
+                border-radius: 14px; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            ">
+                <img src="{ADS_ICON}" width="40">
+            </div>
+            <div>
+                <h1 style="
+                    margin: 0; 
+                    color: white; 
+                    font-size: 26px; 
+                    font-weight: 900; 
+                    letter-spacing: 1.5px; 
+                    text-transform: uppercase;
+                    line-height: 1.2;
+                ">
+                    📈 ADS & <span style="color: {BRAND_YELLOW};">BUDGET</span> ANALYTICS
+                </h1>
+                <p style="
+                    margin: 0; 
+                    color: rgba(255, 255, 255, 0.7); 
+                    font-size: 11px; 
+                    font-weight: 700; 
+                    text-transform: uppercase; 
+                    letter-spacing: 1px; 
+                    margin-top: 5px;
+                ">
+                    Real-time ROI Engine: Tracking CPL, CAC, & ROAS Performance
+                </p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
     
     # Asumsi Nilai 1 Closing
     BIAYA_PELATIHAN = 12995000
