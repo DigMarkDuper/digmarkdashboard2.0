@@ -93,15 +93,29 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                     df_full_tags['Mekari Tag'] = df_full_tags['Mekari Tag'].astype(str).str.strip()
                     mekari_vc = df_full_tags['Mekari Tag'].value_counts()
                     # FIX PANDAS: Pembuatan dataframe aman
-                    mekari_summary = pd.DataFrame({'Tag': mekari_vc.index, 'Jumlah': mekari_vc.values})
-                    
+                    modern_colors = ['#1E3A8A', '#3B82F6', '#06B6D4', '#10B981', '#6366F1', '#F59E0B']
+
                     fig_mekari = px.pie(
-                        mekari_summary, names='Tag', values='Jumlah', hole=0.4, 
-                        color_discrete_sequence=px.colors.qualitative.Bold
+                        mekari_summary, 
+                        names='Tag', 
+                        values='Jumlah', 
+                        hole=0.6, 
+                        color_discrete_sequence=modern_colors
                     )
-                    fig_mekari.update_traces(textinfo='label+value+percent', textposition='outside', textfont_size=12)
-                    fig_mekari.update_layout(height=600, showlegend=True, legend=dict(orientation="h", y=-0.2, x=0.5), paper_bgcolor='white')
-                    st.plotly_chart(fig_mekari, use_container_width=True)
+                
+                    fig_mekari.update_traces(
+                        textinfo='percent', 
+                        textposition='outside',
+                        marker=dict(line=dict(color='#FFFFFF', width=2))
+                    )
+                
+                    fig_mekari.update_layout(
+                        height=450, 
+                        showlegend=True,
+                        legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.1),
+                        margin=dict(t=30, b=30, l=0, r=100),
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        plot_bgcolor='rgba(0,0,0,0)',
 
                 # 5. KATEGORI PESAN MASUK
                 st.markdown('<div class="feature-header">🗂️ Kategori Intensi Pesan</div>', unsafe_allow_html=True)
