@@ -86,7 +86,19 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
             """, unsafe_allow_html=True)
 
     # --- 3. HEADER ---
-    st.markdown('<div class="feature-header" style="text-align: center; margin-bottom:48px;">🚀 DIGITAL MARKETING COMMAND CENTER</div>', unsafe_allow_html=True)
+    st.markdown(f"""
+        <div style="text-align: center; margin-bottom: 0px;">
+            <h1 style="font-size: 48px; font-weight: 900; color: {BRAND_BLUE}; margin-bottom: 5px; letter-spacing: -1.5px;">
+                🚀 DIGITAL MARKETING COMMAND CENTER
+            </h1>
+            <div style="width: 70%; margin: 0 auto; border-top: 1px solid #E5E7EB; border-bottom: 1px solid #E5E7EB; padding: 3px 0;">
+                <marquee scrollamount="6" style="color: #6B7280; font-family: 'Courier New', Courier, monospace; font-size: 13px; font-weight: 700;">
+                    STATUS: SYSTEM ACTIVE • DATA SYNCED WITH GOOGLE SHEETS • ROI ENGINE OPERATIONAL • MONITORING REAL-TIME LEADS LPK DUTA PERSADA • WELCOME BACK, MANAGER!
+                </marquee>
+            </div>
+        </div>
+        <div style="margin-bottom: 50px;"></div>
+    """, unsafe_allow_html=True)
 
     # --- 4. NAVIGASI MENU ---
     def create_square_card(icon, title, subtitle, target_page, button_key):
