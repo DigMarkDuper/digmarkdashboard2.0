@@ -35,128 +35,84 @@ BRAND_BLUE = "#005696"
 BRAND_YELLOW = "#FDB813"
 
 # =====================================================================
-# 2. SISTEM LOGIN (ULTRA COMPACT - NUCLEAR RESET)
+# 2. SISTEM LOGIN (CLEAN & FUNCTIONAL)
 # =====================================================================
 def check_password():
     if st.session_state.get("password_correct"):
         return True
     
-    try:
-        utils.set_bg_local('bg.png')
-    except:
-        pass 
-
-    # --- CSS KUSTOM DENGAN SELECTOR YANG LEBIH AGRESIF ---
+    # Set Background
+    utils.set_bg_local('bg.png') 
+    
+    # CSS Minimalis: Hanya untuk mempercantik, bukan merubah struktur posisi
     st.markdown(f'''
         <style>
-            /* 1. Paksa Reset Total Halaman */
-            [data-testid="stAppViewContainer"] {{
-                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+            /* Menggelapkan background sedikit agar teks putih kelihatan */
+            .stApp {{
+                background-color: #0f172a !important;
             }}
             
-            /* Sembunyikan semua elemen default Streamlit */
-            [data-testid="stHeader"], [data-testid="stSidebar"], footer {{
-                display: none !important;
-            }}
-            
-            .main .block-container {{
-                padding: 0 !important;
-                max-width: 100% !important;
-            }}
-
-            /* 2. Container Centering Mutlak */
-            .wrapper_login_final {{
-                position: fixed;
-                top: 0; left: 0; 
-                width: 100vw; height: 100vh;
-                background: rgba(0,0,0,0.4); /* Overlay gelap sedikit */
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 999999;
+            /* Membuat kotak form terlihat seperti kaca */
+            [data-testid="stForm"] {{
+                background: rgba(255, 255, 255, 0.05) !important;
+                backdrop-filter: blur(15px);
+                border-radius: 20px;
+                padding: 30px !important;
+                border: 1px solid rgba(255, 255, 255, 0.1) !important;
             }}
 
-            /* 3. Kotak Kaca Compact */
-            .box_glass_final {{
-                background: rgba(255, 255, 255, 0.08) !important;
-                backdrop-filter: blur(25px) !important;
-                -webkit-backdrop-filter: blur(25px) !important;
-                border: 1px solid rgba(255, 255, 255, 0.15) !important;
-                border-radius: 20px !important;
-                padding: 30px 25px !important;
-                width: 300px !important; /* KUNCI MATI LEBAR */
-                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5) !important;
-                text-align: center !important;
-            }}
-
-            /* 4. Paksa Elemen Form Streamlit agar Kecil */
-            .box_glass_final [data-testid="stForm"] {{
-                border: none !important;
-                padding: 0 !important;
-                background: transparent !important;
-            }}
-
-            /* Label Putih Terang */
-            .box_glass_final label p {{
+            /* Warna label putih solid agar terlihat jelas */
+            .stTextInput label p {{
                 color: white !important;
-                font-size: 11px !important;
-                font-weight: 800 !important;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                text-align: left !important;
-                margin-bottom: -10px !important;
+                font-weight: bold !important;
             }}
 
-            /* Input Field */
-            .box_glass_final input {{
-                background: transparent !important;
-                border: none !important;
-                border-bottom: 2px solid rgba(255,255,255,0.2) !important;
+            /* Input text putih */
+            .stTextInput input {{
                 color: white !important;
-                border-radius: 0px !important;
-                font-size: 14px !important;
             }}
 
-            /* Tombol Biru Rapi */
-            .box_glass_final button {{
+            /* Tombol login */
+            div[data-testid="stFormSubmitButton"] > button {{
                 background: {BRAND_BLUE} !important;
                 color: white !important;
-                border: none !important;
-                width: 100% !important;
-                border-radius: 10px !important;
-                font-weight: bold !important;
-                margin-top: 20px !important;
-                height: 40px !important;
+                width: 100%;
+                border-radius: 10px;
+                font-weight: bold;
             }}
+            
+            header, footer {{visibility: hidden;}}
         </style>
     ''', unsafe_allow_html=True)
 
-    # --- RENDER STRUKTUR BARU ---
-    placeholder = st.empty()
-    with placeholder.container():
-        # Membungkus dengan ID Class Baru (wrapper_login_final)
-        st.markdown('<div class="wrapper_login_final"><div class="box_glass_final">', unsafe_allow_html=True)
+    # --- RENDER MENGGUNAKAN COLUMNS (Cara Paling Aman) ---
+    # Kita bagi layar jadi 3 kolom: [Kiri, Tengah, Kanan]
+    # Kolom tengah dibuat kecil (1.5) agar form-nya tidak melar
+    left, mid, right = st.columns([1, 1.5, 1])
+    
+    with mid:
+        # 1. Kasih jarak dari atas
+        st.markdown("<br><br><br>", unsafe_allow_html=True)
         
-        # Logo
-        st.image(LOGO_URL, width=100)
-        st.markdown(f'<div style="color:white; font-size:12px; font-weight:200; letter-spacing:3px; margin: 15px 0;">DM <span style="font-weight:800; color:{BRAND_YELLOW}">LOGIN</span></div>', unsafe_allow_html=True)
+        # 2. Logo & Judul (Di luar form tapi di dalam kolom yang sama)
+        st.image(LOGO_URL, width=150)
+        st.markdown(f'<h3 style="color:white; margin-bottom:20px;">Digital Marketing <span style="color:{BRAND_YELLOW}">LOGIN</span></h3>', unsafe_allow_html=True)
 
-        # Form dengan Key Baru ("login_v2")
-        with st.form(key="login_v2"):
+        # 3. Form Login
+        with st.form("login_safe"):
             u_name = st.text_input("Username").strip().lower()
             u_pass = st.text_input("Password", type="password")
             
-            if st.form_submit_button("MASUK KE DASHBOARD"):
+            if st.form_submit_button("MASUK SISTEM"):
                 if "credentials" in st.secrets and u_name in st.secrets["credentials"] and st.secrets["credentials"][u_name] == u_pass:
                     st.session_state["password_correct"] = True
                     st.rerun()
                 else:
-                    st.error("Gagal")
-        
-        st.markdown('</div></div>', unsafe_allow_html=True)
-
+                    st.error("Gagal: Username atau Password Salah")
+                    
     return False
 
+# --- Jalankan di bagian paling luar ---
 if not check_password():
     st.stop()
 
