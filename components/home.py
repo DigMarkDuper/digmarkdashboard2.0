@@ -579,58 +579,64 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
             
             st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
             
-    # B. GRAFIK TREEMAP
+  # B. GRAFIK TREEMAP
     # --- SECTION HEADER: TREEMAP DISTRIBUTION (CONSISTENT STYLE) ---
-            TREE_ICON = "https://cdn-icons-png.flaticon.com/512/1632/1632602.png" 
+    TREE_ICON = "https://cdn-icons-png.flaticon.com/512/1632/1632602.png" 
         
-            st.markdown(f"""
-                <div style="
-                    display: flex; 
-                    align-items: center; 
-                    gap: 15px; 
-                    background: linear-gradient(90deg, {BRAND_BLUE} 0%, #1e3a8a 100%); 
-                    padding: 12px 20px; 
-                    border-radius: 12px; 
-                    margin-top: 25px;
-                    margin-bottom: 20px; 
-                    border-left: 10px solid {BRAND_YELLOW}; 
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    st.markdown(f"""
+        <div style="
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            background: linear-gradient(90deg, {BRAND_BLUE} 0%, #1e3a8a 100%); 
+            padding: 12px 20px; 
+            border-radius: 12px; 
+            margin-top: 25px;
+            margin-bottom: 20px; 
+            border-left: 10px solid {BRAND_YELLOW}; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        ">
+            <div style="
+                background: rgba(255, 255, 255, 0.2); 
+                padding: 8px; 
+                border-radius: 8px; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center;
+            ">
+                <img src="{TREE_ICON}" width="25">
+            </div>
+            <div>
+                <h2 style="
+                    margin: 0; 
+                    color: white; 
+                    font-size: 16px; 
+                    font-weight: 800; 
+                    letter-spacing: 1.5px; 
+                    text-transform: uppercase;
                 ">
-                    <div style="
-                        background: rgba(255, 255, 255, 0.2); 
-                        padding: 8px; 
-                        border-radius: 8px; 
-                        display: flex; 
-                        align-items: center; 
-                        justify-content: center;
-                    ">
-                        <img src="{TREE_ICON}" width="25">
-                    </div>
-                    <div>
-                        <h2 style="
-                            margin: 0; 
-                            color: white; 
-                            font-size: 16px; 
-                            font-weight: 800; 
-                            letter-spacing: 1.5px; 
-                            text-transform: uppercase;
-                        ">
-                            📍 Sebaran Domisili Prospek <span style="color: {BRAND_YELLOW};">(TREEMAP)</span>
-                        </h2>
-                        <p style="
-                            margin: 0; 
-                            color: rgba(255, 255, 255, 0.7); 
-                            font-size: 10px; 
-                            font-weight: 600; 
-                            text-transform: uppercase;
-                        ">
-                            Hierarchical Visualization of Lead Locations & Origin
-                        </p>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
-                
-            with st.container(border=True):       
+                    📍 Sebaran Domisili Prospek <span style="color: {BRAND_YELLOW};">(TREEMAP)</span>
+                </h2>
+                <p style="
+                    margin: 0; 
+                    color: rgba(255, 255, 255, 0.7); 
+                    font-size: 10px; 
+                    font-weight: 600; 
+                    text-transform: uppercase;
+                ">
+                    Hierarchical Visualization of Lead Locations & Origin
+                </p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    try:
+        # Pengecekan apakah kolom 'Asal' tersedia di dataframe (asumsi df adalah sumber data)
+        if 'Asal' in df.columns:
+            asal_counts = df['Asal'].value_counts().reset_index()
+            asal_counts.columns = ['Lokasi', 'Jumlah']
+
+            with st.container(border=True):        
                 if not asal_counts.empty:
                     fig_asal = px.treemap(
                         asal_counts, 
@@ -645,7 +651,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
                 else:
                     st.info("Data Asal belum tersedia untuk dibuatkan TreeMap.")
         else:
-            st.info("💡 Data 'Asal' belum tersedia untuk dipetakan.")
+            st.info("💡 Kolom data 'Asal' tidak ditemukan dalam sistem.")
 
     except Exception as e:
         st.error(f"Gagal memuat visualisasi peta/grafik: {e}")
