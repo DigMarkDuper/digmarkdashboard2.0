@@ -52,10 +52,8 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     if 'preview_data' not in st.session_state: st.session_state.preview_data = None
     if 'uploader_key' not in st.session_state: st.session_state.uploader_key = 0
 
-    # Ambil data dari bundle (Tab Index 2)
     df_db_main = st.session_state.get('bundle', {}).get(2, pd.DataFrame())
 
-    # --- RENDER SUMMARY & CHARTS (JIKA DATA ADA) ---
     if not df_db_main.empty:
         df_calc = df_db_main.copy()
         if len(df_calc.columns) >= len(header_names):
@@ -73,33 +71,11 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         g3.metric("Grand Interaksi", f"{int(df_calc['Interaction'].sum()):,}")
         g4.metric("Grand Followers", f"{int(df_calc['Follow'].sum()):,}")
 
-        try:
-            df_trend = df_calc.copy()
-            df_trend['Date'] = pd.to_datetime(df_trend['Date'], dayfirst=True, errors='coerce')
-            df_trend = df_trend.dropna(subset=['Date']).sort_values('Date')
-            df_m = df_trend.groupby([df_trend['Date'].dt.to_period('M'), 'Platform']).sum(numeric_only=True).reset_index()
-            df_m['Date'] = df_m['Date'].dt.to_timestamp()
-
-            st.subheader("🎵 Tren TikTok")
-            df_tk = df_m[df_m['Platform'] == 'TikTok']
-            if not df_tk.empty:
-                tk1, tk2 = st.columns(2)
-                with tk1: st.plotly_chart(create_modern_chart(df_tk, 'View', BRAND_BLUE, "TikTok Views"), use_container_width=True)
-                with tk2: st.plotly_chart(create_modern_chart(df_tk, 'Follow', "#00CC96", "TikTok Followers"), use_container_width=True)
-            
-            st.subheader("📸 Tren Instagram")
-            df_ig = df_m[df_m['Platform'] == 'Instagram']
-            if not df_ig.empty:
-                ig1, ig2 = st.columns(2)
-                with ig1: st.plotly_chart(create_modern_chart(df_ig, 'View', "#E1306C", "Instagram Views"), use_container_width=True)
-                with ig2: st.plotly_chart(create_modern_chart(df_ig, 'Follow', "#833AB4", "Instagram Followers"), use_container_width=True)
-        except: pass
-
     st.markdown("---")
 
-    # --- 3. SMART IMPORTER V17 (FILENAME LOGIC & FORCE RENAME) ---
+    # --- 3. SMART IMPORTER V18 ---
     with st.expander("🚀 Upload Data Insight Baru", expanded=True):
-        files = st.file_uploader("Upload CSV TikTok/Instagram", type=["csv"], accept_multiple_files=True, key=f"ins_v17_{st.session_state.uploader_key}")
+        files = st.file_uploader("Upload CSV TikTok/Instagram", type=["csv"], accept_multiple_files=True, key=f"ins_v18_{st.session_state.uploader_key}")
         
         if files:
             all_platform_data = []
@@ -111,11 +87,13 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                     # 1. LOGIKA TIKTOK
                     if "overview" in fn or "followerhistory" in fn:
                         df_raw = pd.read_csv(io.StringIO(content))
-                        # PAKSA NAMA KOLOM: Apapun header di file, kita paksa
-                        # TikTok biasanya: Date, Video Views, Profile Views, Likes, Comments, Shares
+                        df_raw.columns = [str(c).replace('"', '').strip() for c in df_raw.columns]
+                        
                         if "overview" in fn:
                             df_raw.columns = ['Date', 'View', 'Profile Visit', 'Like', 'Comment', 'Share']
-                            df_raw['Interaction'] = df_raw['Like'] + df_raw['Comment'] + df_raw['Share']
+                            df_raw['Interaction'] = pd.to_numeric(df_raw['Like'], errors='coerce').fillna(0) + \
+                                                pd.to_numeric(df_raw['Comment'], errors='coerce').fillna(0) + \
+                                                pd.to_numeric(df_raw['Share'], errors='coerce').fillna(0)
                             res = pd.DataFrame({'Date': df_raw['Date'], 'Platform': 'TikTok', 'View': df_raw['View'], 'Interaction': df_raw['Interaction'], 'Profile Visit': df_raw['Profile Visit']})
                         else:
                             df_raw.columns = ['Date', 'Total', 'Follow']
@@ -125,19 +103,23 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                         all_platform_data.append(res)
                         st.success(f"✅ TikTok detected: {f.name}")
 
-                    # 2. LOGIKA INSTAGRAM (SANGAT AMAN)
+                    # 2. LOGIKA INSTAGRAM
                     else:
                         mapping = {"follows": "Follow", "visits": "Profile Visit", "link clicks": "Link Clicks", "interactions": "Interaction", "reach": "Reach", "views": "View"}
                         target_col = next((v for k, v in mapping.items() if k in fn), None)
                         
                         if target_col:
-                            # Langsung skip 2 baris dan PAKSA NAMA KOLOM
-                            df_raw = pd.read_csv(io.StringIO(content), skiprows=2, header=None)
-                            df_raw = df_raw.iloc[:, :2] # Ambil 2 kolom saja
-                            df_raw.columns = ['Date', 'Primary'] # Paksa ganti nama
+                            # Instagram: skip 3 baris agar langsung ke angka, abaikan header "Date","Primary"
+                            df_raw = pd.read_csv(io.StringIO(content), skiprows=3, header=None)
+                            df_raw = df_raw.iloc[:, :2] # Ambil Date dan Value
+                            df_raw.columns = ['Date', 'RawValue']
+                            
+                            # MEMBERSIHKAN ANGKA: Hapus kutip ganda dan spasi agar tidak jadi 0
+                            df_raw['Value'] = df_raw['RawValue'].astype(str).str.replace('"', '').str.replace("'", "").str.strip()
+                            df_raw['Value'] = pd.to_numeric(df_raw['Value'], errors='coerce').fillna(0)
                             
                             df_raw['Date'] = df_raw['Date'].apply(universal_date_parser)
-                            res = pd.DataFrame({'Date': df_raw['Date'], 'Platform': 'Instagram', target_col: pd.to_numeric(df_raw['Primary'], errors='coerce').fillna(0)})
+                            res = pd.DataFrame({'Date': df_raw['Date'], 'Platform': 'Instagram', target_col: df_raw['Value']})
                             all_platform_data.append(res)
                             st.success(f"✅ Instagram {target_col} detected: {f.name}")
 
@@ -146,9 +128,17 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
 
             if all_platform_data:
                 df_merged = pd.concat(all_platform_data, ignore_index=True)
-                df_merged = df_merged.groupby(['Date', 'Platform']).sum(numeric_only=True).reset_index()
+                # Pastikan numerik sebelum grup
+                for col in numeric_cols:
+                    if col in df_merged.columns:
+                        df_merged[col] = pd.to_numeric(df_merged[col], errors='coerce').fillna(0)
+                
+                df_merged = df_merged.groupby(['Date', 'Platform']).sum().reset_index()
+                
+                # Pastikan semua kolom ada untuk preview
                 for col in header_names:
                     if col not in df_merged.columns: df_merged[col] = 0
+                
                 st.session_state.preview_data = df_merged[header_names]
 
     # --- 4. PREVIEW & SAVE ---
@@ -164,7 +154,7 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                 st.session_state.bundle = utils.fetch_all_master_data()
                 st.rerun()
 
-    # --- 5. RIWAYAT DATABASE (SELALU MUNCUL) ---
+    # --- 5. RIWAYAT DATABASE ---
     st.markdown("---")
     st.markdown("### 🗄️ Riwayat Data di Spreadsheet")
     if not df_db_main.empty:
@@ -176,8 +166,6 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
             df_history = df_history.sort_values(by='SortDate', ascending=False).drop(columns=['SortDate'])
         except: pass
         st.dataframe(df_history, use_container_width=True, hide_index=True)
-    else:
-        st.info("Belum ada data di Spreadsheet (Tab Index 2).")
 
     if st.button("🔄 Refresh Tabel Riwayat", use_container_width=True):
         st.cache_data.clear()
