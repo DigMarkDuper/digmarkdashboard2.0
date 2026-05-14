@@ -488,6 +488,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
             </div>
         </div>
     """, unsafe_allow_html=True)
+    
     try:
         # --- 1. FILTER DATA: Hanya Leads Murni ---
         df_maps = df_wa.copy()
@@ -574,57 +575,57 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
                     )
                     fig_map.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, height=600, coloraxis_showscale=False)
                     st.plotly_chart(fig_map, use_container_width=True)
+                
+      # B. GRAFIK TREEMAP (FIXED & SYNCED)
+        # --- SECTION HEADER: TREEMAP DISTRIBUTION ---
+        TREE_ICON = "https://cdn-icons-png.flaticon.com/512/1632/1632602.png" 
             
-  # B. GRAFIK TREEMAP (FIXED & SYNCED)
-    # --- SECTION HEADER: TREEMAP DISTRIBUTION ---
-    TREE_ICON = "https://cdn-icons-png.flaticon.com/512/1632/1632602.png" 
-        
-    st.markdown(f"""
-        <div style="
-            display: flex; 
-            align-items: center; 
-            gap: 15px; 
-            background: linear-gradient(90deg, {BRAND_BLUE} 0%, #1e3a8a 100%); 
-            padding: 12px 20px; 
-            border-radius: 12px; 
-            margin-top: 25px;
-            margin-bottom: 20px; 
-            border-left: 10px solid {BRAND_YELLOW}; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        ">
+        st.markdown(f"""
             <div style="
-                background: rgba(255, 255, 255, 0.2); 
-                padding: 8px; 
-                border-radius: 8px; 
                 display: flex; 
                 align-items: center; 
-                justify-content: center;
+                gap: 15px; 
+                background: linear-gradient(90deg, {BRAND_BLUE} 0%, #1e3a8a 100%); 
+                padding: 12px 20px; 
+                border-radius: 12px; 
+                margin-top: 25px;
+                margin-bottom: 20px; 
+                border-left: 10px solid {BRAND_YELLOW}; 
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             ">
-                <img src="{TREE_ICON}" width="25">
-            </div>
-            <div>
-                <h2 style="
-                    margin: 0; 
-                    color: white; 
-                    font-size: 16px; 
-                    font-weight: 800; 
-                    letter-spacing: 1.5px; 
-                    text-transform: uppercase;
+                <div style="
+                    background: rgba(255, 255, 255, 0.2); 
+                    padding: 8px; 
+                    border-radius: 8px; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center;
                 ">
-                    📍 Sebaran Domisili Prospek <span style="color: {BRAND_YELLOW};">(TREEMAP)</span>
-                </h2>
-                <p style="
-                    margin: 0; 
-                    color: rgba(255, 255, 255, 0.7); 
-                    font-size: 10px; 
-                    font-weight: 600; 
-                    text-transform: uppercase;
-                ">
-                    Hierarchical Visualization of Lead Locations & Origin
-                </p>
+                    <img src="{TREE_ICON}" width="25">
+                </div>
+                <div>
+                    <h2 style="
+                        margin: 0; 
+                        color: white; 
+                        font-size: 16px; 
+                        font-weight: 800; 
+                        letter-spacing: 1.5px; 
+                        text-transform: uppercase;
+                    ">
+                        📍 Sebaran Domisili Prospek <span style="color: {BRAND_YELLOW};">(TREEMAP)</span>
+                    </h2>
+                    <p style="
+                        margin: 0; 
+                        color: rgba(255, 255, 255, 0.7); 
+                        font-size: 10px; 
+                        font-weight: 600; 
+                        text-transform: uppercase;
+                    ">
+                        Hierarchical Visualization of Lead Locations & Origin
+                    </p>
+                </div>
             </div>
-        </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
     try:
         if not df_wa.empty:
