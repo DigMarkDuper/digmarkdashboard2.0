@@ -763,8 +763,8 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                 """, unsafe_allow_html=True)
                 col_refresh, _ = st.columns([1, 2])
                 
-                with col_refresh:
-                    if st.button("🔄 Refresh & Tarik Data Terbaru", use_container_width=True, key="refresh_wa_admin"):
+                with col_btn:
+                    if st.button("🔄 Refresh Data", use_container_width=True, key="refresh_wa_admin_bottom"):
                         st.cache_data.clear()
                         if 'bundle' in st.session_state:
                             del st.session_state['bundle']
