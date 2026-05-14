@@ -151,7 +151,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
             </div>
             <div style="flex-grow: 1; min-width: 0;">
                 <h1 class="main-title-text">
-                    DIGITAL MARKETING <span style="color: {BRAND_YELLOW};">COMMAND CENTER</span>
+                    DIGITAL MARKETING <span style="color: {BRAND_YELLOW};">COMMAND CENTER</pan style="color: {BRAND_YELLOW}>
                 </h1>
                 <div class="marquee-wrapper-new">
                     <div class="marquee-text-new">
