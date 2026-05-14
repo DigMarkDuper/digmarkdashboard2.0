@@ -461,115 +461,115 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                     st.plotly_chart(fig_status, use_container_width=True)
                 
                 # 7. FUNNEL & SUMBER
-        c1, c2 = st.columns(2)
-        
-        with c1:
-            # --- SUB-HEADER KIRI: FUNNEL KONVERSI ---
-            FUNNEL_ICON = "https://cdn-icons-png.flaticon.com/512/1951/1951336.png" # Ikon Funnel/Corong
-
-            st.markdown(f"""
-                <div style="
-                    display: flex; 
-                    align-items: center; 
-                    gap: 12px; 
-                    background: #FFFFFF; 
-                    padding: 10px 15px; 
-                    border-radius: 10px; 
-                    margin-bottom: 15px; 
-                    border-left: 6px solid {BRAND_BLUE}; 
-                    border: 1px solid #E2E8F0;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-                ">
+            c1, c2 = st.columns(2)
+            
+            with c1:
+                # --- SUB-HEADER KIRI: FUNNEL KONVERSI ---
+                FUNNEL_ICON = "https://cdn-icons-png.flaticon.com/512/1951/1951336.png" # Ikon Funnel/Corong
+    
+                st.markdown(f"""
                     <div style="
-                        background: #F8FAFC; 
-                        padding: 6px; 
-                        border-radius: 6px; 
                         display: flex; 
                         align-items: center; 
-                        justify-content: center;
-                        border: 1px solid #F1F5F9;
+                        gap: 12px; 
+                        background: #FFFFFF; 
+                        padding: 10px 15px; 
+                        border-radius: 10px; 
+                        margin-bottom: 15px; 
+                        border-left: 6px solid {BRAND_BLUE}; 
+                        border: 1px solid #E2E8F0;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
                     ">
-                        <img src="{FUNNEL_ICON}" width="18">
-                    </div>
-                    <div>
                         <div style="
-                            margin: 0; 
-                            color: #1E293B; 
-                            font-size: 13px; 
-                            font-weight: 800; 
-                            letter-spacing: 0.5px; 
-                            text-transform: uppercase;
+                            background: #F8FAFC; 
+                            padding: 6px; 
+                            border-radius: 6px; 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center;
+                            border: 1px solid #F1F5F9;
                         ">
-                            📊 Funnel <span style="color: {BRAND_BLUE};">Konversi Prospek</span>
+                            <img src="{FUNNEL_ICON}" width="18">
+                        </div>
+                        <div>
+                            <div style="
+                                margin: 0; 
+                                color: #1E293B; 
+                                font-size: 13px; 
+                                font-weight: 800; 
+                                letter-spacing: 0.5px; 
+                                text-transform: uppercase;
+                            ">
+                                📊 Funnel <span style="color: {BRAND_BLUE};">Konversi Prospek</span>
+                            </div>
                         </div>
                     </div>
-                </div>
-            """, unsafe_allow_html=True)
-            
-            # --- LOGIKA FUNNEL AMAN ---
-            total_leads_saat_ini = len(df_wa) # Menghitung total data yang difilter saat ini
-            funnel_order = ["Follow Up", "Daftar", "Interview", "Closing"]
-            funnel_data = [dict(Tahap="Total Leads", Jumlah=total_leads_saat_ini)]
-            
-            if 'Status' in df_wa.columns:
-                for tahap in funnel_order:
-                    count = len(df_wa[df_wa['Status'].str.contains(tahap, case=False, na=False)])
-                    funnel_data.append(dict(Tahap=tahap, Jumlah=count))
-                    
-            df_f = pd.DataFrame(funnel_data)
-            df_f['Pct'] = (df_f['Jumlah'] / total_leads_saat_ini * 100).round(1) if total_leads_saat_ini > 0 else 0
-            
-            fig_funnel = px.bar(
-                df_f, x='Jumlah', y='Tahap', orientation='h',
-                text=df_f.apply(lambda r: f"{r['Jumlah']} ({r['Pct']}%)", axis=1),
-                color='Tahap', color_discrete_sequence=[BRAND_BLUE, "#006bbd", "#0080e0", BRAND_YELLOW, "#32CD32"]
-            )
-            fig_funnel.update_layout(paper_bgcolor='white', plot_bgcolor='white', showlegend=False, yaxis={'categoryorder':'total descending'})
-            st.plotly_chart(fig_funnel, use_container_width=True)
-
-        with c2:
-            # --- SUB-HEADER KANAN: SUMBER PROSPEK ---
-            SOURCE_ICON = "https://cdn-icons-png.flaticon.com/512/876/876019.png" # Ikon Network/Sumber
-            
-            st.markdown(f"""
-                <div style="
-                    display: flex; 
-                    align-items: center; 
-                    gap: 12px; 
-                    background: #FFFFFF; 
-                    padding: 10px 15px; 
-                    border-radius: 10px; 
-                    margin-bottom: 15px; 
-                    border-left: 6px solid {BRAND_BLUE}; 
-                    border: 1px solid #E2E8F0;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-                ">
+                """, unsafe_allow_html=True)
+                
+                # --- LOGIKA FUNNEL AMAN ---
+                total_leads_saat_ini = len(df_wa) # Menghitung total data yang difilter saat ini
+                funnel_order = ["Follow Up", "Daftar", "Interview", "Closing"]
+                funnel_data = [dict(Tahap="Total Leads", Jumlah=total_leads_saat_ini)]
+                
+                if 'Status' in df_wa.columns:
+                    for tahap in funnel_order:
+                        count = len(df_wa[df_wa['Status'].str.contains(tahap, case=False, na=False)])
+                        funnel_data.append(dict(Tahap=tahap, Jumlah=count))
+                        
+                df_f = pd.DataFrame(funnel_data)
+                df_f['Pct'] = (df_f['Jumlah'] / total_leads_saat_ini * 100).round(1) if total_leads_saat_ini > 0 else 0
+                
+                fig_funnel = px.bar(
+                    df_f, x='Jumlah', y='Tahap', orientation='h',
+                    text=df_f.apply(lambda r: f"{r['Jumlah']} ({r['Pct']}%)", axis=1),
+                    color='Tahap', color_discrete_sequence=[BRAND_BLUE, "#006bbd", "#0080e0", BRAND_YELLOW, "#32CD32"]
+                )
+                fig_funnel.update_layout(paper_bgcolor='white', plot_bgcolor='white', showlegend=False, yaxis={'categoryorder':'total descending'})
+                st.plotly_chart(fig_funnel, use_container_width=True)
+    
+            with c2:
+                # --- SUB-HEADER KANAN: SUMBER PROSPEK ---
+                SOURCE_ICON = "https://cdn-icons-png.flaticon.com/512/876/876019.png" # Ikon Network/Sumber
+                
+                st.markdown(f"""
                     <div style="
-                        background: #F8FAFC; 
-                        padding: 6px; 
-                        border-radius: 6px; 
                         display: flex; 
                         align-items: center; 
-                        justify-content: center;
-                        border: 1px solid #F1F5F9;
+                        gap: 12px; 
+                        background: #FFFFFF; 
+                        padding: 10px 15px; 
+                        border-radius: 10px; 
+                        margin-bottom: 15px; 
+                        border-left: 6px solid {BRAND_BLUE}; 
+                        border: 1px solid #E2E8F0;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
                     ">
-                        <img src="{SOURCE_ICON}" width="18">
-                    </div>
-                    <div>
                         <div style="
-                            margin: 0; 
-                            color: #1E293B; 
-                            font-size: 13px; 
-                            font-weight: 800; 
-                            letter-spacing: 0.5px; 
-                            text-transform: uppercase;
+                            background: #F8FAFC; 
+                            padding: 6px; 
+                            border-radius: 6px; 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center;
+                            border: 1px solid #F1F5F9;
                         ">
-                            🌐 Sumber <span style="color: {BRAND_BLUE};">Prospek</span>
+                            <img src="{SOURCE_ICON}" width="18">
+                        </div>
+                        <div>
+                            <div style="
+                                margin: 0; 
+                                color: #1E293B; 
+                                font-size: 13px; 
+                                font-weight: 800; 
+                                letter-spacing: 0.5px; 
+                                text-transform: uppercase;
+                            ">
+                                🌐 Sumber <span style="color: {BRAND_BLUE};">Prospek</span>
+                            </div>
                         </div>
                     </div>
-                </div>
-            """, unsafe_allow_html=True)
-            
+                """, unsafe_allow_html=True)
+                
             if 'Sumber (Ads/Organik/Sales)' in df_wa.columns:
                 sumber_vc = df_wa['Sumber (Ads/Organik/Sales)'].value_counts()
                 sumber_counts = pd.DataFrame({'Sumber': sumber_vc.index, 'Jumlah': sumber_vc.values})
