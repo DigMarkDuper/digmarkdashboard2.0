@@ -1,76 +1,114 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 import datetime
 from components.utils import append_sheet_rows, fetch_single_sheet
 
-def show_dm_sosmed_page(BRAND_BLUE):
-    st.title("📥 Input & Tracker DM Sosmed")
-    
-    # --- 1. FAST LOADING LOGIC ---
-    # Gunakan kunci khusus 'dm_data' agar tidak bercampur dengan bundle besar
+def show_dm_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
+    st.title("📥 TRACKER DM SOSMED")
+    st.markdown("Rekapitulasi calon siswa dari Instagram, TikTok, dan Facebook.")
+
+    # --- 1. OPTIMIZED DATA LOADING (FAST & STABLE) ---
     if 'dm_data' not in st.session_state:
-        with st.spinner("Menghubungkan ke Database..."):
+        with st.spinner("Menghubungkan ke Database DM..."):
+            # Kita hanya tarik Tab Index 5 agar ringan
             st.session_state.dm_data = fetch_single_sheet(5)
 
     df_dm = st.session_state.dm_data
 
-    # --- 2. FORM INPUT (INSTANT FEEL) ---
-    with st.form("form_input_dm", clear_on_submit=True):
-        st.markdown("### 📝 Form Prospek Baru")
-        c1, c2 = st.columns(2)
-        with c1:
-            platform = st.selectbox("Platform 📱", ["Instagram", "Tiktok", "Facebook"])
-            username = st.text_input("Nama / Username 👤")
-            domisili = st.text_input("Domisili / Asal Daerah 📍")
-        with c2:
-            no_hp = st.text_input("No HP / WhatsApp ☎️")
-            status_dm = st.selectbox("Status DM 📌", ["No Response", "Follow Up", "Daftar", "Interview", "Closing", "Move ke Whatsapp"])
-            tag_dm = st.selectbox("Tag Prospek 🏷️", ["NOT ELIGIBLE", "FUTURE PROSPECT", "HOT LEAD", "WARM LEAD", "COLD LEAD"])
+    # --- 2. SUMMARY METRICS (MODERN LOOK) ---
+    if not df_dm.empty:
+        # Penanganan Kolom & Filter
+        df_calc = df_dm.copy()
+        kolom_plat = 'Platform' if 'Platform' in df_calc.columns else df_calc.columns[1]
         
-        if st.form_submit_button("💾 Simpan Data DM", use_container_width=True):
-            if not username:
-                st.warning("Username wajib diisi!")
-            else:
-                uname_clean = username.strip().replace("@", "")
-                link_final = f"https://{platform.lower()}.com/{uname_clean}"
-                tgl_hari_ini = datetime.date.today().strftime("%Y-%m-%d")
-                
-                # Buat data baru untuk dikirim ke Google Sheets
-                # Urutan sesuai kolom di Sheets: No, Platform, Nama, Link, No HP, Domisili, Status, Tag, Tanggal
-                no_urut = len(df_dm) + 1
-                new_row_data = [no_urut, platform, username, link_final, no_hp, domisili, status_dm, tag_dm, tgl_hari_ini]
-                
-                with st.spinner("Menyimpan ke Cloud..."):
-                    if append_sheet_rows(5, [new_row_data]):
-                        # --- OPTIMISTIC UPDATE (INI RAHASIA KECEPATANNYA) ---
-                        # Alih-alih tarik data lagi, kita tempel langsung data baru ke tabel lokal
-                        new_row_df = pd.DataFrame([new_row_data], columns=df_dm.columns)
-                        st.session_state.dm_data = pd.concat([st.session_state.dm_data, new_row_df], ignore_index=True)
-                        
-                        st.toast("✅ Data Berhasil Masuk!", icon="🔥")
-                        st.rerun()
+        ig_count = len(df_calc[df_calc[kolom_plat].astype(str).str.contains('Instagram', case=False)])
+        tt_count = len(df_calc[df_calc[kolom_plat].astype(str).str.contains('Tiktok', case=False)])
+        fb_count = len(df_calc[df_calc[kolom_plat].astype(str).str.contains('Facebook', case=False)])
+
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Total Prospek", len(df_calc))
+        m2.metric("Instagram", ig_count)
+        m3.metric("TikTok", tt_count)
+        m4.metric("Facebook", fb_count)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # --- 3. MODERN PIE CHARTS (GRID 2x2) ---
+        c_pie1, c_pie2 = st.columns(2)
+        
+        # Style Chart Premium
+        def style_pie(fig):
+            fig.update_traces(textposition='inside', textinfo='percent+label', hole=0.5, marker=dict(line=dict(color='#white', width=2)))
+            fig.update_layout(margin=dict(l=20, r=20, t=40, b=20), height=300, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+            return fig
+
+        with c_pie1:
+            kolom_status = 'Status DM' if 'Status DM' in df_calc.columns else 'Status'
+            if kolom_status in df_calc.columns:
+                fig_stat = px.pie(df_calc, names=kolom_status, title='<b>Distribusi Status Prospek</b>')
+                st.plotly_chart(style_pie(fig_stat), use_container_width=True)
+
+        with c_pie2:
+            kolom_tag = 'Tag Prospek' if 'Tag Prospek' in df_calc.columns else 'Tag'
+            if kolom_tag in df_calc.columns:
+                df_tag = df_calc[df_calc[kolom_tag].astype(str).str.strip() != '']
+                fig_tag = px.pie(df_tag, names=kolom_tag, title='<b>Kualitas Lead (Tagging)</b>')
+                st.plotly_chart(style_pie(fig_tag), use_container_width=True)
 
     st.markdown("---")
 
-    # --- 3. TABEL DATA (PASTI MUNCUL) ---
-    st.markdown("### 📑 Tabel Database Terkini")
-    
-    if not st.session_state.dm_data.empty:
-        # Kita tampilkan 20 data terbaru di paling atas
-        # Menggunakan session_state.dm_data secara langsung agar sinkron
-        df_display = st.session_state.dm_data.copy()
+    # --- 4. FORM INPUT (INSTANT SAVE) ---
+    with st.form("form_dm_new", clear_on_submit=True):
+        st.markdown("### 📝 Input Data Prospek Baru")
+        c1, c2 = st.columns(2)
         
-        # Pastikan kolom Tanggal Masuk (atau kolom terakhir) ada untuk sorting jika perlu
-        # Kita tampilkan data terbaru di atas
-        st.dataframe(
-            df_display.iloc[::-1].head(20), 
-            use_container_width=True, 
-            hide_index=True
-        )
-    else:
-        st.info("Database kosong atau sedang sinkronisasi. Coba tekan tombol Refresh di bawah.")
+        with c1:
+            platform = st.selectbox("Platform 📱", ["Instagram", "Tiktok", "Facebook"])
+            username = st.text_input("Nama / Username 👤", placeholder="Username tanpa @")
+            domisili = st.text_input("Domisili / Asal Daerah 📍", placeholder="Contoh: Yogyakarta")
+            
+        with c2:
+            no_hp = st.text_input("No HP / WhatsApp ☎️", placeholder="Contoh: 0812...")
+            status_dm = st.selectbox("Status DM 📌", ["No Response", "Follow Up", "Daftar", "Interview", "Closing", "Move ke Whatsapp"])
+            tag_dm = st.selectbox("Tag Prospek 🏷️", ["HOT LEAD", "WARM LEAD", "COLD LEAD", "FUTURE PROSPECT", "NOT ELIGIBLE"])
+        
+        if st.form_submit_button("💾 SIMPAN DATA KE TRACKER", use_container_width=True):
+            if not username:
+                st.warning("⚠️ Nama/Username wajib diisi!")
+            else:
+                # Logika Auto-Link & Phone Format
+                uname_clean = username.strip().replace("@", "")
+                if platform == "Instagram": link_final = f"https://instagram.com/{uname_clean}"
+                elif platform == "Tiktok": link_final = f"https://tiktok.com/@{uname_clean}"
+                else: link_final = f"https://facebook.com/{uname_clean}"
+                
+                # Format HP untuk Sheets
+                hp_val = str(no_hp).strip()
+                no_hp_final = "'" + ("62" + hp_val[1:] if hp_val.startswith("0") else hp_val) if hp_val else ""
 
-    # Tombol Refresh untuk Sinkronisasi Paksa
-    if st.button("🔄 Sinkronisasi Ulang dengan Google Sheets"):
+                tgl_hari_ini = datetime.date.today().strftime("%Y-%m-%d")
+                no_urut = len(df_dm) + 1
+                
+                # Data Baru (Struktur 9 Kolom)
+                data_baru = [no_urut, platform, username, link_final, no_hp_final, domisili, status_dm, tag_dm, tgl_hari_ini]
+                
+                if append_sheet_rows(5, [data_baru]):
+                    # OPTIMISTIC UPDATE: Tempel langsung ke tabel di layar tanpa tunggu refresh
+                    new_row_df = pd.DataFrame([data_baru], columns=df_dm.columns if not df_dm.empty else None)
+                    st.session_state.dm_data = pd.concat([st.session_state.dm_data, new_row_df], ignore_index=True)
+                    
+                    st.success(f"🔥 Berhasil menyimpan {username}!")
+                    st.rerun()
+
+    # --- 5. DATABASE TABLE ---
+    st.markdown("### 📑 15 Update Terakhir")
+    if not st.session_state.dm_data.empty:
+        # Sortir data terbaru di atas
+        df_display = st.session_state.dm_data.copy()
+        st.dataframe(df_display.iloc[::-1].head(15), use_container_width=True, hide_index=True)
+    
+    if st.button("🔄 Sinkronisasi Ulang Database"):
         del st.session_state.dm_data
+        st.cache_data.clear()
         st.rerun()
