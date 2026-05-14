@@ -443,8 +443,51 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
     # ==========================================================
     # 6. PETA PERSEBARAN & GRAFIK (CLEAN & FIXED)
     # ==========================================================
-    st.markdown(f"<h3 style='color:{BRAND_BLUE}; font-size: 18px; margin-bottom: 10px; margin-top: 15px;'>🗺️ Peta Persebaran & Top Asal Prospek</h3>", unsafe_allow_html=True)
+    # --- SECTION HEADER: GEOSPATIAL ANALYSIS ---
+    MAP_ICON = "https://cdn-icons-png.flaticon.com/512/854/854878.png" # Ikon Peta/Pin Lokasi Modern
 
+    st.markdown(f"""
+        <div style="
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            background: linear-gradient(90deg, #1e40af 0%, {BRAND_BLUE} 100%); 
+            padding: 15px 25px; 
+            border-radius: 15px; 
+            margin-top: 30px;
+            margin-bottom: 20px; 
+            border-left: 12px solid {BRAND_YELLOW}; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        ">
+            <div style="
+                background: rgba(255, 255, 255, 0.15); 
+                backdrop-filter: blur(8px);
+                padding: 10px; 
+                border-radius: 12px; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            ">
+                <img src="{MAP_ICON}" width="28">
+            </div>
+            <div>
+                <h3 style="
+                    margin: 0; 
+                    color: white; 
+                    font-size: 18px; 
+                    font-weight: 900; 
+                    letter-spacing: 1px; 
+                    text-transform: uppercase;
+                ">
+                    Peta Persebaran & <span style="color: {BRAND_YELLOW};">Top Asal</span> Prospek
+                </h3>
+                <p style="margin: 0; color: rgba(255, 255, 255, 0.7); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Geographic Distribution & Lead Origin Intelligence
+                </p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
     try:
         # --- 1. FILTER DATA: Hanya Leads Murni ---
         df_maps = df_wa.copy()
