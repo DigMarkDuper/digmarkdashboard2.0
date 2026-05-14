@@ -327,7 +327,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
                     justify-content: center;
                     border: 1px solid rgba(255, 255, 255, 0.2);
                 ">
-                    <img src="https://img.icons8.com/fluency/48/globe--v1.png" width="30">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3163/3163634.png" width="30">
                 </div>
                 <div>
                     <h2 style="
