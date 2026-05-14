@@ -304,7 +304,48 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
         final_cac = final_spend / closing_total if closing_total > 0 else 0
         final_roas = (final_omzet / final_spend) if final_spend > 0 else 0
 
-        st.markdown('<div style="font-weight: 800; margin-bottom: 15px; margin-top: 25px;">🌍 ULTIMATE ROI DASHBOARD (ALL TIME GLOBAL)</div>', unsafe_allow_html=True)
+        st.markdown(f"""
+            <div style="
+                display: flex; 
+                align-items: center; 
+                gap: 15px; 
+                background: linear-gradient(90deg, #0F172A 0%, {BRAND_BLUE} 100%); 
+                padding: 15px 25px; 
+                border-radius: 15px; 
+                margin-top: 35px;
+                margin-bottom: 25px; 
+                border-left: 12px solid {BRAND_YELLOW}; 
+                box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            ">
+                <div style="
+                    background: rgba(255, 255, 255, 0.1); 
+                    backdrop-filter: blur(5px);
+                    padding: 10px; 
+                    border-radius: 12px; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center;
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                ">
+                    <img src="https://img.icons8.com/fluency/48/globe--v1.png" width="30">
+                </div>
+                <div>
+                    <h2 style="
+                        margin: 0; 
+                        color: white; 
+                        font-size: 18px; 
+                        font-weight: 900; 
+                        letter-spacing: 2px; 
+                        text-transform: uppercase;
+                    ">
+                        ULTIMATE <span style="color: {BRAND_YELLOW};">ROI DASHBOARD</span>
+                    </h2>
+                    <p style="margin: 0; color: #94A3B8; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                        All-Time Global Conversion & Investment Analytics
+                    </p>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
         r = st.columns(5)
 
         render_universal_card(r[0], "💸", "Total Spend Ads+Mekari", f"Rp {final_spend:,.0f}", "All Platforms", "#8B0000")
