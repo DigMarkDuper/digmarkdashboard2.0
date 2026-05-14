@@ -21,52 +21,69 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
     df_ins = utils.load_insight()
 
     # --- 2. CSS CUSTOM (ULTRACLEAN COMMAND CENTER) ---
-    st.markdown("""
+LOGO_URL = "hhttps://www.dutapersadajogja.com/assets/img/logo.png"
+
+    st.markdown(f"""
         <style>
-        .kpi-card {
-            background-color: #FFFFFF !important;
-            border-radius: 12px !important;
-            padding: 18px !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
-            border: 1px solid #F0F2F6 !important;
-            min-height: 135px !important; 
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: space-between !important;
-            transition: all 0.3s ease !important;
-        }
-        .kpi-card:hover {
-            transform: translateY(-5px) !important;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.1) !important;
-            border-color: #D1D5DB !important;
-        }
-        .card-header {
-            display: flex !important;
-            align-items: center !important;
-            gap: 10px !important;
-            margin-bottom: 10px !important;
-        }
-        .metric-title {
-            font-size: 10px !important;
-            color: #6B7280 !important;
-            font-weight: 800 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.5px !important;
-            line-height: 1.2 !important;
-        }
-        .metric-value {
-            font-size: 20px !important;
-            font-weight: 800 !important;
-            color: #111827 !important;
-            line-height: 1 !important;
-            margin-bottom: 4px !important;
-        }
-        .metric-sub {
-            font-size: 10px !important;
-            font-weight: 600 !important;
-            color: #059669 !important;
-        }
+            @keyframes marquee_blue {{
+                0% {{ transform: translateX(100%); }}
+                100% {{ transform: translateX(-100%); }}
+            }}
+            .main-header-container {{
+                text-align: center;
+                margin-bottom: 40px;
+                padding: 20px;
+            }}
+            .logo-img {{
+                width: 100px;
+                margin-bottom: 15px;
+                filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.1));
+            }}
+            .title-text {{
+                font-size: 52px;
+                font-weight: 900;
+                color: {BRAND_BLUE};
+                margin: 0;
+                letter-spacing: -2px;
+                text-transform: uppercase;
+                line-height: 1.1;
+            }}
+            .title-accent {{
+                color: {BRAND_YELLOW};
+                display: inline-block;
+            }}
+            .marquee-box {{
+                width: 75%;
+                margin: 15px auto 0;
+                overflow: hidden;
+                white-space: nowrap;
+                border-top: 2px solid {BRAND_YELLOW}; /* Aksen Kuning di garis */
+                border-bottom: 2px solid {BRAND_BLUE};  /* Aksen Biru di garis */
+                padding: 6px 0;
+            }}
+            .marquee-anim {{
+                display: inline-block;
+                animation: marquee_blue 25s linear infinite;
+                color: #4B5563;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 13px;
+                font-weight: 800;
+            }}
         </style>
+
+        <div class="main-header-container">
+            <img src="{LOGO_URL}" class="logo-img">
+            
+            <h1 class="title-text">
+                DIGITAL MARKETING <span class="title-accent">COMMAND CENTER</span>
+            </h1>
+            
+            <div class="marquee-box">
+                <div class="marquee-anim">
+                    SYSTEM STATUS: OPTIMIZED • DATA SOURCE: LPK DUTA PERSADA GOOGLE ECOSYSTEM • ROI ENGINE: ONLINE • WELCOME BACK, MANAGER • SINKRONISASI 2026 AKTIF • 
+                </div>
+            </div>
+        </div>
     """, unsafe_allow_html=True)
 
     # --- FUNGSI RENDER UNIVERSAL ---
