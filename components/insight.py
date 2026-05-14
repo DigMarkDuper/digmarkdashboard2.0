@@ -249,12 +249,13 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
 
    # --- 4. SECTION: UPLOAD MODULE ---
     st.markdown(f"""
-        <div style="display: flex; align-items: center; gap: 12px; background: #EEF2FF; padding: 12px 18px; border-radius: 12px 12px 0 0; border: 1px solid #E0E7FF; border-bottom: none;">
-            <div style="background: white; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                <img src="https://img.icons8.com/fluency/48/cloud-lighting.png" width="25">
+        <div style="display: flex; align-items: center; gap: 15px; background: linear-gradient(90deg, {BRAND_BLUE} 0%, #1e40af 100%); padding: 15px 25px; border-radius: 15px 15px 0 0; border-left: 10px solid {BRAND_YELLOW}; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <div style="background: rgba(255,255,255,0.2); padding: 8px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <img src="https://img.icons8.com/color/48/upload-to-cloud--v1.png" width="28">
             </div>
-            <div style="font-size: 14px; font-weight: 800; color: #3730A3; text-transform: uppercase; letter-spacing: 1px;">
-                Data Ingestion Engine
+            <div>
+                <h2 style="margin:0; color:white; font-size:18px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">🚀 Upload Data Insight Baru</h2>
+                <p style="margin:0; color: rgba(255,255,255,0.7); font-size: 11px; font-weight: 600;">Import file terbaru untuk memperbarui dashboard</p>
             </div>
         </div>
     """, unsafe_allow_html=True)
