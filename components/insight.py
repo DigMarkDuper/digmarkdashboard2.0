@@ -37,7 +37,9 @@ def universal_date_parser(d_str):
     return d_str
 
 def create_modern_chart(data, y_col, color, title):
-    # Buat chart dasar
+    if data.empty:
+        return go.Figure()
+
     fig = px.area(
         data,
         x='Date',
@@ -46,12 +48,13 @@ def create_modern_chart(data, y_col, color, title):
         line_shape='spline'
     )
 
-    # Konfigurasi agar angka muncul permanen
     fig.update_traces(
-        mode='lines+markers+text',          # Tambahkan '+text' agar angka muncul
-        text=data[y_col],                   # Ambil angka dari kolom y
-        textposition='top center',          # Posisi angka di atas titik
-        texttemplate='%{text:,.0f}',        # Format angka (ribuan dipisah koma)
+        mode='lines+markers+text',
+        text=data[y_col],
+        textposition='top center',
+        texttemplate='%{text:,.0f}',
+        # PENTING: Agar angka tidak terpotong meski keluar dari garis sumbu
+        cliponaxis=False, 
         line=dict(width=3, color=color),
         fillcolor='rgba' + str(
             tuple(
@@ -66,18 +69,23 @@ def create_modern_chart(data, y_col, color, title):
             color='white',
             line=dict(width=3, color=color)
         ),
-        # Font untuk angka yang muncul permanen
         textfont=dict(
             family="Arial",
-            size=11,
-            color=color  # Warna angka disamakan dengan warna garis agar senada
+            size=12,
+            color=color,
+            # Memberikan efek bold agar angka lebih jelas
+            weight="bold" 
         ),
         hovertemplate="<b>%{y:,.0f}</b><extra></extra>"
     )
 
+    # Hitung batas atas secara dinamis (tambah 30% dari nilai tertinggi)
+    max_val = data[y_col].max()
+    y_upper_limit = max_val * 1.3 if max_val > 0 else 100
+
     fig.update_layout(
-        height=320, # Ditambah sedikit tingginya agar angka tidak terpotong plafon grafik
-        margin=dict(l=10, r=10, t=60, b=10),
+        height=350, # Sedikit lebih tinggi agar lega
+        margin=dict(l=10, r=10, t=80, b=10), # Tambah margin atas (t=80)
         template="plotly_white",
         hovermode="x unified",
         xaxis=dict(
@@ -89,8 +97,8 @@ def create_modern_chart(data, y_col, color, title):
             showgrid=True, 
             gridcolor='#F3F4F6', 
             tickformat=",",
-            # Berikan sedikit ruang di atas (padding) agar angka tertinggi tidak menempel ke judul
-            range=[0, data[y_col].max() * 1.2 if not data.empty else 100] 
+            # Mengunci range agar ada ruang kosong di atas untuk angka
+            range=[0, y_upper_limit] 
         ),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
