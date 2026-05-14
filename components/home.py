@@ -162,34 +162,65 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
         </div>
     """, unsafe_allow_html=True)
 
-    # --- 4. NAVIGASI MENU ---
-    def create_square_card(icon, title, subtitle, target_page, button_key):
+    # ==========================================================
+    # 4. NAVIGASI MENU (REMODERNIZED)
+    # ==========================================================
+    
+    # --- CSS INJECTION UNTUK TOMBOL BIRU ---
+    st.markdown(f"""
+        <style>
+        div.stButton > button {{
+            background-color: {BRAND_BLUE} !important;
+            color: white !important;
+            border-radius: 8px !important;
+            border: none !important;
+            height: 40px !important;
+            font-weight: 700 !important;
+            transition: all 0.3s ease !important;
+        }}
+        div.stButton > button:hover {{
+            background-color: #1e40af !important; /* Biru lebih gelap saat hover */
+            border: none !important;
+            color: {BRAND_YELLOW} !important; /* Teks berubah kuning saat hover */
+            transform: translateY(-2px) !important;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2) !important;
+        }}
+        </style>
+    """, unsafe_allow_html=True)
+
+    def create_square_card(icon_url, title, subtitle, target_page, button_key):
         with st.container(border=True):
             st.markdown(f"""
                 <div style="text-align: center; padding: 10px 0px;">
-                    <div style="font-size: 45px; margin-bottom: 10px;">{icon}</div>
-                    <div style="font-size: 14px; font-weight: 800; color: #1E3A8A; text-transform: uppercase;">{title}</div>
-                    <div style="font-size: 11px; color: #666; margin-top: 5px; min-height: 35px;">{subtitle}</div>
+                    <div style="margin-bottom: 15px; display: flex; justify-content: center; align-items: center; height: 60px;">
+                        <img src="{icon_url}" width="50">
+                    </div>
+                    <div style="font-size: 14px; font-weight: 800; color: #1E3A8A; text-transform: uppercase; letter-spacing: 1px;">{title}</div>
+                    <div style="font-size: 11px; color: #666; margin-top: 5px; min-height: 35px; font-weight: 500;">{subtitle}</div>
                 </div>
             """, unsafe_allow_html=True)
-            st.button("Masuk ➔", key=button_key, use_container_width=True, on_click=go_to_page_func, args=(target_page,))
+            # Tombol sudah otomatis jadi Biru karena CSS di atas
+            st.button("MASUK ➔", key=button_key, use_container_width=True, on_click=go_to_page_func, args=(target_page,))
 
+    # Data Navigasi dengan URL Logo Premium
     nav_data = [
-        ("📱", "Sosmed", "Jadwal PIC", "📱 SOSIAL MEDIA", "btn_sos"),
-        ("🌐", "Website", "SEO Audit", "🌐 WEBSITE AUDIT", "btn_web"),
-        ("📈", "Insight", "Analytics", "📈 INSIGHTS & ANALYTICS", "btn_in"),
-        ("💬", "WA Admin", "Closing Funnel", "💬 WA ADMIN REPORT", "btn_wa"),
-        ("📂", "Database", "CRM Kontak", "📂 DATABASE NOMOR", "btn_db"),
-        ("📥", "DM Sosmed", "Tracker Inbox", "📱 DM SOSMED", "btn_dm"),
-        ("🎯", "Ads Report", "ROI & CPL", "📈 ADS ANALYTICS", "btn_ads")
+        ("https://cdn-icons-png.flaticon.com/512/6033/6033716.png", "Sosmed", "Jadwal PIC", "📱 SOSIAL MEDIA", "btn_sos"),
+        ("https://cdn-icons-png.flaticon.com/512/1006/1006771.png", "Website", "SEO Audit", "🌐 WEBSITE AUDIT", "btn_web"),
+        ("https://cdn-icons-png.flaticon.com/512/4285/4285667.png", "Insight", "Analytics", "📈 INSIGHTS & ANALYTICS", "btn_in"),
+        ("https://cdn-icons-png.flaticon.com/512/3063/3063822.png", "WA Admin", "Closing Funnel", "💬 WA ADMIN REPORT", "btn_wa"),
+        ("https://cdn-icons-png.flaticon.com/512/1243/1243420.png", "Database", "CRM Kontak", "📂 DATABASE NOMOR", "btn_db"),
+        ("https://cdn-icons-png.flaticon.com/512/2099/2099122.png", "DM Sosmed", "Tracker Inbox", "📱 DM SOSMED", "btn_dm"),
+        ("https://cdn-icons-png.flaticon.com/512/3256/3256150.png", "Ads Report", "ROI & CPL", "📈 ADS ANALYTICS", "btn_ads")
     ]
 
+    # Render Baris 1
     cols1 = st.columns(4)
     for col, data in zip(cols1, nav_data[:4]):
         with col: create_square_card(*data)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
+    # Render Baris 2
     cols2 = st.columns(4)
     for col, data in zip(cols2, nav_data[4:]):
         with col: create_square_card(*data)
