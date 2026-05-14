@@ -38,7 +38,7 @@ def check_password():
     if st.session_state.get("password_correct"):
         return True
     
-                st.markdown(f"""
+        st.markdown(f"""
         <style>
         
         /* Background utama */
