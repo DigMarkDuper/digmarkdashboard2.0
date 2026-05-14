@@ -141,7 +141,7 @@ try:
         show_crm_page()
 
     elif page == "📱 DM SOSMED":
-        show_dm_sosmed_page(BRAND_BLUE)
+        show_dm_sosmed_page(BRAND_BLUE, BRAND_YELLOW)
 
     elif page == "📈 ADS ANALYTICS":
         show_ads_analytics_page(BRAND_BLUE)
