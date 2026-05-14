@@ -574,12 +574,8 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
                     )
                     fig_map.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, height=600, coloraxis_showscale=False)
                     st.plotly_chart(fig_map, use_container_width=True)
-                else:
-                    st.warning("⚠️ Lokasi terdeteksi tapi koordinat tidak ditemukan di database lokasi.")
             
-            st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
-            
- # B. GRAFIK TREEMAP (FIXED & SYNCED)
+  # B. GRAFIK TREEMAP (FIXED & SYNCED)
     # --- SECTION HEADER: TREEMAP DISTRIBUTION ---
     TREE_ICON = "https://cdn-icons-png.flaticon.com/512/1632/1632602.png" 
         
@@ -631,7 +627,6 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
     """, unsafe_allow_html=True)
 
     try:
-        # PERBAIKAN: Gunakan df_wa (sesuai variabel yang di-load di atas), bukan df
         if not df_wa.empty:
             # Mencari kolom yang mengandung kata 'Asal' secara otomatis
             asal_col = next((c for c in df_wa.columns if 'Asal' in str(c)), None)
