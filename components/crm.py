@@ -65,42 +65,73 @@ def show_crm_page():
     st.markdown("---")
 
     # 2. LOAD DATA & FILTER SYSTEM
-    try:
-        df_crm = load_database_nomor()
-        if not df_crm.empty:
-            df_crm = df_crm.fillna('')
+try:
+    df_crm = load_database_nomor()
+    if not df_crm.empty:
+        df_crm = df_crm.fillna('')
+        
+        # Filter UI
+        with st.expander("🔍 Filter Strategis Database", expanded=True):
+            search_crm = st.text_input("🔎 Cari Nama/HP:", placeholder="Ketik...", key="search_v_final")
             
-            # Filter UI
-            with st.expander("🔍 Filter Strategis Database", expanded=True):
-                search_crm = st.text_input("🔎 Cari Nama/HP:", placeholder="Ketik...", key="search_v_final")
-                c1, c2 = st.columns(2)
-                with c1:
-                    m_tag_col = 'Mekari Tag (Status Terakhir)'
-                    opts_mekari = sorted(df_crm[m_tag_col].unique().tolist()) if m_tag_col in df_crm.columns else []
-                    sel_mekari = st.multiselect("Mekari Tag:", options=opts_mekari, key="f_mek_v_final")
-                with c2:
-                    opts_daerah = sorted(df_crm['Domisili'].unique().tolist()) if 'Domisili' in df_crm.columns else []
-                    sel_daerah = st.multiselect("Pilih Daerah:", options=opts_daerah, key="f_daer_v_final")
-
-            # Logika Filter
-            mask = pd.Series([True] * len(df_crm))
-            if search_crm:
-                mask &= (df_crm['Nama'].astype(str).str.contains(search_crm, case=False) | df_crm['No Hp'].astype(str).str.contains(search_crm))
-            if sel_mekari:
-                mask &= df_crm[m_tag_col].isin(sel_mekari)
-            if sel_daerah:
-                mask &= df_crm['Domisili'].isin(sel_daerah)
+            # Ubah menjadi 3 kolom agar muat filter baru
+            c1, c2, c3 = st.columns(3)
             
-            filtered_crm = df_crm[mask].copy()
-
-            st.markdown('<div class="feature-header">📑 Management Database CRM</div>', unsafe_allow_html=True)
+            with c1:
+                m_tag_col = 'Mekari Tag (Status Terakhir)'
+                opts_mekari = sorted(df_crm[m_tag_col].unique().tolist()) if m_tag_col in df_crm.columns else []
+                sel_mekari = st.multiselect("Mekari Tag:", options=opts_mekari, key="f_mek_v_final")
             
-            col_m1, col_m2 = st.columns(2)
-            col_m1.metric("Prospek Terfilter", len(filtered_crm))
-            col_m2.metric("Total Database", len(df_crm))
+            with c2:
+                opts_daerah = sorted(df_crm['Domisili'].unique().tolist()) if 'Domisili' in df_crm.columns else []
+                sel_daerah = st.multiselect("Pilih Daerah:", options=opts_daerah, key="f_daer_v_final")
+            
+            with c3:
+                # Filter Baru: Status Treatment
+                # Mengasumsikan ada kolom 'Status Treatment' di database
+                sel_treatment = st.selectbox(
+                    "Status Treatment:",
+                    options=["Semua", "Sudah Treatment", "Belum Treatment"],
+                    key="f_treat_v_final"
+                )
 
-            st.dataframe(filtered_crm, use_container_width=True, hide_index=True)
-        else:
-            st.info("Database masih kosong. Silakan import data.")
-    except Exception as e:
-        st.error(f"Gagal memuat data CRM: {e}")
+        # Logika Filter
+        mask = pd.Series([True] * len(df_crm))
+        
+        if search_crm:
+            mask &= (df_crm['Nama'].astype(str).str.contains(search_crm, case=False) | 
+                     df_crm['No Hp'].astype(str).str.contains(search_crm))
+        
+        if sel_mekari:
+            mask &= df_crm[m_tag_col].isin(sel_mekari)
+        
+        if sel_daerah:
+            mask &= df_crm['Domisili'].isin(sel_daerah)
+
+        # Logika Filter Treatment
+        if sel_treatment == "Sudah Treatment":
+            # Mencari baris yang tidak kosong atau berisi 'Sudah'
+            mask &= (df_crm['Status Treatment'].astype(str).str.contains('Sudah', case=False))
+        elif sel_treatment == "Belum Treatment":
+            # Mencari baris yang kosong atau tidak berisi 'Sudah'
+            mask &= (~df_crm['Status Treatment'].astype(str).str.contains('Sudah', case=False))
+        
+        filtered_crm = df_crm[mask].copy()
+
+        # Dashboard Metrics
+        st.markdown('<div class="feature-header">📑 Management Database CRM</div>', unsafe_allow_html=True)
+        
+        col_m1, col_m2, col_m3 = st.columns(3)
+        col_m1.metric("Prospek Terfilter", len(filtered_crm))
+        col_m2.metric("Total Database", len(df_crm))
+        
+        # Tambahan metric untuk insight cepat
+        sudah_count = len(df_crm[df_crm['Status Treatment'].astype(str).str.contains('Sudah', case=False)])
+        col_m3.metric("Total Sudah Treatment", sudah_count)
+
+        st.dataframe(filtered_crm, use_container_width=True, hide_index=True)
+        
+    else:
+        st.info("Database masih kosong. Silakan import data.")
+except Exception as e:
+    st.error(f"Gagal memuat data CRM: {e}")
