@@ -37,10 +37,20 @@ def show_dm_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
         # --- 3. MODERN PIE CHARTS (GRID 2x2) ---
         c_pie1, c_pie2 = st.columns(2)
         
-        # Style Chart Premium
+        # Style Chart Premium (VERSI FIX)
         def style_pie(fig):
-            fig.update_traces(textposition='inside', textinfo='percent+label', hole=0.5, marker=dict(line=dict(color='#white', width=2)))
-            fig.update_layout(margin=dict(l=20, r=20, t=40, b=20), height=300, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+            fig.update_traces(
+                textposition='inside', 
+                textinfo='percent+label', 
+                hole=0.5, 
+                marker=dict(line=dict(color='white', width=2)) # SUDAH DIPERBAIKI: '#white' jadi 'white'
+            )
+            fig.update_layout(
+                margin=dict(l=20, r=20, t=40, b=20), 
+                height=300, 
+                paper_bgcolor='rgba(0,0,0,0)', 
+                plot_bgcolor='rgba(0,0,0,0)'
+            )
             return fig
 
         with c_pie1:
