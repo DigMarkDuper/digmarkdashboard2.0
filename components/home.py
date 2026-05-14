@@ -88,89 +88,89 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
     # --- 3. HEADER ---
     LOGO_URL = "https://www.dutapersadajogja.com/assets/img/logo.png"
 
-st.markdown(f"""
-        <style>
-            @keyframes marquee_header {{
-                0% {{ transform: translateX(100%); }}
-                100% {{ transform: translateX(-100%); }}
-            }}
-            .main-header-box {{
-                display: flex;
-                align-items: center;
-                gap: 25px;
-                background: linear-gradient(90deg, {BRAND_BLUE} 0%, #1e40af 100%);
-                padding: 25px 30px;
-                border-radius: 20px;
-                border-left: 12px solid {BRAND_YELLOW};
-                box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-                margin-bottom: 40px;
-            }}
-            .glass-logo-wrapper {{
-                background: rgba(255, 255, 255, 0.15);
-                backdrop-filter: blur(10px);
-                padding: 15px;
-                border-radius: 18px;
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                flex-shrink: 0;
-            }}
-            .header-content-area {{
-                flex-grow: 1;
-                overflow: hidden;
-            }}
-            .main-title {{
-                margin: 0;
-                color: white;
-                font-size: 38px;
-                font-weight: 900;
-                letter-spacing: -1px;
-                text-transform: uppercase;
-                line-height: 1;
-            }}
-            .title-yellow {{
-                color: {BRAND_YELLOW};
-            }}
-            .marquee-wrapper-new {{
-                margin-top: 12px;
-                width: 100%;
-                overflow: hidden;
-                white-space: nowrap;
-                background: rgba(0, 0, 0, 0.2);
-                padding: 6px 0;
-                border-radius: 5px;
-                border-top: 1px solid rgba(255,255,255,0.1);
-            }}
-            .marquee-text-new {{
-                display: inline-block;
-                animation: marquee_header 25s linear infinite;
-                color: rgba(255, 255, 255, 0.8);
-                font-family: 'Courier New', Courier, monospace;
-                font-size: 13px;
-                font-weight: 700;
-                letter-spacing: 1px;
-            }}
-        </style>
-
-        <div class="main-header-box">
-            <div class="glass-logo-wrapper">
-                <img src="{LOGO_URL}" width="80">
-            </div>
-            
-            <div class="header-content-area">
-                <h1 class="main-title">
-                    DIGITAL MARKETING <span class="title-yellow">COMMAND CENTER</span>
-                </h1>
+    st.markdown(f"""
+            <style>
+                @keyframes marquee_header {{
+                    0% {{ transform: translateX(100%); }}
+                    100% {{ transform: translateX(-100%); }}
+                }}
+                .main-header-box {{
+                    display: flex;
+                    align-items: center;
+                    gap: 25px;
+                    background: linear-gradient(90deg, {BRAND_BLUE} 0%, #1e40af 100%);
+                    padding: 25px 30px;
+                    border-radius: 20px;
+                    border-left: 12px solid {BRAND_YELLOW};
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+                    margin-bottom: 40px;
+                }}
+                .glass-logo-wrapper {{
+                    background: rgba(255, 255, 255, 0.15);
+                    backdrop-filter: blur(10px);
+                    padding: 15px;
+                    border-radius: 18px;
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                }}
+                .header-content-area {{
+                    flex-grow: 1;
+                    overflow: hidden;
+                }}
+                .main-title {{
+                    margin: 0;
+                    color: white;
+                    font-size: 38px;
+                    font-weight: 900;
+                    letter-spacing: -1px;
+                    text-transform: uppercase;
+                    line-height: 1;
+                }}
+                .title-yellow {{
+                    color: {BRAND_YELLOW};
+                }}
+                .marquee-wrapper-new {{
+                    margin-top: 12px;
+                    width: 100%;
+                    overflow: hidden;
+                    white-space: nowrap;
+                    background: rgba(0, 0, 0, 0.2);
+                    padding: 6px 0;
+                    border-radius: 5px;
+                    border-top: 1px solid rgba(255,255,255,0.1);
+                }}
+                .marquee-text-new {{
+                    display: inline-block;
+                    animation: marquee_header 25s linear infinite;
+                    color: rgba(255, 255, 255, 0.8);
+                    font-family: 'Courier New', Courier, monospace;
+                    font-size: 13px;
+                    font-weight: 700;
+                    letter-spacing: 1px;
+                }}
+            </style>
+    
+            <div class="main-header-box">
+                <div class="glass-logo-wrapper">
+                    <img src="{LOGO_URL}" width="80">
+                </div>
                 
-                <div class="marquee-wrapper-new">
-                    <div class="marquee-text-new">
-                        SYSTEM STATUS: OPTIMIZED • DATA SOURCE: LPK DUTA PERSADA GOOGLE ECOSYSTEM • ROI ENGINE: ONLINE • WELCOME BACK, MANAGER • SINKRONISASI 2026 AKTIF • 
+                <div class="header-content-area">
+                    <h1 class="main-title">
+                        DIGITAL MARKETING <span class="title-yellow">COMMAND CENTER</span>
+                    </h1>
+                    
+                    <div class="marquee-wrapper-new">
+                        <div class="marquee-text-new">
+                            SYSTEM STATUS: OPTIMIZED • DATA SOURCE: LPK DUTA PERSADA GOOGLE ECOSYSTEM • ROI ENGINE: ONLINE • WELCOME BACK, MANAGER • SINKRONISASI 2026 AKTIF • 
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
     # --- 4. NAVIGASI MENU ---
     def create_square_card(icon, title, subtitle, target_page, button_key):
