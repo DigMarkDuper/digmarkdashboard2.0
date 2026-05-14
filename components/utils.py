@@ -7,10 +7,12 @@ import datetime
 import time  
 
 # =====================================================================
-# 1. KONEKSI ENGINE
+# 1. KONEKSI ENGINE (GOOGLE SHEETS API)
 # =====================================================================
+
 @st.cache_resource
 def init_connection():
+    """Membuka akses ke Google Sheets menggunakan st.secrets"""
     try:
         creds_info = dict(st.secrets["gcp_service_account"])
         if "private_key" in creds_info:
@@ -23,26 +25,43 @@ def init_connection():
         return None
 
 # =====================================================================
-# 2. DATA LOADERS (JALUR LAMBAT - BUNDLE)
+# 2. DATA LOADERS - JALUR UTAMA (BUNDLE SEMUA TAB)
 # =====================================================================
+
 @st.cache_data(ttl=600)
 def fetch_all_master_data():
+    """Menarik hampir semua tab sekaligus (Jalur Lambat - 1.2s per tab)"""
     client = init_connection()
     if not client: return None
     try:
         master = client.open("MASTER DATA DIGITAL MARKETING 2.0")
-        def get_df(idx):
-            time.sleep(1.2) # Jeda aman API
-            data = master.get_worksheet(idx).get_all_records()
-            return pd.DataFrame(data) if data else pd.DataFrame()
         
-        return {0: get_df(0), 1: get_df(1), 2: get_df(2), 3: get_df(3), 
-                4: get_df(4), 6: get_df(6), 7: get_df(7), 8: get_df(8)}
+        def get_df(idx):
+            try:
+                time.sleep(1.2) # Jeda aman API agar tidak terkena Limit
+                data = master.get_worksheet(idx).get_all_records()
+                return pd.DataFrame(data) if data else pd.DataFrame()
+            except Exception as e: 
+                print(f"Gagal tarik tab {idx}: {e}")
+                return pd.DataFrame()
+        
+        # Tarik data bundle (Index 5 dilewati karena ada jalur cepat sendiri)
+        return {
+            0: get_df(0), # Sosmed
+            1: get_df(1), # Website
+            2: get_df(2), # Insight
+            3: get_df(3), # WA Admin
+            4: get_df(4), # Database Nomor (CRM)
+            6: get_df(6), # Iklan/Ads
+            7: get_df(7), # CRM Progress
+            8: get_df(8)  # Pengaturan
+        }
     except Exception as e:
-        st.error(f"Gagal Sinkronisasi: {e}")
+        st.error(f"Gagal Sinkronisasi Master Data: {e}")
         return None
 
 def get_from_bundle(idx):
+    """Ambil data dari session state bundle."""
     if 'bundle' not in st.session_state or st.session_state.bundle is None:
         st.session_state.bundle = fetch_all_master_data()
     if st.session_state.bundle is None:
@@ -50,11 +69,10 @@ def get_from_bundle(idx):
     return st.session_state.bundle.get(idx, pd.DataFrame()).copy()
 
 # =====================================================================
-# 3. DATA LOADERS (HALAMAN SPESIFIK)
+# 3. DATA LOADERS - HALAMAN SPESIFIK (DIBUTUHKAN SEMUA PAGE)
 # =====================================================================
 
 def load_sosmed(): 
-    """Fungsi yang dicari oleh sosmed.py"""
     df = get_from_bundle(0)
     if not df.empty:
         col_date = 'Tanggal Deadline' if 'Tanggal Deadline' in df.columns else 'Deadline'
@@ -82,7 +100,11 @@ def load_wa_admin():
             df['Tanggal Masuk'] = pd.to_datetime(df['Tanggal Masuk'], dayfirst=True, errors='coerce')
     return df
 
-# Loader Cepat khusus DM Sosmed
+def load_database_nomor():
+    """Fungsi yang dicari oleh crm.py"""
+    return get_from_bundle(4)
+
+# Loader Cepat khusus DM Sosmed (Jalur Cepat Tab 5)
 @st.cache_data(ttl=300)
 def load_dm_sosmed_fast():
     try:
@@ -100,7 +122,7 @@ def load_dm_sosmed_fast():
     return pd.DataFrame()
 
 # =====================================================================
-# 4. OPERASI PENULISAN
+# 4. OPERASI PENULISAN (APPEND & UPDATE)
 # =====================================================================
 
 def append_sheet_rows(sheet_index, data_list):
@@ -120,12 +142,11 @@ def append_sheet_rows(sheet_index, data_list):
 def append_sheet_rows_fast(sheet_index, data_list):
     success = append_sheet_rows(sheet_index, data_list)
     if success:
-        st.cache_data.clear()
+        st.cache_data.clear() # Hapus cache agar data terbaru segera terlihat
         return True
     return False
 
 def update_sheet_cell(sheet_index, row_index, column_name, new_value):
-    """Fungsi yang dicari oleh sosmed.py"""
     client = init_connection()
     if client:
         try:
@@ -140,7 +161,45 @@ def update_sheet_cell(sheet_index, row_index, column_name, new_value):
     return False
 
 # =====================================================================
-# 5. VISUAL & UTILS LAINNYA
+# 5. LOGIKA OTOMATISASI CRM
+# =====================================================================
+
+def sync_leads_to_crm():
+    """Fungsi yang dicari oleh crm.py untuk memindahkan data WA Admin ke CRM"""
+    try:
+        df_wa = load_wa_admin()
+        df_crm = load_database_nomor()
+        
+        if df_wa.empty: return False, "Data WA Admin kosong."
+        
+        # Ambil list nomor HP yang sudah ada di CRM agar tidak duplikat
+        existing_numbers = set()
+        if not df_crm.empty and 'No Hp' in df_crm.columns:
+            existing_numbers = set(df_crm['No Hp'].astype(str).unique())
+
+        # Filter data WA Admin yang belum ada di CRM
+        new_leads = df_wa[~df_wa['No Hp'].astype(str).isin(existing_numbers)]
+        
+        if new_leads.empty:
+            return True, "Semua data sudah sinkron."
+
+        # Kolom yang akan dipindahkan: Tanggal Masuk, Nama, No Hp, Asal
+        rows_to_add = new_leads[['Tanggal Masuk', 'Nama', 'No Hp', 'Asal']].values.tolist()
+        
+        # Konversi tanggal ke string agar tidak error saat kirim ke Sheets
+        for row in rows_to_add:
+            if isinstance(row[0], pd.Timestamp):
+                row[0] = row[0].strftime('%Y-%m-%d')
+        
+        if append_sheet_rows(4, rows_to_add):
+            return True, f"Berhasil sinkronisasi {len(rows_to_add)} data baru."
+        return False, "Gagal menulis ke Google Sheets."
+            
+    except Exception as e:
+        return False, f"Error Sinkronisasi: {e}"
+
+# =====================================================================
+# 6. VISUAL UTILS
 # =====================================================================
 
 def set_bg_local(main_bg):
