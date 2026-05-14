@@ -20,38 +20,70 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
     df_web = utils.load_website()
     df_ins = utils.load_insight()
 
-    # --- 2. CSS CUSTOM (FORCE VERTICAL STYLE) ---
+    # --- 2. CSS CUSTOM (ULTRACLEAN COMMAND CENTER) ---
     st.markdown("""
         <style>
         .kpi-card {
             background-color: #FFFFFF !important;
             border-radius: 12px !important;
-            padding: 15px 20px !important;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05) !important;
+            padding: 18px !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
             border: 1px solid #F0F2F6 !important;
-            min-height: 110px !important;
-            width: 100% !important;
-            display: block !important; 
+            min-height: 135px !important; 
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+            transition: all 0.3s ease !important;
         }
-        .metric-title { 
-            display: block !important; 
-            font-size: 24px !important; 
-            color: #6B7280 !important; 
-            font-weight: 800 !important; 
-            text-transform: uppercase !important; 
-            margin-bottom: 10px !important; 
+        .kpi-card:hover {
+            transform: translateY(-5px) !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1) !important;
+            border-color: #D1D5DB !important;
+        }
+        .card-header {
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+            margin-bottom: 10px !important;
+        }
+        .metric-title {
+            font-size: 10px !important;
+            color: #6B7280 !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
             line-height: 1.2 !important;
-            width: 100% !important;
         }
-        .metric-value { 
-            display: block !important; 
-            font-size: 22px !important; 
-            font-weight: 800 !important; 
+        .metric-value {
+            font-size: 20px !important;
+            font-weight: 800 !important;
+            color: #111827 !important;
             line-height: 1 !important;
-            width: 100% !important;
+            margin-bottom: 4px !important;
+        }
+        .metric-sub {
+            font-size: 10px !important;
+            font-weight: 600 !important;
+            color: #059669 !important;
         }
         </style>
     """, unsafe_allow_html=True)
+
+    # --- FUNGSI RENDER UNIVERSAL ---
+    def render_universal_card(col, icon, title, value, subtext="", color="#111827"):
+        with col:
+            st.markdown(f"""
+                <div class="kpi-card">
+                    <div class="card-header">
+                        <span style="font-size: 20px;">{icon}</span>
+                        <div class="metric-title">{title}</div>
+                    </div>
+                    <div>
+                        <div class="metric-value" style="color:{color};">{value}</div>
+                        <div class="metric-sub">{subtext}</div>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
 
     # --- 3. HEADER ---
     st.markdown('<div class="feature-header" style="text-align: center; margin-bottom:20px;">🚀 DIGITAL MARKETING COMMAND CENTER</div>', unsafe_allow_html=True)
@@ -97,54 +129,38 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
         tahun_ini = sekarang.year
         BIAYA_PELATIHAN = 12995000 
 
-        # Identifikasi Kolom Status Sekali Saja
-        status_col = None
+        total_leads_mei, total_closing_mei = 0, 0
+        sos_pend, web_pend = 0, 0
+
         if not df_wa.empty:
             status_col = next((c for c in df_wa.columns if 'Status' in str(c)), None)
-
-        total_leads_mei, total_closing_mei = 0, 0
-        if not df_wa.empty:
             df_wa['tgl_p'] = pd.to_datetime(df_wa['Tanggal Masuk'], dayfirst=True, errors='coerce')
             df_current = df_wa[(df_wa['tgl_p'].dt.month == bulan_ini) & (df_wa['tgl_p'].dt.year == tahun_ini)]
             total_leads_mei = len(df_current)
             if status_col:
                 total_closing_mei = len(df_current[df_current[status_col].astype(str).str.contains('Closing', case=False, na=False)])
 
-        # RENDER SNAPSHOT
-        st.markdown(f'<div style="font-weight: 800; margin-bottom: 15px;">📊 EXECUTIVE SNAPSHOT (MEI {tahun_ini})</div>', unsafe_allow_html=True)
-        k1, k2, k3, k4 = st.columns(4)
-
-        def render_kpi(icon, title, value, subtext=""):
-            st.markdown(f"""
-                <div class="kpi-card">
-                    <div style="font-size: 24px;">{icon}</div>
-                    <div>
-                        <div class="metric-title">{title}</div>
-                        <div class="metric-value">{value}</div>
-                        <div style="font-size: 10px; color: #059669; font-weight: 600;">{subtext}</div>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
-
-        conv_mei = (total_closing_mei / total_leads_mei * 100) if total_leads_mei > 0 else 0
-        with k1: render_kpi("🎯", "Mei: Close/Leads", f"{total_closing_mei} / {total_leads_mei}", f"Conv: {conv_mei:.1f}%")
-        with k2: render_kpi("💰", "Omzet Mei", f"Rp {total_closing_mei * BIAYA_PELATIHAN:,.0f}".replace(",", "."), "Bulan Berjalan")
-
-        sos_pend = 0
         if not df_sos.empty and 'PROSES' in df_sos.columns:
             col_tgl_sos = 'Tanggal Deadline' if 'Tanggal Deadline' in df_sos.columns else ('Deadline' if 'Deadline' in df_sos.columns else None)
             if col_tgl_sos:
                 df_sos['tgl_conv'] = pd.to_datetime(df_sos[col_tgl_sos], dayfirst=True, errors='coerce')
                 sos_pend = len(df_sos[(df_sos['PROSES'].astype(str).str.upper() != 'DONE') & (df_sos['tgl_conv'].dt.month == bulan_ini)])
-        with k3: render_kpi("📱", "Hutang Sosmed", f"{sos_pend} Task", "Deadline Mei")
 
-        web_pend = 0
         if not df_web.empty and 'Status Post' in df_web.columns:
             col_tgl_web = 'Deadline' if 'Deadline' in df_web.columns else ('Tanggal Deadline' if 'Tanggal Deadline' in df_web.columns else None)
             if col_tgl_web:
                 df_web['tgl_conv'] = pd.to_datetime(df_web[col_tgl_web], dayfirst=True, errors='coerce')
                 web_pend = len(df_web[(~df_web['Status Post'].astype(str).str.upper().isin(['DONE', 'V', '1'])) & (df_web['tgl_conv'].dt.month == bulan_ini)])
-        with k4: render_kpi("🌐", "Hutang Web", f"{web_pend} Page", "Deadline Mei")
+
+        # RENDER SNAPSHOT
+        st.markdown(f'<div style="font-weight: 800; margin-bottom: 15px;">📊 EXECUTIVE SNAPSHOT (MEI 2026)</div>', unsafe_allow_html=True)
+        k = st.columns(4)
+        conv_mei = (total_closing_mei / total_leads_mei * 100) if total_leads_mei > 0 else 0
+        
+        render_universal_card(k[0], "🎯", "Mei: Close/Leads", f"{total_closing_mei}/{total_leads_mei}", f"Conv: {conv_mei:.1f}%")
+        render_universal_card(k[1], "💰", "Omzet Mei", f"Rp {total_closing_mei * BIAYA_PELATIHAN:,.0f}".replace(",", "."), "Bulan Berjalan")
+        render_universal_card(k[2], "📱", "Hutang Sosmed", f"{sos_pend} Task", "Deadline Mei", "#DC2626" if sos_pend > 0 else "#111827")
+        render_universal_card(k[3], "🌐", "Hutang Web", f"{web_pend} Page", "Deadline Mei", "#DC2626" if web_pend > 0 else "#111827")
 
     except Exception as e:
         st.error(f"Gagal memuat snapshot: {e}")
@@ -156,9 +172,9 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
         
         if not df_wa.empty:
             leads_total = len(df_wa)
-            status_col = next((c for c in df_wa.columns if 'Status' in str(c)), None)
-            if status_col:
-                closing_total = len(df_wa[df_wa[status_col].astype(str).str.contains('Closing', case=False, na=False)])
+            status_col_global = next((c for c in df_wa.columns if 'Status' in str(c)), None)
+            if status_col_global:
+                closing_total = len(df_wa[df_wa[status_col_global].astype(str).str.contains('Closing', case=False, na=False)])
 
         sp_tk = st.session_state.get('spend_tiktok', 0)
         sp_mt = st.session_state.get('spend_meta', 0)
@@ -169,23 +185,14 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
         final_cac = final_spend / closing_total if closing_total > 0 else 0
         final_roas = (final_omzet / final_spend) if final_spend > 0 else 0
 
-        st.markdown('<div style="font-weight: 800; margin-bottom: 15px; margin-top: 20px;">🌍 ULTIMATE ROI DASHBOARD (ALL TIME GLOBAL)</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-weight: 800; margin-bottom: 15px; margin-top: 25px;">🌍 ULTIMATE ROI DASHBOARD (ALL TIME GLOBAL)</div>', unsafe_allow_html=True)
         r = st.columns(5)
-        
-        def render_box(col, title, value, color="#111827"):
-            with col:
-                st.markdown(f"""
-                    <div class="kpi-card">
-                        <div class="metric-title">{title}</div>
-                        <div class="metric-value" style="color:{color};">{value}</div>
-                    </div>
-                """, unsafe_allow_html=True)
 
-        render_box(r[0], "💸 Total Spend Ads + Mekari", f"Rp {final_spend:,.0f}", "#8B0000")
-        render_box(r[1], "👥 Leads Total", f"{leads_total}")
-        render_box(r[2], "🎓 Closing Total", f"{closing_total} Swa", "#006400")
-        render_box(r[3], "🎯 Biaya per Siswa (CAC)", f"Rp {final_cac:,.0f}", "#D2691E")
-        render_box(r[4], "🚀 ROAS Total", f"{final_roas:,.1f}x", "#1E3A8A")
+        render_universal_card(r[0], "💸", "Total Spend Ads+Mekari", f"Rp {final_spend:,.0f}", "All Platforms", "#8B0000")
+        render_universal_card(r[1], "👥", "Leads Total", f"{leads_total}", "Database")
+        render_universal_card(r[2], "🎓", "Closing Total", f"{closing_total} Swa", "Total Closing", "#006400")
+        render_universal_card(r[3], "🎯", "Biaya per Siswa (CAC)", f"Rp {final_cac:,.0f}", "Efisiensi")
+        render_universal_card(r[4], "🚀", "ROAS Total", f"{final_roas:,.1f}x", "Profitability", "#1E3A8A")
 
         st.markdown("---")
     except Exception as e:
