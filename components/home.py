@@ -184,52 +184,55 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
         actual = {"Total View": 0, "Total Reach": 0, "Link Click": 0, "Engagement": 0}
         
         if not df_ins.empty:
-            col_map = {"Total View": ["View"], "Total Reach": ["Reach"], "Link Click": ["Link Clicks"], "Engagement": ["Interaction"]}
-            for key_target, col_names in col_map.items():
-                target_col = next((c for c in df_ins.columns if c in col_names), None)
-                if target_col: actual[key_target] = pd.to_numeric(df_ins[target_col], errors='coerce').fillna(0).sum()
+            # Clean header: hilangkan spasi dan buat huruf kecil semua agar mudah dicocokkan
+            df_ins.columns = [str(c).strip().lower() for c in df_ins.columns]
+            
+            # Mapping pintar (mencari kata kunci di dalam nama kolom)
+            col_map = {
+                "Total View": ["view", "views", "tayangan"],
+                "Total Reach": ["reach", "jangkauan"],
+                "Total Click": ["click", "clicks", "klik", "link"],
+                "Engagement": ["interaction", "engagement", "interaksi", "engagement"]
+            }
+            
+            for key_target, aliases in col_map.items():
+                # Cari kolom mana yang mengandung salah satu kata kunci di atas
+                target_col = next((c for c in df_ins.columns if any(a in c for a in aliases)), None)
+                
+                if target_col:
+                    # Bersihkan karakter non-angka (seperti titik/koma ribuan) sebelum dijumlahkan
+                    temp_series = df_ins[target_col].astype(str).str.replace(r'[^\d.]', '', regex=True)
+                    actual[key_target] = pd.to_numeric(temp_series, errors='coerce').fillna(0).sum()
 
         cols_gauge = st.columns(4) 
         
         for i, (label, target_val) in enumerate(targets.items()):
-            current_val = actual[label]
+            # Pastikan key yang dipanggil di actual sesuai dengan yang didefinisikan di col_map
+            current_val = actual.get(label, 0) if label != "Link Click" else actual.get("Total Click", 0)
+            
             percentage = (current_val / target_val * 100) if target_val > 0 else 0
-            display_percent = min(percentage, 100) # Untuk visual ring saja
+            display_percent = min(percentage, 100)
             
             with cols_gauge[i]:
-                # Render Ring Chart
                 fig = go.Figure(go.Pie(
                     values=[display_percent, 100 - display_percent],
                     hole=0.85,
                     marker=dict(colors=[BRAND_BLUE, "#F0F2F6"]),
-                    textinfo='none',
-                    hoverinfo='none',
-                    sort=False
+                    textinfo='none', hoverinfo='none', sort=False
                 ))
                 
                 fig.add_annotation(
                     text=f"<b style='font-size:16px;'>{percentage:.1f}%</b>",
-                    x=0.5, y=0.5, showarrow=False,
-                    font=dict(color=BRAND_BLUE)
+                    x=0.5, y=0.5, showarrow=False, font=dict(color=BRAND_BLUE)
                 )
 
                 fig.update_layout(
-                    showlegend=False,
-                    height=140,
-                    margin=dict(l=5, r=5, t=5, b=5),
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    plot_bgcolor='rgba(0,0,0,0)',
+                    showlegend=False, height=140, margin=dict(l=5, r=5, t=5, b=5),
+                    paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
                 )
 
                 with st.container(border=True):
-                    # --- FIX: Tambahkan parameter key unik di sini ---
-                    st.plotly_chart(
-                        fig, 
-                        use_container_width=True, 
-                        config={'displayModeBar': False},
-                        key=f"target_ring_{label.replace(' ', '_')}" 
-                    )
-                    
+                    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False}, key=f"ring_{label}")
                     st.markdown(f"""
                         <div style="text-align:center; margin-top:-5px;">
                             <div style="font-size:9px; color:gray; font-weight:800; text-transform:uppercase;">{label}</div>
@@ -238,7 +241,7 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
                     """, unsafe_allow_html=True)
                     
     except Exception as e:
-        st.error(f"Gagal memuat Target: {e}")
+        st.error(f"⚠️ Gagal memproses Target: {e}")
 
     # ==========================================================
     # 6. PETA PERSEBARAN & GRAFIK (CLEAN & FIXED)
