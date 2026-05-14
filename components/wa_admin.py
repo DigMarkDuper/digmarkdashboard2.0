@@ -393,7 +393,47 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                     st.plotly_chart(fig_kat, use_container_width=True)
 
                 # 6. DISTRIBUSI STATUS INTERNAL
-                st.markdown('<div class="feature-header">📊 Distribusi Status Prospek (Internal Status)</div>', unsafe_allow_html=True)
+                # --- SUB-HEADER: DISTRIBUSI STATUS PROSPEK ---
+                CHART_ICON = "https://cdn-icons-png.flaticon.com/512/3256/3256150.png" # Ikon Grafik/Distribusi Modern
+            
+                st.markdown(f"""
+                    <div style="
+                        display: flex; 
+                        align-items: center; 
+                        gap: 12px; 
+                        background: #FFFFFF; 
+                        padding: 10px 15px; 
+                        border-radius: 10px; 
+                        margin-bottom: 15px; 
+                        border-left: 6px solid {BRAND_BLUE}; 
+                        border: 1px solid #E2E8F0;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                    ">
+                        <div style="
+                            background: #F8FAFC; 
+                            padding: 6px; 
+                            border-radius: 6px; 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center;
+                            border: 1px solid #F1F5F9;
+                        ">
+                            <img src="{CHART_ICON}" width="18">
+                        </div>
+                        <div>
+                            <div style="
+                                margin: 0; 
+                                color: #1E293B; 
+                                font-size: 13px; 
+                                font-weight: 800; 
+                                letter-spacing: 0.5px; 
+                                text-transform: uppercase;
+                            ">
+                                📊 Distribusi <span style="color: {BRAND_BLUE};">Status Prospek</span> (Internal)
+                            </div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
                 status_order = [
                     "Belum Terupdate", "No Response", "Follow Up", "Daftar", "Interview", 
                     "Closing", "Sales Progress", "Withdraw", "Lainnya",
