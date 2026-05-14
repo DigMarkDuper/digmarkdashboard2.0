@@ -571,14 +571,11 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                     """, unsafe_allow_html=True)
                     
                 if 'Sumber (Ads/Organik/Sales)' in df_wa.columns:
-                    sumber_vc = df_wa['Sumber (Ads/Organik/Sales)'].value_counts()
-                    sumber_counts = pd.DataFrame({'Sumber': sumber_vc.index, 'Jumlah': sumber_vc.values})
-                    
+                    sumber_counts = df_wa['Sumber (Ads/Organik/Sales)'].value_counts().reset_index()
+                    sumber_counts.columns = ['Sumber', 'Jumlah']
                     fig_sumber = px.pie(sumber_counts, names='Sumber', values='Jumlah', hole=0.4, color_discrete_sequence=[BRAND_BLUE, BRAND_YELLOW, "#003A66"])
                     fig_sumber.update_traces(textinfo='label+percent')
                     st.plotly_chart(fig_sumber, use_container_width=True)
-                else:
-                    st.info("Kolom 'Sumber (Ads/Organik/Sales)' tidak ditemukan.")
 
                 # 8. MAPPING ASAL (TREEMAP)
                 st.markdown('<div class="feature-header">📍 Sebaran Domisili Prospek (TreeMap)</div>', unsafe_allow_html=True)
