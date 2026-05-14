@@ -41,29 +41,27 @@ def check_password():
     if st.session_state.get("password_correct"):
         return True
     
-    # Set Background
+   # Set Background
     utils.set_bg_local('bg.png') 
     
-   # --- CSS KUSTOM: BACKGROUND DARK MODE (FIXED) ---
+    # --- CSS KUSTOM: BACKGROUND DARK BLUE OVERLAY (FIXED) ---
     st.markdown(f'''
         <style>
-            /* 1. Paksa warna dasar aplikasi hitam pekat */
+            /* 1. Paksa warna dasar aplikasi menjadi Biru Tua Gelap */
             .stApp {{
-                background-color: #000000 !important;
+                background-color: #020617 !important; /* Slate 950 / Biru Midnight */
             }}
 
-            /* 2. Overlay Gelap yang Menempel di Main Container */
-            /* Kita gunakan .main agar pasti berada di bawah konten tapi di atas bg image */
+            /* 2. Overlay Biru Tua dengan Opacity 60% */
+            /* Menggunakan rgba(2, 6, 23, 0.6) untuk nuansa biru gelap transparan */
             .main {{
-                background: rgba(0, 0, 0, 0.8) !important; /* Angka 0.8 untuk lebih gelap */
+                background: rgba(2, 6, 23, 0.6) !important; 
                 position: relative;
             }}
             
-            /* 3. Jika utils.set_bg_local menggunakan stAppViewContainer, 
-               kita redupkan gambarnya secara langsung */
+            /* 3. Redupkan gambar latar belakang agar tidak terlalu terang */
             [data-testid="stAppViewContainer"] {{
-                background-color: #000000 !important;
-                filter: brightness(30%); /* Cara paling ampuh menggelapkan gambar */
+                filter: brightness(50%) contrast(110%); 
             }}
 
             /* 4. Rapikan padding halaman */
@@ -71,11 +69,11 @@ def check_password():
                 padding-top: 2rem !important;
             }}
 
-            /* 5. Pastikan teks label Putih Terang */
+            /* 5. Teks label Putih Terang agar kontras dengan Biru */
             .stTextInput label p {{
                 color: white !important;
                 font-weight: 800 !important;
-                text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+                text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
             }}
 
             /* 6. Hilangkan header & footer */
