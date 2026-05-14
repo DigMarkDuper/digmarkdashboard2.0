@@ -35,98 +35,117 @@ BRAND_BLUE = "#005696"
 BRAND_YELLOW = "#FDB813"
 
 # =====================================================================
-# 2. SISTEM LOGIN (PREMIUM GLASSMORPHISM EDITION) - FIXED
+# 2. SISTEM LOGIN (PREMIUM GLASSMORPHISM EDITION) - FINAL REPAIR
 # =====================================================================
 def check_password():
     """Fungsi login dengan tampilan Glassmorphism premium dan logika utuh."""
     
-    # 1. Jika sudah login, langsung return True
+    # 1. Cek session state
     if st.session_state.get("password_correct"):
         return True
     
-    # 2. Set Latar Belakang
+    # 2. Set Background (Pastikan file bg.png ada)
     utils.set_bg_local('bg.png') 
     
-    # --- CSS KUSTOM (KODE MAS) ---
+    # --- CSS KUSTOM (DIPERBAIKI) ---
     st.markdown(f'''
         <style>
-            .main > .block-container {{
-                padding-top: 0rem !important;
-                padding-bottom: 0rem !important;
+            /* Memaksa background aplikasi agar tidak putih saat login */
+            .stApp {{
+                background: transparent !important;
             }}
-            .login-wrapper {{
+            
+            .main > .block-container {{
+                padding: 0 !important;
+            }}
+
+            .login-container {{
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                min-height: 90vh;
+                height: 100vh;
+                width: 100%;
             }}
+
             .glass-box {{
-                background: rgba(255, 255, 255, 0.08);
-                backdrop-filter: blur(25px);
-                -webkit-backdrop-filter: blur(25px);
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
                 border-radius: 20px;
-                padding: 40px 30px;
-                width: 400px;
-                border: 1px solid rgba(255, 255, 255, 0.15);
-                box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+                padding: 40px;
+                width: 380px;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
                 text-align: center;
+                z-index: 9999;
             }}
+
+            /* Sembunyikan elemen bawaan form streamlit */
             [data-testid="stForm"] {{
                 border: none !important;
                 background: transparent !important;
                 padding: 0 !important;
             }}
-            .stTextInput > div > div > input {{
-                background-color: transparent !important;
+
+            /* Gaya Input */
+            .stTextInput input {{
+                background-color: rgba(255,255,255,0.05) !important;
                 border: none !important;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.5) !important;
-                border-radius: 0px !important;
-                color: #FFFFFF !important;
-                padding: 10px 5px !important;
-            }}
-            .stTextInput label p {{
-                color: rgba(255, 255, 255, 0.7) !important;
-                font-size: 12px !important;
-                text-transform: uppercase !important;
-            }}
-            div[data-testid="stFormSubmitButton"] > button {{
-                background: linear-gradient(135deg, rgba(30, 64, 175, 0.5), rgba(15, 23, 42, 0.5)) !important;
+                border-bottom: 2px solid rgba(255,255,255,0.2) !important;
                 color: white !important;
-                border-radius: 12px !important;
-                margin-top: 20px !important;
+                border-radius: 0px !important;
+            }}
+
+            /* Gaya Tombol */
+            div[data-testid="stFormSubmitButton"] > button {{
                 width: 100% !important;
+                background: {BRAND_BLUE} !important;
+                color: white !important;
+                border-radius: 10px !important;
+                border: none !important;
+                padding: 10px !important;
+                font-weight: bold !important;
+                margin-top: 20px;
             }}
         </style>
     ''', unsafe_allow_html=True)
 
-    # --- 3. RENDER FORMULIR (BAGIAN YANG HILANG) ---
-    _, col_mid, _ = st.columns([1, 4, 1])
-    with col_mid:
-        # Kita bungkus formulir dalam div class glass-box agar CSS-nya bekerja
-        st.markdown('<div class="login-wrapper"><div class="glass-box">', unsafe_allow_html=True)
+    # --- RENDER LOGIN ---
+    # Menggunakan container kosong untuk memastikan layout tidak berantakan
+    placeholder = st.empty()
+    
+    with placeholder.container():
+        # Gunakan kolom tengah untuk centering horizontal
+        _, col_mid, _ = st.columns([1, 3, 1])
         
-        # Logo dan Judul
-        st.markdown(f'<img src="{LOGO_URL}" width="150" style="margin-bottom:20px;">', unsafe_allow_html=True)
-        st.markdown('<h3 style="color:white; font-weight:300; letter-spacing:2px;">DASHBOARD LOGIN</h3>', unsafe_allow_html=True)
-
-        with st.form("login_form"):
-            u_name = st.text_input("Username").strip().lower()
-            u_pass = st.text_input("Password", type="password")
+        with col_mid:
+            # Container pembungkus utama
+            st.markdown('<div class="glass-box">', unsafe_allow_html=True)
             
-            submit = st.form_submit_button("MASUK SISTEM")
-            
-            if submit:
-                # Validasi menggunakan st.secrets
-                if "credentials" in st.secrets and u_name in st.secrets["credentials"] and st.secrets["credentials"][u_name] == u_pass:
-                    st.session_state["password_correct"] = True
-                    st.success("Sukses! Mengalihkan...")
-                    st.rerun()
-                else:
-                    st.error("Username/Password Salah")
+            # Header
+            st.image(LOGO_URL, width=150)
+            st.markdown('<h2 style="color:white; font-weight:700; margin-top:10px;">DASHBOARD</h2>', unsafe_allow_html=True)
+            st.markdown('<p style="color:rgba(255,255,255,0.7); font-size:14px; margin-bottom:20px;">Silakan login untuk melanjutkan</p>', unsafe_allow_html=True)
 
-        st.markdown('</div></div>', unsafe_allow_html=True)
-        
+            # Formulir
+            with st.form("login_form"):
+                u_name = st.text_input("Username").strip().lower()
+                u_pass = st.text_input("Password", type="password")
+                submit = st.form_submit_button("MASUK SISTEM")
+                
+                if submit:
+                    if "credentials" in st.secrets and u_name in st.secrets["credentials"] and st.secrets["credentials"][u_name] == u_pass:
+                        st.session_state["password_correct"] = True
+                        st.success("Login Berhasil!")
+                        st.rerun()
+                    else:
+                        st.error("Username/Password Salah")
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+
     return False
+    if not check_password():
+    st.stop()
 
 # =====================================================================
 # 3. DATA ENGINE (SINKRONISASI BUNDLE)
