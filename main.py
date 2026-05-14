@@ -109,7 +109,8 @@ if page != "🏠 HOMEPAGE":
 try:
     if page == "🏠 HOMEPAGE":
         show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page, bundle)
-
+        df_wa = utils.load_wa_admin()
+        
     elif page == "📱 SOSIAL MEDIA":
         show_sosmed_page(BRAND_BLUE, BRAND_YELLOW)
 
@@ -126,7 +127,6 @@ try:
         show_crm_page()
 
     elif page == "📱 DM SOSMED":
-        # Menggunakan data cepat (Fast Lane) di dalam komponen halamannya
         show_dm_sosmed_page(BRAND_BLUE, BRAND_YELLOW)
 
     elif page == "📈 ADS ANALYTICS":
