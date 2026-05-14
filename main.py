@@ -100,38 +100,42 @@ def check_password():
         </style>
     """, unsafe_allow_html=True)
 
-    # --- RENDER KONTEN (CENTERED) ---
-    _, mid, _ = st.columns([1.5, 1, 1.5]) 
+    # --- RENDER KONTEN (CENTERED & BALANCED) ---
+    _, mid, _ = st.columns([1.2, 1, 1.2]) # Sedikit dilebarkan agar form tidak terlalu sesak
     
     with mid:
+        # Memberikan padding atas yang pas agar tidak terlalu mepet ke atas layar
         st.markdown("<br><br><br>", unsafe_allow_html=True)
         
-        # Centering Logo dengan ukuran yang lebih kecil (80-100px)
-        # Kita pakai container HTML agar centering-nya mutlak
+        # Logo: Ukuran 140px biasanya paling pas untuk logo institusi
         st.markdown(f'''
-            <div style="display: flex; justify-content: center; margin-bottom: 10px;">
-                <img src="{LOGO_URL}" width="80">
+            <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+                <img src="{LOGO_URL}" width="140" style="filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.3));">
             </div>
         ''', unsafe_allow_html=True)
             
+        # Judul: Ukuran font dinaikkan sedikit agar seimbang dengan logo
         st.markdown(f'''
-            <div style="text-align: center; margin-bottom: 20px;">
-                <h4 style="color:white; font-weight:300; letter-spacing:1px; margin:0; font-size: 14px;">
-                    Digital Marketing <br>
-                    <span style="color:{BRAND_YELLOW}; font-weight:800;">DASHBOARD</span>
+            <div style="text-align: center; margin-bottom: 25px;">
+                <h4 style="color:white; font-weight:300; letter-spacing:2px; margin:0; font-size: 16px; line-height: 1.4;">
+                    DIGITAL MARKETING <br>
+                    <span style="color:{BRAND_YELLOW}; font-weight:800; font-size: 20px;">DASHBOARD</span>
                 </h4>
             </div>
         ''', unsafe_allow_html=True)
 
+        # Form Login
         with st.form("login_compact"):
             u_name = st.text_input("Username").strip().lower()
             u_pass = st.text_input("Password", type="password")
-            if st.form_submit_button("LOGIN"):
+            
+            # Tombol dibuat lebih tegas
+            if st.form_submit_button("LOGIN KE SISTEM"):
                 if "credentials" in st.secrets and u_name in st.secrets["credentials"] and st.secrets["credentials"][u_name] == u_pass:
                     st.session_state["password_correct"] = True
                     st.rerun()
                 else:
-                    st.error("Gagal: Akses Ditolak")
+                    st.error("Akses Ditolak: Kredensial Salah")
                     
     return False
 
