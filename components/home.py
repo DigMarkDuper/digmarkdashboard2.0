@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import datetime
+import plotly.graph_objects as go
 
 # --- WAJIB ADA: Panggil file utils kita ---
 import components.utils as utils
@@ -13,27 +14,31 @@ except:
     indo_coords = {}
 
 def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
-    # --- AMBIL DATA DARI UTILS (Sangat Rapih & Aman) ---
+    # --- AMBIL DATA DARI UTILS ---
     df_wa = utils.load_wa_admin()
     df_sos = utils.load_sosmed()
     df_web = utils.load_website()
     df_ins = utils.load_insight()
 
-    # --- 1. CSS CUSTOM UNTUK TAMPILAN ---
+    # --- 1. CSS CUSTOM (FIX BOX SERAGAM) ---
     st.markdown("""
         <style>
         .kpi-card {
             background-color: #FFFFFF;
             border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             border: 1px solid #F0F2F6;
             display: flex;
-            align-items: center;
-            gap: 15px;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 110px; /* MEMAKSA TINGGI BOX SAMA RATA */
             transition: all 0.3s ease;
         }
-        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .metric-title { font-size: 11px; color: #6B7280; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }
+        .metric-value { font-size: 20px; font-weight: 800; color: #111827; }
+        .metric-sub { font-size: 10px; font-weight: 600; margin-top: 2px; }
         </style>
     """, unsafe_allow_html=True)
 
@@ -45,14 +50,13 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
         with st.container(border=True):
             st.markdown(f"""
                 <div style="text-align: center; padding: 10px 0px;">
-                    <div style="font-size: 45px; margin-bottom: 10px;">{icon}</div>
-                    <div style="font-size: 14px; font-weight: 800; color: #1E3A8A; text-transform: uppercase;">{title}</div>
-                    <div style="font-size: 11px; color: #666; margin-top: 5px; min-height: 35px;">{subtitle}</div>
+                    <div style="font-size: 40px; margin-bottom: 10px;">{icon}</div>
+                    <div style="font-size: 13px; font-weight: 800; color: #1E3A8A; text-transform: uppercase;">{title}</div>
+                    <div style="font-size: 10px; color: #666; margin-top: 5px; min-height: 30px;">{subtitle}</div>
                 </div>
             """, unsafe_allow_html=True)
             st.button("Masuk ➔", key=button_key, use_container_width=True, on_click=go_to_page_func, args=(target_page,))
 
-    # Data Menu
     nav_data = [
         ("📱", "Sosmed", "Jadwal PIC", "📱 SOSIAL MEDIA", "btn_sos"),
         ("🌐", "Website", "SEO Audit", "🌐 WEBSITE AUDIT", "btn_web"),
@@ -75,87 +79,38 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
 
     st.markdown("---")
 
-    # --- 4. EXECUTIVE SUMMARY (FILTERED BY MONTH) ---
+    # --- 4. LOGIKA DATA & DASHBOARD ---
     try:
-        # Logic Waktu
         sekarang = datetime.datetime.now()
         bulan_ini = sekarang.month
         tahun_ini = sekarang.year
         BIAYA_PELATIHAN = 15000000 
 
-        # A. Hitung Leads & Closing Bulan Ini
+        # A. Hitung Leads & Closing
         total_leads, total_closing = 0, 0
         if not df_wa.empty:
             df_wa['tgl_p'] = pd.to_datetime(df_wa['Tanggal Masuk'], dayfirst=True, errors='coerce')
             df_current = df_wa[(df_wa['tgl_p'].dt.month == bulan_ini) & (df_wa['tgl_p'].dt.year == tahun_ini)]
-            
             status_col = next((c for c in df_wa.columns if 'Status' in str(c)), None)
             total_leads = len(df_current)
             if status_col:
                 total_closing = len(df_current[df_current[status_col].astype(str).str.contains('Closing', case=False, na=False)])
 
-        # B. FILTER HUTANG SOSMED (BULAN INI SAJA)
-        sos_pend = 0
-        if not df_sos.empty and 'PROSES' in df_sos.columns:
-            # Cari kolom tanggal (Tanggal Deadline atau Deadline)
-            col_tgl_sos = 'Tanggal Deadline' if 'Tanggal Deadline' in df_sos.columns else ('Deadline' if 'Deadline' in df_sos.columns else None)
-            if col_tgl_sos:
-                df_sos['tgl_conv'] = pd.to_datetime(df_sos[col_tgl_sos], dayfirst=True, errors='coerce')
-                # Filter: Status belum DONE DAN Jatuh tempo bulan ini
-                df_sos_current = df_sos[
-                    (df_sos['PROSES'].astype(str).str.upper() != 'DONE') & 
-                    (df_sos['tgl_conv'].dt.month == bulan_ini) & 
-                    (df_sos['tgl_conv'].dt.year == tahun_ini)
-                ]
-                sos_pend = len(df_sos_current)
+        # B. Hitung Spend & ROI (Kunci Perbaikan: Perhitungan harus sebelum Render)
+        spend_tiktok = st.session_state.get('spend_tiktok', 0)
+        spend_meta = st.session_state.get('spend_meta', 0)
+        spend_mekari = st.session_state.get('spend_mekari', 0)
+        
+        global_spend = spend_tiktok + spend_meta + spend_mekari
+        global_omzet = total_closing * BIAYA_PELATIHAN 
+        global_cac = global_spend / total_closing if total_closing > 0 else 0
+        global_roas = (global_omzet / global_spend) if global_spend > 0 else 0
 
-        # C. FILTER HUTANG WEB (BULAN INI SAJA)
-        web_pend = 0
-        if not df_web.empty and 'Status Post' in df_web.columns:
-            # Cari kolom tanggal (Deadline atau Tanggal Deadline)
-            col_tgl_web = 'Deadline' if 'Deadline' in df_web.columns else ('Tanggal Deadline' if 'Tanggal Deadline' in df_web.columns else None)
-            if col_tgl_web:
-                df_web['tgl_conv'] = pd.to_datetime(df_web[col_tgl_web], dayfirst=True, errors='coerce')
-                # Filter: Status belum DONE DAN Jatuh tempo bulan ini
-                df_web_current = df_web[
-                    (~df_web['Status Post'].astype(str).str.upper().isin(['DONE', 'V', '1'])) & 
-                    (df_web['tgl_conv'].dt.month == bulan_ini) & 
-                    (df_web['tgl_conv'].dt.year == tahun_ini)
-                ]
-                web_pend = len(df_web_current)
-
-        # --- Render KPI Card Tetap Sama ---
-        conv_rate = (total_closing / total_leads * 100) if total_leads > 0 else 0
-        estimasi_omzet = total_closing * BIAYA_PELATIHAN
-
-        st.markdown('<div style="font-weight: 800; margin-bottom: 15px;">📊 EXECUTIVE SNAPSHOT (MEI 2026)</div>', unsafe_allow_html=True)
-        k1, k2, k3, k4 = st.columns(4)
-
-        def render_kpi(icon, title, value, subtext=""):
-            st.markdown(f"""
-                <div class="kpi-card">
-                    <div style="font-size: 24px;">{icon}</div>
-                    <div>
-                        <div style="font-size: 11px; color: #6B7280; font-weight: 600;">{title}</div>
-                        <div style="font-size: 18px; font-weight: 800; color: #111827;">{value}</div>
-                        <div style="font-size: 10px; color: #059669; font-weight: 600;">{subtext}</div>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
-
-        with k1: render_kpi("🎯", "Closing / Leads", f"{total_closing} / {total_leads}", f"Conv: {conv_rate:.1f}%")
-        with k2: render_kpi("💰", "Estimasi Omzet", f"Rp {estimasi_omzet:,.0f}".replace(",", "."), "Bulan Ini")
-        with k3: render_kpi("📱", "Hutang Sosmed", f"{sos_pend} Task", "Deadline Bulan Ini")
-        with k4: render_kpi("🌐", "Hutang Web", f"{web_pend} Page", "Deadline Bulan Ini")
-
-    except Exception as e:
-        st.error(f"Gagal memuat metrik: {e}")
-
-    # --- TAMPILAN ROI (BOX DISERAGAMKAN) ---
+        # C. Render ROI Dashboard
         st.markdown('<div style="font-weight: 800; margin-bottom: 15px;">🌍 ULTIMATE ROI DASHBOARD (ALL PLATFORM)</div>', unsafe_allow_html=True)
         r = st.columns(5)
-
-        def render_roi_box(col, title, value, color="#111827"):
+        
+        def render_box(col, title, value, color="#111827"):
             with col:
                 st.markdown(f"""
                     <div class="kpi-card">
@@ -164,16 +119,57 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
                     </div>
                 """, unsafe_allow_html=True)
 
-        render_roi_box(r[0], "💸 Total Spend", f"Rp {global_spend:,.0f}", "#8B0000")
-        render_roi_box(r[1], "👥 Leads (Mei)", f"{total_leads}")
-        render_roi_box(r[2], "🎓 Closing", f"{total_closing} Swa", "#006400")
-        render_roi_box(r[3], "🎯 CAC", f"Rp {global_cac:,.0f}", "#D2691E")
-        render_roi_box(r[4], "🚀 ROAS", f"{global_roas:,.1f}x", "#1E3A8A")
+        render_box(r[0], "💸 Total Spend", f"Rp {global_spend:,.0f}", "#8B0000")
+        render_box(r[1], "👥 Leads (Mei)", f"{total_leads}")
+        render_box(r[2], "🎓 Closing", f"{total_closing} Swa", "#006400")
+        render_box(r[3], "🎯 CAC", f"Rp {global_cac:,.0f}", "#D2691E")
+        render_box(r[4], "🚀 ROAS", f"{global_roas:,.1f}x", "#1E3A8A")
 
         if global_roas > 0:
             st.success(f"🔥 **Status Bisnis:** Investasi **Rp {global_spend:,.0f}** menghasilkan omzet **Rp {global_omzet:,.0f}** ({global_roas:,.1f}x).")
 
         st.markdown("---")
+
+        # D. Operational Snapshot (Hutang Sosmed/Web)
+        sos_pend = 0
+        if not df_sos.empty and 'PROSES' in df_sos.columns:
+            col_tgl_sos = 'Tanggal Deadline' if 'Tanggal Deadline' in df_sos.columns else ('Deadline' if 'Deadline' in df_sos.columns else None)
+            if col_tgl_sos:
+                df_sos['tgl_p'] = pd.to_datetime(df_sos[col_tgl_sos], dayfirst=True, errors='coerce')
+                sos_pend = len(df_sos[(df_sos['PROSES'].astype(str).str.upper() != 'DONE') & (df_sos['tgl_p'].dt.month == bulan_ini)])
+
+        web_pend = 0
+        if not df_web.empty and 'Status Post' in df_web.columns:
+            col_tgl_web = 'Deadline' if 'Deadline' in df_web.columns else ('Tanggal Deadline' if 'Tanggal Deadline' in df_web.columns else None)
+            if col_tgl_web:
+                df_web['tgl_p'] = pd.to_datetime(df_web[col_tgl_web], dayfirst=True, errors='coerce')
+                web_pend = len(df_web[(~df_web['Status Post'].astype(str).str.upper().isin(['DONE', 'V', '1'])) & (df_web['tgl_p'].dt.month == bulan_ini)])
+
+        conv_rate = (total_closing / total_leads * 100) if total_leads > 0 else 0
+        
+        st.markdown('<div style="font-weight: 800; margin-bottom: 15px;">📊 OPERATIONAL SNAPSHOT</div>', unsafe_allow_html=True)
+        k = st.columns(4)
+
+        def render_op_box(col, icon, title, value, subtext, subcolor="#059669"):
+            with col:
+                st.markdown(f"""
+                    <div class="kpi-card" style="flex-direction: row; gap: 12px; align-items: center;">
+                        <div style="font-size: 24px;">{icon}</div>
+                        <div>
+                            <div class="metric-title">{title}</div>
+                            <div class="metric-value" style="font-size: 18px;">{value}</div>
+                            <div class="metric-sub" style="color:{subcolor};">{subtext}</div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+
+        render_op_box(k[0], "🎯", "Conv. Rate", f"{conv_rate:.1f}%", "Closing Leads")
+        render_op_box(k[1], "💰", "Est. Omzet", f"Rp {global_omzet:,.0f}", "Mei 2026")
+        render_op_box(k[2], "📱", "Hutang Sosmed", f"{sos_pend} Task", "Deadline Mei", "#DC2626" if sos_pend > 0 else "#059669")
+        render_op_box(k[3], "🌐", "Hutang Web", f"{web_pend} Page", "Deadline Mei", "#DC2626" if web_pend > 0 else "#059669")
+
+    except Exception as e:
+        st.error(f"Gagal memuat metrik: {e}")
         
     # --- 5. ANNUAL TARGET TRACKING (YEAR-TO-DATE) ---
     try:
