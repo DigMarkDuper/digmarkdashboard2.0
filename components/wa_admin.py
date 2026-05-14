@@ -95,32 +95,43 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                     df_full_tags['Mekari Tag'] = df_full_tags['Mekari Tag'].astype(str).str.strip()
                     mekari_vc = df_full_tags['Mekari Tag'].value_counts()
                     
-                    # 2. Buat Dataframe Ringkasan (PENTING: Agar px.pie bisa baca)
                     mekari_summary = pd.DataFrame({
                         'Tag': mekari_vc.index, 
                         'Jumlah': mekari_vc.values
                     })
                     
-                    # 3. Formulasi Warna Modern (Deep Blue, Teal, & Amber)
-                    modern_colors = ['#1E3A8A', '#3B82F6', '#06B6D4', '#10B981', '#6366F1', '#F59E0B']
+                    # 2. DEFINISI WARNA SPESIFIK (Custom Mapping)
+                    # Sesuaikan nama Tag di bawah ini harus persis dengan yang ada di Excel/Sheet
+                    color_map = {
+                        "Not Eligible": "#DC2626",              # Merah
+                        "Closed Not Interested": "#DC2626",      # Merah
+                        "Closed - Not Interested": "#DC2626",    # Variasi nama lain (jika ada)
+                        "Daftar": "#059669",                    # Hijau
+                        "Closed - Registered": "#1E3A8A",                   # Biru Tua (atau #059669 jika ingin Hijau juga)
+                        "Form Submitted": "#059669"                      # Hijau
+                    }
+                    
+                    # Warna cadangan jika ada tag baru yang tidak terdaftar di atas
+                    default_color = "#D1D5DB" # Abu-abu
 
-                    # 4. Inisialisasi Donut Chart (Sleek Style)
+                    # 3. Inisialisasi Donut Chart dengan color_discrete_map
                     fig_mekari = px.pie(
                         mekari_summary, 
                         names='Tag', 
                         values='Jumlah', 
-                        hole=0.6, 
-                        color_discrete_sequence=modern_colors
+                        hole=0.6,
+                        color='Tag', # Wajib ada agar map berfungsi
+                        color_discrete_map=color_map
                     )
                 
-                    # 5. Styling Traces
+                    # 4. Styling Traces
                     fig_mekari.update_traces(
                         textinfo='percent', 
                         textposition='outside',
                         marker=dict(line=dict(color='#FFFFFF', width=2))
                     )
                 
-                    # 6. Styling Layout Command Center
+                    # 5. Styling Layout
                     fig_mekari.update_layout(
                         height=450, 
                         showlegend=True,
@@ -136,7 +147,6 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                         plot_bgcolor='rgba(0,0,0,0)',
                     )
                     
-                    # 7. Render ke Streamlit
                     st.plotly_chart(fig_mekari, use_container_width=True)
 
                 # 5. KATEGORI PESAN MASUK
