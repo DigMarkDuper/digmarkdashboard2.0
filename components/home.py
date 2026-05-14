@@ -180,40 +180,50 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
     try:
         st.markdown('<div style="font-weight: 800; margin-top: 20px; margin-bottom: 15px;">🎯 2026 ANNUAL TARGET PROGRESS</div>', unsafe_allow_html=True)
         
-        targets = {"Total View": 10000000, "Total Reach": 2400000, "Link Click": 24000, "Engagement": 40000}
-        actual = {"Total View": 0, "Total Reach": 0, "Link Click": 0, "Engagement": 0}
+        # 1. Definisi Target (Label yang akan muncul di UI)
+        targets = {
+            "Total View": 10000000, 
+            "Total Reach": 2400000, 
+            "Link Click": 24000, 
+            "Engagement": 40000
+        }
+        
+        # 2. Inisialisasi angka awal
+        actual = {k: 0 for k in targets.keys()}
         
         if not df_ins.empty:
-            # Clean header: hilangkan spasi dan buat huruf kecil semua agar mudah dicocokkan
-            df_ins.columns = [str(c).strip().lower() for c in df_ins.columns]
+            # SINKRONISASI KOLOM: Paksa nama kolom sesuai dengan standar di Insight Page Mas
+            header_names = ["Date", "Platform", "View", "Reach", "Interaction", "Profile Visit", "Link Clicks", "Follow"]
+            if len(df_ins.columns) >= len(header_names):
+                df_ins.columns = header_names[:len(df_ins.columns)]
             
-            # Mapping pintar (mencari kata kunci di dalam nama kolom)
-            col_map = {
-                "Total View": ["view", "views", "tayangan"],
-                "Total Reach": ["reach", "jangkauan"],
-                "Total Click": ["click", "clicks", "klik", "link"],
-                "Engagement": ["interaction", "engagement", "interaksi", "engagement"]
+            # 3. Mapping Manual yang Presisi (Key Target UI -> Nama Kolom Insight)
+            mapping_insight = {
+                "Total View": "View",
+                "Total Reach": "Reach",
+                "Link Click": "Link Clicks",
+                "Engagement": "Interaction"
             }
             
-            for key_target, aliases in col_map.items():
-                # Cari kolom mana yang mengandung salah satu kata kunci di atas
-                target_col = next((c for c in df_ins.columns if any(a in c for a in aliases)), None)
-                
-                if target_col:
-                    # Bersihkan karakter non-angka (seperti titik/koma ribuan) sebelum dijumlahkan
-                    temp_series = df_ins[target_col].astype(str).str.replace(r'[^\d.]', '', regex=True)
-                    actual[key_target] = pd.to_numeric(temp_series, errors='coerce').fillna(0).sum()
+            for ui_label, col_name in mapping_insight.items():
+                if col_name in df_ins.columns:
+                    # Bersihkan data (buang titik/koma teks) agar bisa dijumlahkan
+                    val_clean = pd.to_numeric(
+                        df_ins[col_name].astype(str).str.replace(r'[^\d.]', '', regex=True), 
+                        errors='coerce'
+                    ).fillna(0).sum()
+                    actual[ui_label] = val_clean
 
+        # 4. Render ke UI (4 Kolom Jajar)
         cols_gauge = st.columns(4) 
         
         for i, (label, target_val) in enumerate(targets.items()):
-            # Pastikan key yang dipanggil di actual sesuai dengan yang didefinisikan di col_map
-            current_val = actual.get(label, 0) if label != "Link Click" else actual.get("Total Click", 0)
-            
+            current_val = actual[label]
             percentage = (current_val / target_val * 100) if target_val > 0 else 0
             display_percent = min(percentage, 100)
             
             with cols_gauge[i]:
+                # Ring Chart Minimalis
                 fig = go.Figure(go.Pie(
                     values=[display_percent, 100 - display_percent],
                     hole=0.85,
@@ -222,17 +232,17 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
                 ))
                 
                 fig.add_annotation(
-                    text=f"<b style='font-size:16px;'>{percentage:.1f}%</b>",
+                    text=f"<b style='font-size:15px;'>{percentage:.1f}%</b>",
                     x=0.5, y=0.5, showarrow=False, font=dict(color=BRAND_BLUE)
                 )
 
                 fig.update_layout(
-                    showlegend=False, height=140, margin=dict(l=5, r=5, t=5, b=5),
+                    showlegend=False, height=130, margin=dict(l=10, r=10, t=5, b=5),
                     paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
                 )
 
                 with st.container(border=True):
-                    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False}, key=f"ring_{label}")
+                    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False}, key=f"target_{label}")
                     st.markdown(f"""
                         <div style="text-align:center; margin-top:-5px;">
                             <div style="font-size:9px; color:gray; font-weight:800; text-transform:uppercase;">{label}</div>
@@ -241,7 +251,7 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
                     """, unsafe_allow_html=True)
                     
     except Exception as e:
-        st.error(f"⚠️ Gagal memproses Target: {e}")
+        st.error(f"⚠️ Gagal sinkronisasi data Insight: {e}")
 
     # ==========================================================
     # 6. PETA PERSEBARAN & GRAFIK (CLEAN & FIXED)
