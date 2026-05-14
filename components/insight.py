@@ -101,7 +101,9 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     # --- LOAD DATABASE ---
     df_db_main = st.session_state.get('bundle', {}).get(2, pd.DataFrame())
 
+    # =========================================================
     # TOTAL SUMMARY & CHARTS
+    # =========================================================
 
     if not df_db_main.empty:
         df_calc = df_db_main.copy()
@@ -131,21 +133,17 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
             df_trend = df_trend.dropna(subset=['Date']).sort_values('Date')
 
             # --- AGREGASI DATA PER BULAN ---
-            # Mengelompokkan data berdasarkan Platform dan Bulan
             df_monthly = df_trend.groupby([
                 'Platform', 
                 df_trend['Date'].dt.to_period('M')
             ]).sum(numeric_only=True).reset_index()
             
-            # Kembalikan format Date ke Timestamp agar Plotly bisa membacanya
             df_monthly['Date'] = df_monthly['Date'].dt.to_timestamp()
 
-            # --- SECTION TIKTOK ---
+            # --- SECTION 🎵 TIKTOK ---
             df_tk = df_monthly[df_monthly['Platform'] == 'TikTok']
             if not df_tk.empty:
-                st.write("") # Spacer
-                
-                # Header TikTok dengan Logo
+                st.write("") 
                 t_col1, t_col2 = st.columns([0.07, 0.93])
                 with t_col1:
                     st.image("https://img.icons8.com/color/48/tiktok.png", width=35)
@@ -153,18 +151,24 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                     st.markdown("### **TikTok** Growth Trend (Monthly)")
                 
                 st.markdown("---")
-                tk1, tk2 = st.columns(2)
-                with tk1:
+                # Baris 1: Views & Follows
+                tk_row1_1, tk_row1_2 = st.columns(2)
+                with tk_row1_1:
                     st.plotly_chart(create_modern_chart(df_tk, 'View', BRAND_BLUE, "TikTok Video Views"), use_container_width=True)
-                with tk2:
+                with tk_row1_2:
                     st.plotly_chart(create_modern_chart(df_tk, 'Follow', "#00CC96", "TikTok New Followers"), use_container_width=True)
+                
+                # Baris 2: Profile Visits & Interactions
+                tk_row2_1, tk_row2_2 = st.columns(2)
+                with tk_row2_1:
+                    st.plotly_chart(create_modern_chart(df_tk, 'Profile Visit', "#FF0050", "TikTok Profile Visits"), use_container_width=True)
+                with tk_row2_2:
+                    st.plotly_chart(create_modern_chart(df_tk, 'Interaction', "#EE1D52", "TikTok Interactions"), use_container_width=True)
 
-            # --- SECTION INSTAGRAM ---
+            # --- SECTION 📸 INSTAGRAM ---
             df_ig = df_monthly[df_monthly['Platform'] == 'Instagram']
             if not df_ig.empty:
-                st.write("") # Spacer
-                
-                # Header Instagram dengan Logo
+                st.write("") 
                 i_col1, i_col2 = st.columns([0.07, 0.93])
                 with i_col1:
                     st.image("https://img.icons8.com/color/48/instagram-new.png", width=35)
@@ -172,18 +176,28 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                     st.markdown("### **Instagram** Growth Trend (Monthly)")
                 
                 st.markdown("---")
-                ig1, ig2 = st.columns(2)
-                with ig1:
+                # Baris 1: Views & Follows
+                ig_row1_1, ig_row1_2 = st.columns(2)
+                with ig_row1_1:
                     st.plotly_chart(create_modern_chart(df_ig, 'View', "#E1306C", "Instagram Views"), use_container_width=True)
-                with ig2:
+                with ig_row1_2:
                     st.plotly_chart(create_modern_chart(df_ig, 'Follow', "#833AB4", "Instagram New Followers"), use_container_width=True)
+                    
+                # Baris 2: Profile Visits & Interactions
+                ig_row2_1, ig_row2_2 = st.columns(2)
+                with ig_row2_1:
+                    st.plotly_chart(create_modern_chart(df_ig, 'Profile Visit', "#F56040", "Instagram Profile Visits"), use_container_width=True)
+                with ig_row2_2:
+                    st.plotly_chart(create_modern_chart(df_ig, 'Interaction', "#FD1D1D", "Instagram Interactions"), use_container_width=True)
                     
         except Exception as e:
             st.error(f"⚠️ Gagal memuat grafik: {e}")
 
     st.markdown("---")
 
+    # =========================================================
     # --- SMART IMPORTER ---
+    # =========================================================
     with st.expander("🚀 Upload Data Insight Baru", expanded=True):
         files = st.file_uploader(
             "Upload CSV TikTok/Instagram",
