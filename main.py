@@ -38,73 +38,73 @@ def check_password():
     if st.session_state.get("password_correct"):
         return True
     
-            st.markdown(f"""
-    <style>
-    
-    /* Background utama */
-    [data-testid="stAppViewContainer"] {{
-        background-image:
-            linear-gradient(rgba(2, 6, 23, 0.82), rgba(2, 6, 23, 0.82)),
-            url("data:image/png;base64,{utils.get_base64_of_bin_file('bg.png')}");
-            
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-    }}
-    
-    /* Hilangkan background putih default */
-    .main {{
-        background: transparent !important;
-    }}
-    
-    /* Container utama */
-    .block-container {{
-        position: relative;
-        z-index: 2;
-    }}
-    
-    /* Form glassmorphism */
-    [data-testid="stForm"] {{
-        background: rgba(255,255,255,0.06);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 20px;
-        padding: 30px !important;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-    }}
-    
-    /* Input */
-    .stTextInput input {{
-        background: rgba(255,255,255,0.08) !important;
-        color: white !important;
-        border-radius: 10px !important;
-        border: 1px solid rgba(255,255,255,0.1) !important;
-    }}
-    
-    /* Label */
-    .stTextInput label {{
-        color: white !important;
-        font-weight: 700;
-    }}
-    
-    /* Tombol */
-    .stButton button {{
-        width: 100%;
-        background: {BRAND_YELLOW};
-        color: black;
-        border-radius: 12px;
-        font-weight: 700;
-        border: none;
-        padding: 12px;
-    }}
-    
-    header, footer {{
-        visibility: hidden;
-    }}
-    
-    </style>
-    """, unsafe_allow_html=True)
+                st.markdown(f"""
+        <style>
+        
+        /* Background utama */
+        [data-testid="stAppViewContainer"] {{
+            background-image:
+                linear-gradient(rgba(2, 6, 23, 0.82), rgba(2, 6, 23, 0.82)),
+                url("data:image/png;base64,{utils.get_base64_of_bin_file('bg.png')}");
+                
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
+        
+        /* Hilangkan background putih default */
+        .main {{
+            background: transparent !important;
+        }}
+        
+        /* Container utama */
+        .block-container {{
+            position: relative;
+            z-index: 2;
+        }}
+        
+        /* Form glassmorphism */
+        [data-testid="stForm"] {{
+            background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 30px !important;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }}
+        
+        /* Input */
+        .stTextInput input {{
+            background: rgba(255,255,255,0.08) !important;
+            color: white !important;
+            border-radius: 10px !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+        }}
+        
+        /* Label */
+        .stTextInput label {{
+            color: white !important;
+            font-weight: 700;
+        }}
+        
+        /* Tombol */
+        .stButton button {{
+            width: 100%;
+            background: {BRAND_YELLOW};
+            color: black;
+            border-radius: 12px;
+            font-weight: 700;
+            border: none;
+            padding: 12px;
+        }}
+        
+        header, footer {{
+            visibility: hidden;
+        }}
+        
+        </style>
+        """, unsafe_allow_html=True)
 
     # --- RENDER KONTEN ---
     # Menggunakan columns seperti kode Anda sebelumnya
