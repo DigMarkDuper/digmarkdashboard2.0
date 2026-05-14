@@ -38,53 +38,40 @@ def check_password():
     if st.session_state.get("password_correct"):
         return True
     
-        st.markdown(f"""
+            st.markdown(f"""
     <style>
     
     /* Background utama */
-    .stApp {{
-        background: #020617;
-    }}
-    
-    /* Background image */
     [data-testid="stAppViewContainer"] {{
-        background-image: url("data:image/png;base64,{utils.get_base64_of_bin_file('bg.png')}");
+        background-image:
+            linear-gradient(rgba(2, 6, 23, 0.82), rgba(2, 6, 23, 0.82)),
+            url("data:image/png;base64,{utils.get_base64_of_bin_file('bg.png')}");
+            
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
         background-attachment: fixed;
     }}
     
-    /* Overlay GELAP */
-    [data-testid="stAppViewContainer"]::before {{
-        content: "";
-        position: fixed;
-        inset: 0;
-        background: rgba(2, 6, 23, 0.75);
-        z-index: 1;
-        pointer-events: none;
-    }}
-    
-    /* Semua konten di atas overlay */
+    /* Hilangkan background putih default */
     .main {{
-        position: relative;
-        z-index: 2;
+        background: transparent !important;
     }}
     
-    /* Block container */
+    /* Container utama */
     .block-container {{
         position: relative;
         z-index: 2;
     }}
     
-    /* Form styling */
+    /* Form glassmorphism */
     [data-testid="stForm"] {{
         background: rgba(255,255,255,0.06);
         backdrop-filter: blur(12px);
-        border: 1px solid rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.08);
         border-radius: 20px;
         padding: 30px !important;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     }}
     
     /* Input */
@@ -110,11 +97,6 @@ def check_password():
         font-weight: 700;
         border: none;
         padding: 12px;
-    }}
-    
-    .stButton button:hover {{
-        background: white;
-        color: black;
     }}
     
     header, footer {{
