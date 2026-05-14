@@ -120,11 +120,14 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
             </div>
         """, unsafe_allow_html=True)
         
-        g1, g2, g3, g4 = st.columns(4)
+        g1, g2, g3, g4, g5, g6 = st.columns(6)
+        
         g1.metric("Grand Total Views", f"{int(df_calc['View'].sum()):,}")
         g2.metric("Grand Total Reach", f"{int(df_calc['Reach'].sum()):,}")
         g3.metric("Grand Interaksi", f"{int(df_calc['Interaction'].sum()):,}")
         g4.metric("Grand Followers", f"{int(df_calc['Follow'].sum()):,}")
+        g5.metric("Profile Visits", f"{int(df_calc['Profile Visit'].sum()):,}")
+        g6.metric("Link Clicks", f"{int(df_calc['Link Clicks'].sum()):,}")
 
         # --- VISUALISASI PER PLATFORM (MONTHLY) ---
         try:
