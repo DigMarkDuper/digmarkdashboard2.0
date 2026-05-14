@@ -159,7 +159,7 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                     <img src="https://img.icons8.com/color/48/globe--v1.png" width="30">
                 </div>
                 <div>
-                    <h2 style="margin:0; color:white; font-size:18px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">🌍 Total Performa Gabungan</h2>
+                    <h2 style="margin:0; color:white; font-size:18px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">Total Performa Gabungan</h2>
                     <p style="margin:0; color: rgba(255,255,255,0.7); font-size: 11px; font-weight: 600;">Data akumulasi dari seluruh platform yang terhubung</p>
                 </div>
             </div>
@@ -338,7 +338,21 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
 
     # --- HISTORY TABLE ---
     st.markdown("---")
-    st.markdown("### 🗄️ Riwayat Data di Spreadsheet")
+    st.markdown(f"""
+        <div style="display: flex; align-items: center; gap: 15px; background: #F8FAFC; padding: 15px 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #E2E8F0; border-left: 8px solid #22C55E;">
+            <div style="background: white; padding: 8px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center;">
+                <img src="https://img.icons8.com/color/48/google-sheets.png" width="30">
+            </div>
+            <div>
+                <h3 style="margin: 0; color: #1E293B; font-size: 18px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Spreadsheet Data History
+                </h3>
+                <p style="margin: 0; color: #64748B; font-size: 11px; font-weight: 600;">
+                    Log aktivitas dan sinkronisasi data dari sistem Google Sheets
+                </p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
     if not df_db_main.empty:
         df_history = df_db_main.copy()
         if len(df_history.columns) >= len(header_names):
