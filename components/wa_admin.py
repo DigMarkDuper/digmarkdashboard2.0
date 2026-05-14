@@ -463,7 +463,47 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                 # 7. FUNNEL & SUMBER
                 c1, c2 = st.columns(2)
                 with c1:
-                    st.markdown('<div class="feature-header">📊 Funnel Konversi Prospek</div>', unsafe_allow_html=True)
+                    # --- SUB-HEADER KIRI: FUNNEL KONVERSI ---
+                    FUNNEL_ICON = "https://cdn-icons-png.flaticon.com/512/1951/1951336.png" # Ikon Funnel/Corong
+
+                    st.markdown(f"""
+                        <div style="
+                            display: flex; 
+                            align-items: center; 
+                            gap: 12px; 
+                            background: #FFFFFF; 
+                            padding: 10px 15px; 
+                            border-radius: 10px; 
+                            margin-bottom: 15px; 
+                            border-left: 6px solid {BRAND_BLUE}; 
+                            border: 1px solid #E2E8F0;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                        ">
+                            <div style="
+                                background: #F8FAFC; 
+                                padding: 6px; 
+                                border-radius: 6px; 
+                                display: flex; 
+                                align-items: center; 
+                                justify-content: center;
+                                border: 1px solid #F1F5F9;
+                            ">
+                                <img src="{FUNNEL_ICON}" width="18">
+                            </div>
+                            <div>
+                                <div style="
+                                    margin: 0; 
+                                    color: #1E293B; 
+                                    font-size: 13px; 
+                                    font-weight: 800; 
+                                    letter-spacing: 0.5px; 
+                                    text-transform: uppercase;
+                                ">
+                                    📊 Funnel <span style="color: {BRAND_BLUE};">Konversi Prospek</span>
+                                </div>
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
                     funnel_order = ["Follow Up", "Daftar", "Interview", "Closing"]
                     funnel_data = [dict(Tahap="Total Leads", Jumlah=total_leads)]
                     for tahap in funnel_order:
@@ -480,7 +520,47 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                     st.plotly_chart(fig_funnel, use_container_width=True)
 
                 with c2:
-                    st.markdown('<div class="feature-header">🌐 Sumber Prospek</div>', unsafe_allow_html=True)
+                   # --- SUB-HEADER KANAN: SUMBER PROSPEK ---
+                        SOURCE_ICON = "https://cdn-icons-png.flaticon.com/512/876/876019.png" # Ikon Network/Sumber
+                    
+                        st.markdown(f"""
+                            <div style="
+                                display: flex; 
+                                align-items: center; 
+                                gap: 12px; 
+                                background: #FFFFFF; 
+                                padding: 10px 15px; 
+                                border-radius: 10px; 
+                                margin-bottom: 15px; 
+                                border-left: 6px solid {BRAND_BLUE}; 
+                                border: 1px solid #E2E8F0;
+                                box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                            ">
+                                <div style="
+                                    background: #F8FAFC; 
+                                    padding: 6px; 
+                                    border-radius: 6px; 
+                                    display: flex; 
+                                    align-items: center; 
+                                    justify-content: center;
+                                    border: 1px solid #F1F5F9;
+                                ">
+                                    <img src="{SOURCE_ICON}" width="18">
+                                </div>
+                                <div>
+                                    <div style="
+                                        margin: 0; 
+                                        color: #1E293B; 
+                                        font-size: 13px; 
+                                        font-weight: 800; 
+                                        letter-spacing: 0.5px; 
+                                        text-transform: uppercase;
+                                    ">
+                                        🌐 Sumber <span style="color: {BRAND_BLUE};">Prospek</span>
+                                    </div>
+                                </div>
+                            </div>
+                        """, unsafe_allow_html=True)
                     if 'Sumber (Ads/Organik/Sales)' in df_wa.columns:
                         sumber_vc = df_wa['Sumber (Ads/Organik/Sales)'].value_counts()
                         # FIX PANDAS: Pembuatan dataframe aman (Ini yang error sebelumnya!)
