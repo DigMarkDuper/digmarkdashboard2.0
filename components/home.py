@@ -579,8 +579,8 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
             
             st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
             
-  # B. GRAFIK TREEMAP
-    # --- SECTION HEADER: TREEMAP DISTRIBUTION (CONSISTENT STYLE) ---
+ # B. GRAFIK TREEMAP (FIXED & SYNCED)
+    # --- SECTION HEADER: TREEMAP DISTRIBUTION ---
     TREE_ICON = "https://cdn-icons-png.flaticon.com/512/1632/1632602.png" 
         
     st.markdown(f"""
@@ -631,29 +631,39 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
     """, unsafe_allow_html=True)
 
     try:
-        # Pengecekan apakah kolom 'Asal' tersedia di dataframe (asumsi df adalah sumber data)
-        if 'Asal' in df.columns:
-            asal_counts = df['Asal'].value_counts().reset_index()
-            asal_counts.columns = ['Lokasi', 'Jumlah']
+        # PERBAIKAN: Gunakan df_wa (sesuai variabel yang di-load di atas), bukan df
+        if not df_wa.empty:
+            # Mencari kolom yang mengandung kata 'Asal' secara otomatis
+            asal_col = next((c for c in df_wa.columns if 'Asal' in str(c)), None)
+            
+            if asal_col:
+                # Hitung jumlah per lokasi
+                asal_counts = df_wa[asal_col].value_counts().reset_index()
+                asal_counts.columns = ['Lokasi', 'Jumlah']
+                
+                # Bersihkan data sampah
+                asal_counts = asal_counts[~asal_counts['Lokasi'].astype(str).isin(['', '-', 'Nan', 'None', 'Undefined'])]
 
-            with st.container(border=True):        
-                if not asal_counts.empty:
-                    fig_asal = px.treemap(
-                        asal_counts, 
-                        path=[px.Constant("Seluruh Wilayah"), 'Lokasi'], 
-                        values='Jumlah',
-                        color='Jumlah', 
-                        color_continuous_scale='GnBu'
-                    )
-                    fig_asal.update_traces(textinfo="label+value", texttemplate="<b>%{label}</b><br>%{value} Leads")
-                    fig_asal.update_layout(height=500, margin=dict(t=10, l=10, r=10, b=10), coloraxis_showscale=False)
-                    st.plotly_chart(fig_asal, use_container_width=True)
-                else:
-                    st.info("Data Asal belum tersedia untuk dibuatkan TreeMap.")
+                with st.container(border=True):        
+                    if not asal_counts.empty:
+                        fig_asal = px.treemap(
+                            asal_counts, 
+                            path=[px.Constant("Seluruh Wilayah"), 'Lokasi'], 
+                            values='Jumlah',
+                            color='Jumlah', 
+                            color_continuous_scale='GnBu'
+                        )
+                        fig_asal.update_traces(textinfo="label+value", texttemplate="<b>%{label}</b><br>%{value} Leads")
+                        fig_asal.update_layout(height=500, margin=dict(t=10, l=10, r=10, b=10), coloraxis_showscale=False)
+                        st.plotly_chart(fig_asal, use_container_width=True)
+                    else:
+                        st.info("Data Asal belum tersedia untuk dibuatkan TreeMap.")
+            else:
+                st.info("💡 Kolom data 'Asal' tidak ditemukan di database WhatsApp.")
         else:
-            st.info("💡 Kolom data 'Asal' tidak ditemukan dalam sistem.")
+            st.warning("⚠️ Data WhatsApp kosong, tidak bisa merender TreeMap.")
 
     except Exception as e:
-        st.error(f"Gagal memuat visualisasi peta/grafik: {e}")
+        st.error(f"Gagal memuat visualisasi TreeMap: {e}")
 
     st.markdown("<br>", unsafe_allow_html=True)
