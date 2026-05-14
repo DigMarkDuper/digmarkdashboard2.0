@@ -10,14 +10,17 @@ import components.utils as utils
 def universal_date_parser(d_str):
     if pd.isna(d_str) or d_str == "": 
         return ""
-    d_str = str(d_str).strip()
-    # Format TikTok: "January 1", Format IG: "2026-01-01"
+    d_str = str(d_str).strip().replace('"', '')
+    # Menangani TikTok (April 1) dan Instagram (2026-01-01T01:00:00)
+    # Kita ambil tanggalnya saja jika ada format ISO T...
+    d_str = d_str.split('t')[0].split('T')[0]
+    
     formats = ['%B %d', '%b %d', '%d-%m-%Y', '%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y', '%B %d, %Y']
     for fmt in formats:
         try:
             dt_obj = datetime.strptime(d_str, fmt)
             if dt_obj.year == 1900: 
-                dt_obj = dt_obj.replace(year=2026) 
+                dt_obj = dt_obj.replace(year=2026)
             return dt_obj.strftime('%d/%m/%Y')
         except: 
             continue
@@ -92,14 +95,12 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                 with ig1: st.plotly_chart(create_modern_chart(df_ig, 'View', "#E1306C", "Instagram Views"), use_container_width=True)
                 with ig2: st.plotly_chart(create_modern_chart(df_ig, 'Follow', "#833AB4", "Instagram New Followers"), use_container_width=True)
         except: pass
-    else:
-        st.info("Database masih kosong.")
 
     st.markdown("---")
 
-    # --- 3. SMART IMPORTER V10 (ROBUST DETECTION) ---
+    # --- 3. SMART IMPORTER V12 (PRO MULTI-DETECTOR) ---
     with st.expander("🚀 Ultra-Smart Importer (TikTok & Instagram)", expanded=True):
-        files = st.file_uploader("Upload CSV TikTok/IG", type=["csv"], accept_multiple_files=True, key=f"ins_v10_{st.session_state.uploader_key}")
+        files = st.file_uploader("Upload CSV TikTok/IG", type=["csv"], accept_multiple_files=True, key=f"ins_v12_{st.session_state.uploader_key}")
         
         if files:
             all_platform_data = []
@@ -116,11 +117,12 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                             break
                         except: continue
                     
-                    sample_text = content_str.lower()
+                    lines = content_str.splitlines()
                     
-                    # --- A. LOGIKA TIKTOK (DETEKSI NAMA FILE) ---
+                    # --- A. LOGIKA TIKTOK (Detection by Filename) ---
                     if "overview" in fn or "followerhistory" in fn:
                         df_raw = pd.read_csv(io.StringIO(content_str))
+                        df_raw.columns = [c.replace('"', '').strip() for c in df_raw.columns]
                         df_raw['Date'] = df_raw['Date'].apply(universal_date_parser)
                         
                         if "overview" in fn:
@@ -139,51 +141,53 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                             st.success(f"🎵 **TikTok Followers** terdeteksi: `{f.name}`")
                         all_platform_data.append(res)
                     
-                    # --- B. LOGIKA INSTAGRAM (DETEKSI ISI FILE) ---
+                    # --- B. LOGIKA INSTAGRAM (Detection by Content Line 2) ---
                     else:
-                        lines = content_str.splitlines()
-                        skip_rows = 0
-                        # Scan baris untuk menemukan header asli
+                        metric_title = ""
+                        header_idx = -1
+                        
+                        # Cari Baris Header "Date","Primary"
                         for i, line in enumerate(lines):
-                            clean_line = line.replace('"', '').lower()
-                            if "date" in clean_line and "primary" in clean_line:
-                                skip_rows = i
+                            clean = line.replace('"', '').lower()
+                            if i == 1: metric_title = clean # Baris kedua biasanya judul metrik
+                            if "date" in clean and "primary" in clean:
+                                header_idx = i
                                 break
                         
-                        # Baca data mulai dari baris header yang ditemukan
-                        df_raw = pd.read_csv(io.StringIO("\n".join(lines[skip_rows:])))
-                        
-                        # Mapping Metrik Berdasarkan Keyword
-                        mapping = {
-                            "follows": "Follow",
-                            "profile visits": "Profile Visit",
-                            "visits": "Profile Visit", # Tambahan untuk file Visits.csv
-                            "link clicks": "Link Clicks",
-                            "interactions": "Interaction",
-                            "reach": "Reach",
-                            "views": "View"
-                        }
-                        
-                        found_target = None
-                        for key, val in mapping.items():
-                            if key in sample_text or key in fn: # Cek di isi DAN nama file
-                                found_target = val
-                                break
-                        
-                        if found_target and not df_raw.empty:
-                            # Bersihkan tanggal dari embel-embel Jam (T01:00)
-                            df_raw['Date'] = df_raw['Date'].astype(str).str.split('T').str[0]
-                            df_raw['Date'] = df_raw['Date'].apply(universal_date_parser)
+                        if header_idx != -1:
+                            df_raw = pd.read_csv(io.StringIO("\n".join(lines[header_idx:])))
+                            df_raw.columns = [c.replace('"', '').strip() for c in df_raw.columns]
                             
-                            res = pd.DataFrame({
-                                'Date': df_raw['Date'], 
-                                'Platform': 'Instagram', 
-                                found_target: pd.to_numeric(df_raw['Primary'], errors='coerce').fillna(0)
-                            })
-                            all_platform_data.append(res)
-                            st.success(f"📸 **Instagram {found_target}** terdeteksi: `{f.name}`")
+                            # Mapping Metrik Berdasarkan Judul di Baris 2 atau Nama File
+                            mapping = {
+                                "follows": "Follow",
+                                "profile visits": "Profile Visit",
+                                "visits": "Profile Visit",
+                                "link clicks": "Link Clicks",
+                                "interactions": "Interaction",
+                                "reach": "Reach",
+                                "views": "View"
+                            }
+                            
+                            found_metric = None
+                            for key, val in mapping.items():
+                                if key in metric_title or key in fn:
+                                    found_metric = val
+                                    break
+                            
+                            if found_metric:
+                                df_raw['Date'] = df_raw['Date'].apply(universal_date_parser)
+                                res = pd.DataFrame({
+                                    'Date': df_raw['Date'], 
+                                    'Platform': 'Instagram', 
+                                    found_metric: pd.to_numeric(df_raw['Primary'], errors='coerce').fillna(0)
+                                })
+                                all_platform_data.append(res)
+                                st.success(f"📸 **Instagram {found_metric}** terdeteksi: `{f.name}`")
+                            else:
+                                st.warning(f"⚠️ Metrik tidak dikenal pada file: `{f.name}`")
                         else:
-                            st.error(f"❌ File tidak dikenali: `{f.name}`. Pastikan format kolom sesuai.")
+                            st.error(f"❌ Header tidak ditemukan pada file: `{f.name}`")
 
                 except Exception as e:
                     st.error(f"⚠️ Gagal memproses {f.name}: {e}")
