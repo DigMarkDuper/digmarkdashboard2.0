@@ -114,13 +114,38 @@ def check_password():
             </div>
         ''', unsafe_allow_html=True)
             
-        # Judul: Ukuran font dinaikkan sedikit agar seimbang dengan logo
+        # Judul: Center Alignment dengan Flexbox untuk akurasi tinggi
         st.markdown(f'''
-            <div style="text-align: center; margin-bottom: 25px;">
-                <h4 style="color:white; font-weight:300; letter-spacing:2px; margin:0; font-size: 16px; line-height: 1.4;">
-                    DIGITAL MARKETING <br>
-                    <span style="color:{BRAND_YELLOW}; font-weight:800; font-size: 20px;">DASHBOARD</span>
+            <div style="
+                display: flex; 
+                flex-direction: column; 
+                align-items: center; 
+                justify-content: center; 
+                text-align: center; 
+                margin-bottom: 25px; 
+                width: 100%;
+            ">
+                <h4 style="
+                    color: white; 
+                    font-weight: 300; 
+                    letter-spacing: 2px; 
+                    margin: 0; 
+                    font-size: 16px; 
+                    line-height: 1.2;
+                    text-transform: uppercase;
+                ">
+                    DIGITAL MARKETING
                 </h4>
+                <h2 style="
+                    color: {BRAND_YELLOW}; 
+                    font-weight: 800; 
+                    font-size: 24px; 
+                    margin: 0; 
+                    letter-spacing: 1px;
+                    text-transform: uppercase;
+                ">
+                    DASHBOARD
+                </h2>
             </div>
         ''', unsafe_allow_html=True)
 
