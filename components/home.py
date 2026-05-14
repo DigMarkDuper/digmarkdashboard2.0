@@ -202,28 +202,30 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
             # Tombol sudah otomatis jadi Biru karena CSS di atas
             st.button("MASUK ➔", key=button_key, use_container_width=True, on_click=go_to_page_func, args=(target_page,))
 
-    # Data Navigasi dengan URL Logo 
+    # ==========================================================
+    # DATA NAVIGASI (TEMA: MODERN MINIMALIST & MONOCHROME)
+    # ==========================================================
     nav_data = [
-        # 1. Sosmed (Smartphone & Engagement)
-        ("https://cdn-icons-png.flaticon.com/512/1968/1968666.png", "Sosmed", "Jadwal PIC", "📱 SOSIAL MEDIA", "btn_sos"),
+        # 1. Sosmed (Ikon Berbagi/Megaphone Modern - Tidak Neko-neko)
+        ("https://cdn-icons-png.flaticon.com/512/1216/1216654.png", "Sosmed", "Jadwal PIC", "📱 SOSIAL MEDIA", "btn_sos"),
         
-        # 2. Website (Browser & SEO Optimization)
-        ("https://cdn-icons-png.flaticon.com/512/2838/2838838.png", "Website", "SEO Audit", "🌐 WEBSITE AUDIT", "btn_web"),
+        # 2. Website (Ikon Laptop/Browser Garis Bersih)
+        ("https://cdn-icons-png.flaticon.com/512/1216/1216630.png", "Website", "SEO Audit", "🌐 WEBSITE AUDIT", "btn_web"),
         
-        # 3. Insight (Modern Analytics Chart)
-        ("https://cdn-icons-png.flaticon.com/512/2936/2936690.png", "Insight", "Analytics", "📈 INSIGHTS & ANALYTICS", "btn_in"),
+        # 3. Insight (Ikon Grafik Analitik Batang & Garis)
+        ("https://cdn-icons-png.flaticon.com/512/1216/1216670.png", "Insight", "Analytics", "📈 INSIGHTS & ANALYTICS", "btn_in"),
         
-        # 4. WA Admin (Customer Service / Live Chat)
-        ("https://cdn-icons-png.flaticon.com/512/4738/4738047.png", "WA Admin", "Closing Funnel", "💬 WA ADMIN REPORT", "btn_wa"),
+        # 4. WA Admin (Ikon Bubble Chat dengan Tanda Titik-titik Chat Modern)
+        ("https://cdn-icons-png.flaticon.com/512/1216/1216584.png", "WA Admin", "Closing Funnel", "💬 WA ADMIN REPORT", "btn_wa"),
         
-        # 5. Database (Secure Server / CRM)
-        ("https://cdn-icons-png.flaticon.com/512/3242/3242212.png", "Database", "CRM Kontak", "📂 DATABASE NOMOR", "btn_db"),
+        # 5. Database (Ikon Tumpukan Server/Database Rapi)
+        ("https://cdn-icons-png.flaticon.com/512/1216/1216664.png", "Database", "CRM Kontak", "📂 DATABASE NOMOR", "btn_db"),
         
-        # 6. DM Sosmed (Inbox / Messages)
-        ("https://cdn-icons-png.flaticon.com/512/4738/4738023.png", "DM Sosmed", "Tracker Inbox", "📱 DM SOSMED", "btn_dm"),
+        # 6. DM Sosmed (Ikon Pesan Masuk/Envelope)
+        ("https://cdn-icons-png.flaticon.com/512/1216/1216641.png", "DM Sosmed", "Tracker Inbox", "📱 DM SOSMED", "btn_dm"),
         
-        # 7. Ads Report (Target / ROI / Performance)
-        ("https://cdn-icons-png.flaticon.com/512/3228/3228286.png", "Ads Report", "ROI & CPL", "📈 ADS ANALYTICS", "btn_ads")
+        # 7. Ads Report (Ikon Target Bullseye & Panah Konversi)
+        ("https://cdn-icons-png.flaticon.com/512/1216/1216647.png", "Ads Report", "ROI & CPL", "📈 ADS ANALYTICS", "btn_ads")
     ]
 
     # Render Baris 1
