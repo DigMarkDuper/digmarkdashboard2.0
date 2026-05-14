@@ -79,7 +79,11 @@ def show_crm_page():
                 opts_daerah = sorted(df_crm['Domisili'].unique().tolist()) if 'Domisili' in df_crm.columns else []
                 sel_daerah = st.multiselect("Domisili:", options=opts_daerah)
             with f3:
-                sel_treatment = st.selectbox("Status Treatment:", ["Semua", "Sudah Treatment", "Belum Treatment"])
+                # Perbaikan Pilihan Filter Treatment
+                sel_treatment = st.selectbox(
+                    "Status Treatment:", 
+                    ["Semua", "Sudah Treatment 1", "Sudah Treatment 2", "Belum Treatment"]
+                )
 
         # --- EKSEKUSI FILTER ---
         mask = pd.Series([True] * len(df_crm))
@@ -92,13 +96,15 @@ def show_crm_page():
         if sel_daerah:
             mask &= df_crm['Domisili'].isin(sel_daerah)
 
-        # Filter Treatment (Cek kolom treatment 1 & 2)
+        # Logika Filter Treatment Spesifik (Treatment 1 & 2)
         has_t1 = 'treatment 1' in df_crm.columns
         has_t2 = 'treatment 2' in df_crm.columns
         
         if has_t1 and has_t2:
-            if sel_treatment == "Sudah Treatment":
-                mask &= (df_crm['treatment 1'].astype(str) != '') | (df_crm['treatment 2'].astype(str) != '')
+            if sel_treatment == "Sudah Treatment 1":
+                mask &= (df_crm['treatment 1'].astype(str) != '')
+            elif sel_treatment == "Sudah Treatment 2":
+                mask &= (df_crm['treatment 2'].astype(str) != '')
             elif sel_treatment == "Belum Treatment":
                 mask &= (df_crm['treatment 1'].astype(str) == '') & (df_crm['treatment 2'].astype(str) == '')
 
@@ -109,19 +115,19 @@ def show_crm_page():
         # =========================================================
         st.subheader("📑 Data Terfilter")
         
-        m1, m2, m3 = st.columns(3)
-        m1.metric("Hasil Filter", f"{len(filtered_df)} Data")
-        m2.metric("Total Database", f"{len(df_crm)} Data")
+        # Metrics yang lebih informatif
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Hasil Filter", f"{len(filtered_df)}")
+        m2.metric("Total Database", f"{len(df_crm)}")
         
-        # Hitung angka treatment untuk metric
         if has_t1 and has_t2:
-            count_done = len(df_crm[(df_crm['treatment 1'] != '') | (df_crm['treatment 2'] != '')])
-            m3.metric("Total Sudah Treatment", f"{count_done} Orang")
+            count_t1 = len(df_crm[df_crm['treatment 1'].astype(str) != ''])
+            count_t2 = len(df_crm[df_crm['treatment 2'].astype(str) != ''])
+            m3.metric("Sudah T1", f"{count_t1}")
+            m4.metric("Sudah T2", f"{count_t2}")
 
         # Tampilkan Tabel Utama
         st.dataframe(filtered_df, use_container_width=True, hide_index=True)
 
     except Exception as e:
         st.error(f"Terjadi kesalahan saat memuat data: {e}")
-
-# Pastikan fungsi ini dipanggil di app utama
