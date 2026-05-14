@@ -137,6 +137,27 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                     </div>
                 """, unsafe_allow_html=True)
             
+            # --- CSS CUSTOM: UBAH WARNA TAG MULTISELECT JADI BIRU ---
+            st.markdown(f"""
+                <style>
+                /* Mengubah background tag pilihan menjadi Biru */
+                span[data-baseweb="tag"] {{
+                    background-color: {BRAND_BLUE} !important;
+                    color: white !important;
+                    border-radius: 6px !important;
+                    border: none !important;
+                }}
+                /* Mengubah warna ikon (x) untuk menghapus tag menjadi putih */
+                span[data-baseweb="tag"] svg {{
+                    fill: white !important;
+                }}
+                /* Memberikan efek hover sedikit gelap saat ikon (x) disorot */
+                span[data-baseweb="tag"] span:hover {{
+                    background-color: #1e40af !important;
+                }}
+                </style>
+            """, unsafe_allow_html=True)
+
             col_filter1, col_filter2 = st.columns(2)
             
             with col_filter1:
