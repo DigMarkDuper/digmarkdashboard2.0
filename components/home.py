@@ -152,7 +152,42 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # E. RENDER ROI DASHBOARD (DATA GLOBAL TOTAL)
+# --- 1. CSS CUSTOM (VERTIKAL STYLE) ---
+    st.markdown("""
+        <style>
+        .kpi-card {
+            background-color: #FFFFFF;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid #F0F2F6;
+            display: flex;
+            flex-direction: column; /* MEMAKSA ATAS BAWAH */
+            justify-content: center;
+            align-items: flex-start; /* Rata kiri agar lebih rapi */
+            min-height: 110px;
+            transition: all 0.3s ease;
+        }
+        .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .metric-title { 
+            font-size: 10px; 
+            color: #6B7280; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            margin-bottom: 8px; /* Jarak antara judul dan angka */
+            line-height: 1.2;
+        }
+        .metric-value { 
+            font-size: 19px; 
+            font-weight: 800; 
+            color: #111827; 
+            line-height: 1;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # --- E. RENDER ROI DASHBOARD ---
+    try:
         st.markdown('<div style="font-weight: 800; margin-bottom: 15px;">🌍 ULTIMATE ROI DASHBOARD (ALL TIME GLOBAL)</div>', unsafe_allow_html=True)
         r = st.columns(5)
         
@@ -165,17 +200,16 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
                     </div>
                 """, unsafe_allow_html=True)
 
-        render_box(r[0], "💸 Total Spend ADS + Mekari", f"Rp {global_spend:,.0f}", "#8B0000")
+        render_box(r[0], "💸 Total Spend Ads + Mekari", f"Rp {global_spend:,.0f}", "#8B0000")
         render_box(r[1], "👥 Leads Total", f"{global_leads}")
-        render_box(r[2], "🎓 Closing Total", f"{global_closing} Siswa", "#006400")
-        render_box(r[3], "🎯 Customer Aquisition Cost (CAC)", f"Rp {global_cac:,.0f}", "#D2691E")
+        render_box(r[2], "🎓 Closing Total", f"{global_closing} Swa", "#006400")
+        render_box(r[3], "🎯 Biaya per Siswa (CAC)", f"Rp {global_cac:,.0f}", "#D2691E")
         render_box(r[4], "🚀 ROAS Total", f"{global_roas:,.1f}x", "#1E3A8A")
 
         st.markdown("---")
 
     except Exception as e:
         st.error(f"Gagal memuat metrik: {e}")
-
     # --- 5. ANNUAL TARGET TRACKING (FUTURISTIC RING STYLE) ---
     try:
         st.markdown('<div style="font-weight: 800; margin-top: 20px; margin-bottom: 15px;">🎯 2026 ANNUAL TARGET PROGRESS</div>', unsafe_allow_html=True)
