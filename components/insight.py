@@ -9,8 +9,9 @@ import components.utils as utils
 
 def universal_date_parser(d_str):
     if pd.isna(d_str) or d_str == "": return ""
-    d_str = str(d_str).strip().replace('"', '').replace("'", "")
-    # Potong jam jika ada (format Instagram ISO)
+    # Bersihkan segala jenis tanda kutip dan spasi liar
+    d_str = str(d_str).replace('"', '').replace("'", "").strip()
+    # Handle format ISO Instagram (2026-01-01T01:00:00) -> ambil 2026-01-01
     d_str = d_str.split('T')[0].split('t')[0]
     
     formats = ['%B %d', '%b %d', '%d-%m-%Y', '%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y', '%B %d, %Y']
@@ -51,22 +52,29 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     if 'preview_data' not in st.session_state: st.session_state.preview_data = None
     if 'uploader_key' not in st.session_state: st.session_state.uploader_key = 0
 
+    # Ambil data dari bundle (Tab Index 2)
     df_db_main = st.session_state.get('bundle', {}).get(2, pd.DataFrame())
 
     # --- RENDER SUMMARY & CHARTS ---
     if not df_db_main.empty:
         df_calc = df_db_main.copy()
-        if len(df_calc.columns) == len(header_names): df_calc.columns = header_names
-        for col in numeric_cols: 
-            df_calc[col] = pd.to_numeric(df_calc[col], errors='coerce').fillna(0)
+        # Pastikan kolom sesuai header standar
+        if len(df_calc.columns) >= len(header_names):
+            df_calc.columns = header_names[:len(df_calc.columns)]
+        
+        for col in numeric_cols:
+            if col in df_calc.columns:
+                df_calc[col] = pd.to_numeric(df_calc[col], errors='coerce').fillna(0)
 
-        st.markdown(f"""<div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left: 10px solid {BRAND_YELLOW};"><h2 style="margin:0; color:white; font-size:20px;">🌍 TOTAL PERFORMA GABUNGAN</h2></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left: 10px solid {BRAND_YELLOW};"><h2 style="margin:0; color:white; font-size:18px;">🌍 TOTAL PERFORMA GABUNGAN (ALL-TIME)</h2></div>""", unsafe_allow_html=True)
+        
         g1, g2, g3, g4 = st.columns(4)
         g1.metric("Grand Total Views", f"{int(df_calc['View'].sum()):,}")
         g2.metric("Grand Total Reach", f"{int(df_calc['Reach'].sum()):,}")
         g3.metric("Grand Interaksi", f"{int(df_calc['Interaction'].sum()):,}")
         g4.metric("Grand Followers", f"{int(df_calc['Follow'].sum()):,}")
 
+        # TREN VISUAL
         try:
             df_trend = df_calc.copy()
             df_trend['Date'] = pd.to_datetime(df_trend['Date'], dayfirst=True, errors='coerce')
@@ -88,51 +96,52 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                 with ig1: st.plotly_chart(create_modern_chart(df_ig, 'View', "#E1306C", "Instagram Views"), use_container_width=True)
                 with ig2: st.plotly_chart(create_modern_chart(df_ig, 'Follow', "#833AB4", "Instagram New Followers"), use_container_width=True)
         except: pass
+    else:
+        st.info("Database di Spreadsheet masih kosong. Silakan upload data di bawah.")
 
     st.markdown("---")
 
-    # --- 3. SMART IMPORTER V14 (FILENAME LOGIC ONLY) ---
-    with st.expander("🚀 Upload Insight (TikTok & Instagram)", expanded=True):
-        files = st.file_uploader("Pilih file ekspor CSV", type=["csv"], accept_multiple_files=True, key=f"ins_v14_{st.session_state.uploader_key}")
+    # --- 3. SMART IMPORTER V16 (LOGIKA NAMA FILE MURNI) ---
+    with st.expander("🚀 Upload Data Insight Baru (TikTok & Instagram)", expanded=True):
+        files = st.file_uploader("Upload file CSV hasil ekspor", type=["csv"], accept_multiple_files=True, key=f"ins_v16_{st.session_state.uploader_key}")
         
         if files:
             all_platform_data = []
             for f in files:
                 try:
                     fn = f.name.lower()
-                    # Decode content
+                    # Baca konten dengan decoder yang aman
                     content = f.getvalue().decode("utf-8-sig", errors="ignore")
                     
-                    # A. LOGIKA TIKTOK
+                    # 1. JIKA FILE TIKTOK
                     if "overview" in fn or "followerhistory" in fn:
                         df_raw = pd.read_csv(io.StringIO(content))
-                        df_raw.columns = [c.replace('"', '').strip() for c in df_raw.columns]
-                        df_raw['Date'] = df_raw['Date'].apply(universal_date_parser)
+                        # Bersihkan header dari tanda kutip
+                        df_raw.columns = [str(c).replace('"', '').strip() for c in df_raw.columns]
                         
-                        if "overview" in fn:
-                            res = pd.DataFrame({
-                                'Date': df_raw['Date'], 'Platform': 'TikTok', 
-                                'View': df_raw.get('Video Views', 0), 
-                                'Interaction': df_raw.get('Likes', 0) + df_raw.get('Comments', 0) + df_raw.get('Shares', 0), 
-                                'Profile Visit': df_raw.get('Profile Views', 0)
-                            })
-                        else:
-                            res = pd.DataFrame({
-                                'Date': df_raw['Date'], 'Platform': 'TikTok', 
-                                'Follow': df_raw.get('Difference in followers from previous day', 0)
-                            })
-                        all_platform_data.append(res)
-                        st.success(f"🎵 TikTok detected: {f.name}")
+                        if 'Date' in df_raw.columns:
+                            df_raw['Date'] = df_raw['Date'].apply(universal_date_parser)
+                            if "overview" in fn:
+                                res = pd.DataFrame({
+                                    'Date': df_raw['Date'], 'Platform': 'TikTok', 
+                                    'View': df_raw.get('Video Views', 0), 
+                                    'Interaction': df_raw.get('Likes', 0) + df_raw.get('Comments', 0) + df_raw.get('Shares', 0), 
+                                    'Profile Visit': df_raw.get('Profile Views', 0)
+                                })
+                            else:
+                                res = pd.DataFrame({
+                                    'Date': df_raw['Date'], 'Platform': 'TikTok', 
+                                    'Follow': df_raw.get('Difference in followers from previous day', 0)
+                                })
+                            all_platform_data.append(res)
+                            st.success(f"✅ TikTok terdeteksi: {f.name}")
 
-                    # B. LOGIKA INSTAGRAM
+                    # 2. JIKA FILE INSTAGRAM (BERDASARKAN NAMA FILE)
                     else:
                         mapping = {
-                            "follows": "Follow",
-                            "visits": "Profile Visit",
-                            "link clicks": "Link Clicks",
-                            "interactions": "Interaction",
-                            "reach": "Reach",
-                            "views": "View"
+                            "follows": "Follow", "visits": "Profile Visit",
+                            "link clicks": "Link Clicks", "interactions": "Interaction",
+                            "reach": "Reach", "views": "View"
                         }
                         
                         target_col = None
@@ -142,45 +151,68 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                                 break
                         
                         if target_col:
-                            # Instagram CSV: line 0=sep, line 1=title, line 2=header
+                            # Instagram selalu skip 2 baris awal
                             df_raw = pd.read_csv(io.StringIO(content), skiprows=2)
-                            df_raw.columns = [c.replace('"', '').strip() for c in df_raw.columns]
-                            df_raw['Date'] = df_raw['Date'].apply(universal_date_parser)
+                            # PEMBERSIH KOLOM: Paksa hapus tanda kutip di nama kolom
+                            df_raw.columns = [str(c).replace('"', '').strip() for c in df_raw.columns]
                             
-                            res = pd.DataFrame({
-                                'Date': df_raw['Date'], 
-                                'Platform': 'Instagram', 
-                                target_col: pd.to_numeric(df_raw['Primary'], errors='coerce').fillna(0)
-                            })
-                            all_platform_data.append(res)
-                            st.success(f"📸 Instagram {target_col} detected: {f.name}")
+                            if 'Date' in df_raw.columns:
+                                df_raw['Date'] = df_raw['Date'].apply(universal_date_parser)
+                                res = pd.DataFrame({
+                                    'Date': df_raw['Date'], 
+                                    'Platform': 'Instagram', 
+                                    target_col: pd.to_numeric(df_raw['Primary'], errors='coerce').fillna(0)
+                                })
+                                all_platform_data.append(res)
+                                st.success(f"✅ Instagram {target_col} terdeteksi: {f.name}")
+                            else:
+                                st.error(f"❌ Kolom 'Date' tidak terbaca di {f.name}. Periksa format file.")
                         else:
-                            st.warning(f"❓ File tidak dikenali dari nama: {f.name}")
+                            st.warning(f"❓ File tidak dikenali: {f.name} (Pastikan nama file mengandung kata kunci seperti 'Views', 'Reach', dll)")
 
                 except Exception as e:
-                    st.error(f"⚠️ Error {f.name}: {e}")
+                    st.error(f"⚠️ Gagal memproses {f.name}: {e}")
 
             if all_platform_data:
                 df_merged = pd.concat(all_platform_data, ignore_index=True)
                 df_merged = df_merged.groupby(['Date', 'Platform']).sum(numeric_only=True).reset_index()
+                # Pastikan semua kolom standar ada
                 for col in header_names:
                     if col not in df_merged.columns: df_merged[col] = 0
                 st.session_state.preview_data = df_merged[header_names]
 
     # --- 4. PREVIEW & SAVE ---
     if st.session_state.preview_data is not None:
-        st.markdown("### 🔍 Preview Penggabungan")
+        st.markdown("### 🔍 Preview Data Gabungan")
         st.dataframe(st.session_state.preview_data, use_container_width=True, hide_index=True)
-        if st.button("🚀 SIMPAN SEMUA KE DATABASE", use_container_width=True):
+        if st.button("🚀 SIMPAN SEMUA KE SPREADSHEET", use_container_width=True):
             if utils.append_sheet_rows(2, st.session_state.preview_data.values.tolist()):
-                st.success("🔥 Data Berhasil Disimpan!")
+                st.success("🔥 Berhasil disimpan! Mengupdate tabel riwayat...")
                 st.session_state.preview_data = None
                 st.session_state.uploader_key += 1
                 st.cache_data.clear()
                 st.session_state.bundle = utils.fetch_all_master_data()
                 st.rerun()
 
-    if st.button("🔄 Segarkan Data", use_container_width=True):
+    # --- 5. DATABASE TABLE (RIWAYAT) ---
+    st.markdown("### 🗄️ Riwayat Database (Data di Spreadsheet)")
+    if not df_db_main.empty:
+        df_history = df_db_main.copy()
+        # Penyelamatan header jika kolom di spreadsheet tidak bernama
+        if len(df_history.columns) >= len(header_names):
+            df_history.columns = header_names[:len(df_history.columns)]
+        
+        try:
+            # Sorting agar data terbaru muncul di atas
+            df_history['SortDate'] = pd.to_datetime(df_history['Date'], dayfirst=True, errors='coerce')
+            df_history = df_history.sort_values(by='SortDate', ascending=False).drop(columns=['SortDate'])
+        except: pass
+        
+        st.dataframe(df_history, use_container_width=True, hide_index=True)
+    else:
+        st.warning("Tabel riwayat kosong. Belum ada data di Tab Index 2 Google Sheets.")
+
+    if st.button("🔄 Segarkan Tabel Riwayat", use_container_width=True):
         st.cache_data.clear()
         st.session_state.bundle = utils.fetch_all_master_data()
         st.rerun()
