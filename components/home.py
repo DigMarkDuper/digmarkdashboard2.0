@@ -14,47 +14,43 @@ except:
     indo_coords = {}
 
 def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
-    # --- AMBIL DATA DARI UTILS ---
+    # --- 1. AMBIL DATA DARI UTILS ---
     df_wa = utils.load_wa_admin()
     df_sos = utils.load_sosmed()
     df_web = utils.load_website()
     df_ins = utils.load_insight()
 
-    # --- 1. CSS CUSTOM (FORCE VERTICAL STYLE) ---
+    # --- 2. CSS CUSTOM (VERSI ANTI-GAGAL) ---
     st.markdown("""
         <style>
         .kpi-card {
             background-color: #FFFFFF !important;
             border-radius: 12px !important;
-            padding: 15px !important;
+            padding: 15px 20px !important;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05) !important;
             border: 1px solid #F0F2F6 !important;
-            
-            /* INI KUNCINYA: Paksa susunan vertikal */
-            display: flex !important;
-            flex-direction: column !important; 
-            justify-content: center !important;
-            align-items: flex-start !important; 
-            
             min-height: 110px !important;
             width: 100% !important;
+            display: block !important; /* Block layout otomatis susun ke bawah */
         }
         
         .metric-title { 
-            display: block !important; /* Paksa jadi baris sendiri */
+            display: block !important; 
             font-size: 10px !important; 
             color: #6B7280 !important; 
             font-weight: 800 !important; 
             text-transform: uppercase !important; 
-            margin-bottom: 10px !important; /* Jarak ke angka di bawahnya */
+            margin-bottom: 10px !important; 
             line-height: 1.2 !important;
+            width: 100% !important;
         }
         
         .metric-value { 
-            display: block !important; /* Paksa jadi baris sendiri */
-            font-size: 20px !important; 
+            display: block !important; 
+            font-size: 22px !important; 
             font-weight: 800 !important; 
             line-height: 1 !important;
+            width: 100% !important;
         }
         </style>
     """, unsafe_allow_html=True)
