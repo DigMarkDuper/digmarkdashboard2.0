@@ -70,7 +70,7 @@ def create_modern_chart(data, y_col, color, title):
         margin=dict(l=10, r=10, t=60, b=10),
         template="plotly_white",
         hovermode="x unified",
-        xaxis=dict(showgrid=False, tickformat="%b %Y"),
+        xaxis=dict(showgrid=False, tickformat="%d %b"),
         yaxis=dict(showgrid=True, gridcolor='#F3F4F6', tickformat=","),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
@@ -99,7 +99,7 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     # --- LOAD DATABASE ---
     df_db_main = st.session_state.get('bundle', {}).get(2, pd.DataFrame())
 
-    # --- SUMMARY ---
+    # --- SUMMARY & CHARTS ---
     if not df_db_main.empty:
         df_calc = df_db_main.copy()
         if len(df_calc.columns) >= len(header_names):
@@ -117,6 +117,34 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         g3.metric("Grand Interaksi", f"{int(df_calc['Interaction'].sum()):,}")
         g4.metric("Grand Followers", f"{int(df_calc['Follow'].sum()):,}")
 
+        # --- FITUR GRAFIK (TAMBAHAN BARU) ---
+        try:
+            df_trend = df_calc.copy()
+            df_trend['Date'] = pd.to_datetime(df_trend['Date'], dayfirst=True, errors='coerce')
+            df_trend = df_trend.dropna(subset=['Date']).sort_values('Date')
+
+            # Performa TikTok
+            df_tk = df_trend[df_trend['Platform'] == 'TikTok']
+            if not df_tk.empty:
+                st.subheader("🎵 Tren Pertumbuhan TikTok")
+                tk1, tk2 = st.columns(2)
+                with tk1:
+                    st.plotly_chart(create_modern_chart(df_tk, 'View', BRAND_BLUE, "TikTok Video Views"), use_container_width=True)
+                with tk2:
+                    st.plotly_chart(create_modern_chart(df_tk, 'Follow', "#00CC96", "TikTok New Followers"), use_container_width=True)
+
+            # Performa Instagram
+            df_ig = df_trend[df_trend['Platform'] == 'Instagram']
+            if not df_ig.empty:
+                st.subheader("📸 Tren Pertumbuhan Instagram")
+                ig1, ig2 = st.columns(2)
+                with ig1:
+                    st.plotly_chart(create_modern_chart(df_ig, 'View', "#E1306C", "Instagram Views"), use_container_width=True)
+                with ig2:
+                    st.plotly_chart(create_modern_chart(df_ig, 'Follow', "#833AB4", "Instagram New Followers"), use_container_width=True)
+        except:
+            pass
+
     st.markdown("---")
 
     # --- SMART IMPORTER ---
@@ -128,7 +156,6 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
             key=f"ins_v23_{st.session_state.uploader_key}"
         )
 
-        # LOGIKA PERBAIKAN: Jika ada file diproses, jika tidak ada (disilang) preview dihapus
         if files:
             all_platform_data = []
 
@@ -137,13 +164,11 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                     fn = f.name.lower()
                     raw_bytes = f.getvalue()
                     
-                    # DETECT ENCODING
                     if raw_bytes.startswith(b'\xff\xfe') or raw_bytes.startswith(b'\xfe\xff'):
                         content = raw_bytes.decode("utf-16", errors="ignore")
                     else:
                         content = raw_bytes.decode("utf-8-sig", errors="ignore")
 
-                    # --- TIKTOK ---
                     if "overview" in fn or "followerhistory" in fn:
                         df_raw = pd.read_csv(io.StringIO(content))
                         df_raw.columns = [str(c).replace('"', '').strip() for c in df_raw.columns]
@@ -165,7 +190,6 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                         all_platform_data.append(res)
                         st.success(f"✅ TikTok detected: {f.name}")
 
-                    # --- INSTAGRAM ---
                     else:
                         mapping = {"follows": "Follow", "visits": "Profile Visit", "link clicks": "Link Clicks", "interactions": "Interaction", "reach": "Reach", "views": "View"}
                         target_col = next((v for k, v in mapping.items() if k in fn), None)
@@ -195,7 +219,6 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                 st.session_state.preview_data = df_merged[header_names]
         
         else:
-            # RESET: Jika list file kosong (disilang), hapus preview
             st.session_state.preview_data = None
 
     # --- PREVIEW DATA ---
