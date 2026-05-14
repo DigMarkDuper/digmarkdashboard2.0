@@ -144,8 +144,9 @@ def check_password():
             st.markdown('</div>', unsafe_allow_html=True)
 
     return False
-    if not check_password():
-    st.stop()
+    
+            if not check_password():
+            st.stop()
 
 # =====================================================================
 # 3. DATA ENGINE (SINKRONISASI BUNDLE)
