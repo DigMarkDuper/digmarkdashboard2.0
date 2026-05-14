@@ -96,16 +96,7 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
         sekarang = datetime.datetime.now()
         bulan_ini = sekarang.month
         tahun_ini = sekarang.year
-        BIAYA_PELATIHAN = 15000000 
-
-        # A. PERHITUNGAN GLOBAL (TOTAL SEMUA - UNTUK ROI)
-        global_leads = 0
-        global_closing = 0
-        if not df_wa.empty:
-            global_leads = len(df_wa)
-            status_col = next((c for c in df_wa.columns if 'Status' in str(c)), None)
-            if status_col:
-                global_closing = len(df_wa[df_wa[status_col].astype(str).str.contains('Closing', case=False, na=False)])
+        BIAYA_PELATIHAN = 12995000 
 
         # B. PERHITUNGAN BULANAN (KHUSUS MEI - UNTUK SNAPSHOT)
         total_leads_mei, total_closing_mei = 0, 0
@@ -116,15 +107,6 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
             if status_col:
                 total_closing_mei = len(df_current[df_current[status_col].astype(str).str.contains('Closing', case=False, na=False)])
 
-        # C. AMBIL SPEND DARI SESSION STATE
-        spend_tk = st.session_state.get('spend_tiktok', 0)
-        spend_mt = st.session_state.get('spend_meta', 0)
-        spend_mk = st.session_state.get('spend_mekari', 0)
-        
-        global_spend = spend_tk + spend_mt + spend_mk
-        global_omzet = global_closing * BIAYA_PELATIHAN 
-        global_cac = global_spend / global_closing if global_closing > 0 else 0
-        global_roas = (global_omzet / global_spend) if global_spend > 0 else 0
 
         # D. RENDER EXECUTIVE SNAPSHOT (DATA BULANAN)
         st.markdown(f'<div style="font-weight: 800; margin-bottom: 15px;">📊 EXECUTIVE SNAPSHOT (MEI {tahun_ini})</div>', unsafe_allow_html=True)
@@ -165,11 +147,41 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
 
         st.markdown("<br>", unsafe_allow_html=True)
     
-        # --- E. RENDER ROI DASHBOARD ---
+    # =====================================================================
+    # E. RENDER ROI DASHBOARD (SINKRONISASI TOTAL & GLOBAL)
+    # =====================================================================
     try:
-        st.markdown('<div style="font-weight: 800; margin-bottom: 15px;">🌍 ULTIMATE ROI DASHBOARD (ALL TIME GLOBAL)</div>', unsafe_allow_html=True)
+        # 1. HITUNG ULANG DATA LEADS & CLOSING (ALL TIME)
+        leads_total = 0
+        closing_total = 0
+        
+        if not df_wa.empty:
+            # Hitung Leads (Semua Baris)
+            leads_total = len(df_wa)
+            
+            # Cari Kolom Status
+            status_col = next((c for c in df_wa.columns if 'Status' in str(c)), None)
+            if status_col:
+                # Hitung yang mengandung kata 'Closing'
+                closing_total = len(df_wa[df_wa[status_col].astype(str).str.contains('Closing', case=False, na=False)])
+
+        # 2. AMBIL DATA SPEND DARI SESSION STATE (DARI HALAMAN ADS)
+        sp_tk = st.session_state.get('spend_tiktok', 0)
+        sp_mt = st.session_state.get('spend_meta', 0)
+        sp_mk = st.session_state.get('spend_mekari', 0)
+        
+        # 3. KALKULASI VARIABEL ROI
+        final_spend = sp_tk + sp_mt + sp_mk
+        final_omzet = closing_total * 15000000 # Pakai Biaya Pelatihan Mas
+        final_cac = final_spend / closing_total if closing_total > 0 else 0
+        final_roas = (final_omzet / final_spend) if final_spend > 0 else 0
+
+        # 4. TAMPILAN HEADER DASHBOARD
+        st.markdown('<div style="font-weight: 800; margin-bottom: 15px; margin-top: 20px;">🌍 ULTIMATE ROI DASHBOARD (ALL TIME GLOBAL)</div>', unsafe_allow_html=True)
+        
         r = st.columns(5)
         
+        # Fungsi Render (Vertikal Style)
         def render_box(col, title, value, color="#111827"):
             with col:
                 st.markdown(f"""
@@ -179,19 +191,17 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
                     </div>
                 """, unsafe_allow_html=True)
 
-        render_box(r[0], "💸 Total Spend Ads + Mekari", f"Rp {global_spend:,.0f}", "#8B0000")
-        render_box(r[1], "👥 Leads Total", f"{global_leads}")
-        render_box(r[2], "🎓 Closing Total", f"{global_closing} Swa", "#006400")
-        render_box(r[3], "🎯 Biaya per Siswa (CAC)", f"Rp {global_cac:,.0f}", "#D2691E")
-        render_box(r[4], "🚀 ROAS Total", f"{global_roas:,.1f}x", "#1E3A8A")
+        # 5. TAMPILKAN BOX
+        render_box(r[0], "💸 Total Spend Ads + Mekari", f"Rp {final_spend:,.0f}", "#8B0000")
+        render_box(r[1], "👥 Leads Total", f"{leads_total}")
+        render_box(r[2], "🎓 Closing Total", f"{closing_total} Swa", "#006400")
+        render_box(r[3], "🎯 Biaya per Siswa (CAC)", f"Rp {final_cac:,.0f}", "#D2691E")
+        render_box(r[4], "🚀 ROAS Total", f"{final_roas:,.1f}x", "#1E3A8A")
 
         st.markdown("---")
 
     except Exception as e:
-        st.error(f"Gagal memuat metrik: {e}")
-    
-        except Exception as e:
-            st.error(f"Gagal memuat metrik: {e}")
+        st.error(f"Gagal memuat ROI Dashboard: {e}")
     # --- 5. ANNUAL TARGET TRACKING (FUTURISTIC RING STYLE) ---
     try:
         st.markdown('<div style="font-weight: 800; margin-top: 20px; margin-bottom: 15px;">🎯 2026 ANNUAL TARGET PROGRESS</div>', unsafe_allow_html=True)
