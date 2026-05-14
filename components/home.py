@@ -165,10 +165,10 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
                     </div>
                 """, unsafe_allow_html=True)
 
-        render_box(r[0], "💸 Total Spend", f"Rp {global_spend:,.0f}", "#8B0000")
+        render_box(r[0], "💸 Total Spend ADS + Mekari", f"Rp {global_spend:,.0f}", "#8B0000")
         render_box(r[1], "👥 Leads Total", f"{global_leads}")
-        render_box(r[2], "🎓 Closing Total", f"{global_closing} Swa", "#006400")
-        render_box(r[3], "🎯 CAC Global", f"Rp {global_cac:,.0f}", "#D2691E")
+        render_box(r[2], "🎓 Closing Total", f"{global_closing} Siswa", "#006400")
+        render_box(r[3], "🎯 Customer Aquisition Cost (CAC)", f"Rp {global_cac:,.0f}", "#D2691E")
         render_box(r[4], "🚀 ROAS Total", f"{global_roas:,.1f}x", "#1E3A8A")
 
         st.markdown("---")
