@@ -61,12 +61,10 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         df_calc = df_db_main.copy()
         if len(df_calc.columns) == len(header_names): 
             df_calc.columns = header_names
-        
         for col in numeric_cols: 
             df_calc[col] = pd.to_numeric(df_calc[col], errors='coerce').fillna(0)
 
         st.markdown(f"""<div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left: 10px solid {BRAND_YELLOW};"><h2 style="margin:0; color:white; font-size:20px;">🌍 TOTAL PERFORMA GABUNGAN</h2></div>""", unsafe_allow_html=True)
-        
         g1, g2, g3, g4 = st.columns(4)
         g1.metric("Grand Total Views", f"{int(df_calc['View'].sum()):,}")
         g2.metric("Grand Total Reach", f"{int(df_calc['Reach'].sum()):,}")
@@ -99,9 +97,9 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
 
     st.markdown("---")
 
-    # --- 3. SMART IMPORTER V9 (ENHANCED DETECTION) ---
+    # --- 3. SMART IMPORTER V10 (ROBUST DETECTION) ---
     with st.expander("🚀 Ultra-Smart Importer (TikTok & Instagram)", expanded=True):
-        files = st.file_uploader("Upload CSV TikTok/IG", type=["csv"], accept_multiple_files=True, key=f"ins_v9_{st.session_state.uploader_key}")
+        files = st.file_uploader("Upload CSV TikTok/IG", type=["csv"], accept_multiple_files=True, key=f"ins_v10_{st.session_state.uploader_key}")
         
         if files:
             all_platform_data = []
@@ -120,7 +118,7 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                     
                     sample_text = content_str.lower()
                     
-                    # A. DETEKSI TIKTOK (Berdasarkan Nama File)
+                    # --- A. LOGIKA TIKTOK (DETEKSI NAMA FILE) ---
                     if "overview" in fn or "followerhistory" in fn:
                         df_raw = pd.read_csv(io.StringIO(content_str))
                         df_raw['Date'] = df_raw['Date'].apply(universal_date_parser)
@@ -141,21 +139,25 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                             st.success(f"🎵 **TikTok Followers** terdeteksi: `{f.name}`")
                         all_platform_data.append(res)
                     
-                    # B. DETEKSI INSTAGRAM (Berdasarkan Isi File)
+                    # --- B. LOGIKA INSTAGRAM (DETEKSI ISI FILE) ---
                     else:
                         lines = content_str.splitlines()
                         skip_rows = 0
+                        # Scan baris untuk menemukan header asli
                         for i, line in enumerate(lines):
-                            if "date" in line.lower() and "primary" in line.lower():
+                            clean_line = line.replace('"', '').lower()
+                            if "date" in clean_line and "primary" in clean_line:
                                 skip_rows = i
                                 break
                         
+                        # Baca data mulai dari baris header yang ditemukan
                         df_raw = pd.read_csv(io.StringIO("\n".join(lines[skip_rows:])))
                         
-                        # Mapping Keyword Instagram
+                        # Mapping Metrik Berdasarkan Keyword
                         mapping = {
                             "follows": "Follow",
                             "profile visits": "Profile Visit",
+                            "visits": "Profile Visit", # Tambahan untuk file Visits.csv
                             "link clicks": "Link Clicks",
                             "interactions": "Interaction",
                             "reach": "Reach",
@@ -164,24 +166,27 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                         
                         found_target = None
                         for key, val in mapping.items():
-                            if key in sample_text:
+                            if key in sample_text or key in fn: # Cek di isi DAN nama file
                                 found_target = val
                                 break
                         
-                        if found_target and 'Date' in df_raw.columns:
-                            df_raw['Date'] = df_raw['Date'].astype(str).str.split('T').str[0].apply(universal_date_parser)
+                        if found_target and not df_raw.empty:
+                            # Bersihkan tanggal dari embel-embel Jam (T01:00)
+                            df_raw['Date'] = df_raw['Date'].astype(str).str.split('T').str[0]
+                            df_raw['Date'] = df_raw['Date'].apply(universal_date_parser)
+                            
                             res = pd.DataFrame({
                                 'Date': df_raw['Date'], 
                                 'Platform': 'Instagram', 
-                                found_target: df_raw.get('Primary', 0)
+                                found_target: pd.to_numeric(df_raw['Primary'], errors='coerce').fillna(0)
                             })
                             all_platform_data.append(res)
                             st.success(f"📸 **Instagram {found_target}** terdeteksi: `{f.name}`")
                         else:
-                            st.error(f"❌ File tidak dikenali: `{f.name}`. Pastikan ini adalah file CSV asli.")
+                            st.error(f"❌ File tidak dikenali: `{f.name}`. Pastikan format kolom sesuai.")
 
                 except Exception as e:
-                    st.error(f"⚠️ Error pada {f.name}: {e}")
+                    st.error(f"⚠️ Gagal memproses {f.name}: {e}")
 
             if all_platform_data:
                 df_merged = pd.concat(all_platform_data, ignore_index=True)
@@ -189,19 +194,15 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                 for col in header_names:
                     if col not in df_merged.columns: df_merged[col] = 0
                 st.session_state.preview_data = df_merged[header_names]
-            else:
-                st.session_state.preview_data = None
 
     # --- 4. PREVIEW & SAVE ---
     if st.session_state.preview_data is not None:
         st.markdown("### 🔍 Preview Penggabungan Data")
         st.dataframe(st.session_state.preview_data, use_container_width=True, hide_index=True)
-        
-        # Tombol Simpan Sekarang Seharusnya Muncul
-        if st.button("🚀 SIMPAN SEMUA DATA KE DATABASE", use_container_width=True):
+        if st.button("🚀 SIMPAN SEMUA KE DATABASE", use_container_width=True):
             final_list = st.session_state.preview_data.values.tolist()
             if utils.append_sheet_rows(2, final_list):
-                st.success("🔥 Data Berhasil Disimpan ke Cloud!")
+                st.success("🔥 Data Berhasil Disimpan!")
                 st.session_state.preview_data = None
                 st.session_state.uploader_key += 1
                 st.cache_data.clear()
