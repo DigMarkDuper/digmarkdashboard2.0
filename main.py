@@ -37,35 +37,37 @@ BRAND_YELLOW = "#FDB813"
 def check_password():
     if st.session_state.get("password_correct"):
         return True
-    utils.set_bg_local('bg.png')
+    
+    # 1. Pasang background asli lewat fungsi utils
+    utils.set_bg_local('bg.png') 
+    
+    # 2. CSS untuk menggelapkan & styling form
     st.markdown(f"""
         <style>
-        
-        /* 1. Kunci background pada level container tertinggi */
-        [data-testid="stAppViewContainer"] {{
-            background-color: #020617 !important; /* Warna dasar jika gambar gagal load */
-            background-image: 
-                linear-gradient(rgba(2, 6, 23, 0.85), rgba(2, 6, 23, 0.85)), 
-                url("data:image/png;base64,{utils.get_base64_of_bin_file('bg.png')}");
-            background-size: cover !important;
-            background-position: center !important;
-            background-repeat: no-repeat !important;
-            background-attachment: fixed !important;
+        /* Mengunci overlay gelap di atas background yang sudah dipasang utils */
+        [data-testid="stAppViewContainer"]::before {{
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(2, 6, 23, 0.85) !important; /* Biru Midnight Gelap */
+            z-index: 0;
         }}
         
-        /* 2. Pastikan lapisan di atasnya tidak punya warna (transparan) */
+        /* Pastikan konten utama muncul di depan overlay */
+        .main {{
+            position: relative;
+            z-index: 1;
+        }}
+
         [data-testid="stHeader"], [data-testid="stMain"], .main {{
             background: transparent !important;
         }}
         
-        /* 3. Container utama konten */
         .block-container {{
-            position: relative;
-            z-index: 2;
             padding-top: 4rem !important;
         }}
         
-        /* 4. Form Glassmorphism yang lebih tegas kontrasnya */
+        /* Form Glassmorphism */
         [data-testid="stForm"] {{
             background: rgba(255, 255, 255, 0.05) !important;
             backdrop-filter: blur(20px) saturate(150%);
@@ -76,21 +78,17 @@ def check_password():
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
         }}
         
-        /* 5. Input Text */
         .stTextInput input {{
             background-color: rgba(0, 0, 0, 0.2) !important;
             color: white !important;
             border: 1px solid rgba(255, 255, 255, 0.2) !important;
         }}
         
-        /* 6. Perbaikan Label (Warna Putih Solid) */
         .stTextInput label p {{
             color: white !important;
             font-weight: 700 !important;
-            font-size: 14px !important;
         }}
         
-        /* 7. Tombol dengan warna aksen Mas */
         div[data-testid="stFormSubmitButton"] > button {{
             width: 100%;
             background: {BRAND_YELLOW} !important;
@@ -99,13 +97,30 @@ def check_password():
             font-weight: 800 !important;
             text-transform: uppercase;
             border: none !important;
-            padding: 10px !important;
         }}
         
         header, footer {{ visibility: hidden !important; }}
-        
         </style>
-        """, unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
+
+    # --- RENDER FORM ---
+    left, mid, right = st.columns([1, 1.5, 1])
+    with mid:
+        st.markdown("<br><br><br>", unsafe_allow_html=True)
+        st.image(LOGO_URL, width=150)
+        st.markdown(f'<h3 style="color:white; margin-bottom:20px;">Digital Marketing <span style="color:{BRAND_YELLOW}">LOGIN</span></h3>', unsafe_allow_html=True)
+
+        with st.form("login_v2"):
+            u_name = st.text_input("Username").strip().lower()
+            u_pass = st.text_input("Password", type="password")
+            if st.form_submit_button("MASUK SISTEM"):
+                if "credentials" in st.secrets and u_name in st.secrets["credentials"] and st.secrets["credentials"][u_name] == u_pass:
+                    st.session_state["password_correct"] = True
+                    st.rerun()
+                else:
+                    st.error("Username atau Password Salah")
+                    
+    return False
 
     # --- RENDER KONTEN ---
     # Menggunakan columns seperti kode Anda sebelumnya
