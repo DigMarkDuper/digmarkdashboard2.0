@@ -154,7 +154,7 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         g5.metric("Profile Visits", f"{int(df_calc['Profile Visit'].sum()):,}")
         g6.metric("Link Clicks", f"{int(df_calc['Link Clicks'].sum()):,}")
 
-        # --- VISUALISASI PER PLATFORM (MONTHLY) ---
+         # --- VISUALISASI PER PLATFORM (MONTHLY) ---
         try:
             df_trend = df_calc.copy()
             df_trend['Date'] = pd.to_datetime(df_trend['Date'], dayfirst=True, errors='coerce')
@@ -168,21 +168,23 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
             
             df_monthly['Date'] = df_monthly['Date'].dt.to_timestamp()
 
+            # =========================================================
             # --- SECTION 🎵 TIKTOK ---
+            # =========================================================
             df_tk = df_monthly[df_monthly['Platform'] == 'TikTok']
             if not df_tk.empty:
-                st.write("") 
-                t_col1, t_col2 = st.columns([0.07, 0.93])
-                with t_col1:
-                    st.image("https://img.icons8.com/color/48/tiktok.png", width=35)
-                with t_col2:
-                    st.markdown("### **TikTok** Growth Trend (Monthly)")
+                # Header TikTok yang lebih Modern
+                st.markdown("""
+                    <div style="display: flex; align-items: center; gap: 12px; background: #010101; padding: 12px 20px; border-radius: 12px; margin-bottom: 25px; border-left: 6px solid #EE1D52;">
+                        <img src="https://img.icons8.com/color/48/tiktok.png" width="32">
+                        <h3 style="margin: 0; color: white; font-weight: 800; letter-spacing: 1px; font-size: 18px;">TIKTOK GROWTH ANALYTICS</h3>
+                    </div>
+                """, unsafe_allow_html=True)
                 
-                st.markdown("---")
                 # Baris 1: Views & Follows
                 tk_row1_1, tk_row1_2 = st.columns(2)
                 with tk_row1_1:
-                    st.plotly_chart(create_modern_chart(df_tk, 'View', BRAND_BLUE, "TikTok Video Views"), use_container_width=True)
+                    st.plotly_chart(create_modern_chart(df_tk, 'View', "#00f2ea", "TikTok Video Views"), use_container_width=True)
                 with tk_row1_2:
                     st.plotly_chart(create_modern_chart(df_tk, 'Follow', "#00CC96", "TikTok New Followers"), use_container_width=True)
                 
@@ -193,21 +195,25 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                 with tk_row2_2:
                     st.plotly_chart(create_modern_chart(df_tk, 'Interaction', "#EE1D52", "TikTok Interactions"), use_container_width=True)
 
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            # =========================================================
             # --- SECTION 📸 INSTAGRAM ---
+            # =========================================================
             df_ig = df_monthly[df_monthly['Platform'] == 'Instagram']
             if not df_ig.empty:
-                st.write("") 
-                i_col1, i_col2 = st.columns([0.07, 0.93])
-                with i_col1:
-                    st.image("https://img.icons8.com/color/48/instagram-new.png", width=35)
-                with i_col2:
-                    st.markdown("### **Instagram** Growth Trend (Monthly)")
+                # Header Instagram dengan Gradient Khas
+                st.markdown("""
+                    <div style="display: flex; align-items: center; gap: 12px; background: linear-gradient(45deg, #405de6, #5851db, #833ab4, #c13584, #e1306c, #fd1d1d); padding: 12px 20px; border-radius: 12px; margin-bottom: 25px; border-left: 6px solid #FFD600;">
+                        <img src="https://img.icons8.com/color/48/instagram-new.png" width="32">
+                        <h3 style="margin: 0; color: white; font-weight: 800; letter-spacing: 1px; font-size: 18px;">INSTAGRAM GROWTH ANALYTICS</h3>
+                    </div>
+                """, unsafe_allow_html=True)
                 
-                st.markdown("---")
                 # Baris 1: Views & Follows
                 ig_row1_1, ig_row1_2 = st.columns(2)
                 with ig_row1_1:
-                    st.plotly_chart(create_modern_chart(df_ig, 'View', "#E1306C", "Instagram Views"), use_container_width=True)
+                    st.plotly_chart(create_modern_chart(df_ig, 'View', "#e1306c", "Instagram Views"), use_container_width=True)
                 with ig_row1_2:
                     st.plotly_chart(create_modern_chart(df_ig, 'Follow', "#833AB4", "Instagram New Followers"), use_container_width=True)
                     
@@ -220,8 +226,6 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                     
         except Exception as e:
             st.error(f"⚠️ Gagal memuat grafik: {e}")
-
-    st.markdown("---")
 
     # =========================================================
     # --- SMART IMPORTER ---
