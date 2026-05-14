@@ -202,15 +202,28 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
             # Tombol sudah otomatis jadi Biru karena CSS di atas
             st.button("MASUK ➔", key=button_key, use_container_width=True, on_click=go_to_page_func, args=(target_page,))
 
-    # Data Navigasi dengan URL Logo Premium
+    # Data Navigasi dengan URL Logo 
     nav_data = [
-        ("https://cdn-icons-png.flaticon.com/512/6033/6033716.png", "Sosmed", "Jadwal PIC", "📱 SOSIAL MEDIA", "btn_sos"),
-        ("https://cdn-icons-png.flaticon.com/512/1006/1006771.png", "Website", "SEO Audit", "🌐 WEBSITE AUDIT", "btn_web"),
-        ("https://cdn-icons-png.flaticon.com/512/4285/4285667.png", "Insight", "Analytics", "📈 INSIGHTS & ANALYTICS", "btn_in"),
-        ("https://cdn-icons-png.flaticon.com/512/3063/3063822.png", "WA Admin", "Closing Funnel", "💬 WA ADMIN REPORT", "btn_wa"),
-        ("https://cdn-icons-png.flaticon.com/512/1243/1243420.png", "Database", "CRM Kontak", "📂 DATABASE NOMOR", "btn_db"),
-        ("https://cdn-icons-png.flaticon.com/512/2099/2099122.png", "DM Sosmed", "Tracker Inbox", "📱 DM SOSMED", "btn_dm"),
-        ("https://cdn-icons-png.flaticon.com/512/3256/3256150.png", "Ads Report", "ROI & CPL", "📈 ADS ANALYTICS", "btn_ads")
+        # 1. Sosmed (Smartphone & Engagement)
+        ("https://cdn-icons-png.flaticon.com/512/1968/1968666.png", "Sosmed", "Jadwal PIC", "📱 SOSIAL MEDIA", "btn_sos"),
+        
+        # 2. Website (Browser & SEO Optimization)
+        ("https://cdn-icons-png.flaticon.com/512/2838/2838838.png", "Website", "SEO Audit", "🌐 WEBSITE AUDIT", "btn_web"),
+        
+        # 3. Insight (Modern Analytics Chart)
+        ("https://cdn-icons-png.flaticon.com/512/2936/2936690.png", "Insight", "Analytics", "📈 INSIGHTS & ANALYTICS", "btn_in"),
+        
+        # 4. WA Admin (Customer Service / Live Chat)
+        ("https://cdn-icons-png.flaticon.com/512/4738/4738047.png", "WA Admin", "Closing Funnel", "💬 WA ADMIN REPORT", "btn_wa"),
+        
+        # 5. Database (Secure Server / CRM)
+        ("https://cdn-icons-png.flaticon.com/512/3242/3242212.png", "Database", "CRM Kontak", "📂 DATABASE NOMOR", "btn_db"),
+        
+        # 6. DM Sosmed (Inbox / Messages)
+        ("https://cdn-icons-png.flaticon.com/512/4738/4738023.png", "DM Sosmed", "Tracker Inbox", "📱 DM SOSMED", "btn_dm"),
+        
+        # 7. Ads Report (Target / ROI / Performance)
+        ("https://cdn-icons-png.flaticon.com/512/3228/3228286.png", "Ads Report", "ROI & CPL", "📈 ADS ANALYTICS", "btn_ads")
     ]
 
     # Render Baris 1
