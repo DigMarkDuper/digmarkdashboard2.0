@@ -64,7 +64,7 @@ def show_crm_page():
             
     st.markdown("---")
 
-    # 2. LOAD DATA & FILTER SYSTEM
+# 2. LOAD DATA & FILTER SYSTEM
 try:
     df_crm = load_database_nomor()
     if not df_crm.empty:
@@ -74,7 +74,6 @@ try:
         with st.expander("🔍 Filter Strategis Database", expanded=True):
             search_crm = st.text_input("🔎 Cari Nama/HP:", placeholder="Ketik...", key="search_v_final")
             
-            # Ubah menjadi 3 kolom agar muat filter baru
             c1, c2, c3 = st.columns(3)
             
             with c1:
@@ -87,15 +86,13 @@ try:
                 sel_daerah = st.multiselect("Pilih Daerah:", options=opts_daerah, key="f_daer_v_final")
             
             with c3:
-                # Filter Baru: Status Treatment
-                # Mengasumsikan ada kolom 'Status Treatment' di database
                 sel_treatment = st.selectbox(
                     "Status Treatment:",
                     options=["Semua", "Sudah Treatment", "Belum Treatment"],
                     key="f_treat_v_final"
                 )
 
-        # Logika Filter
+        # Logika Filter Dasar
         mask = pd.Series([True] * len(df_crm))
         
         if search_crm:
@@ -108,13 +105,14 @@ try:
         if sel_daerah:
             mask &= df_crm['Domisili'].isin(sel_daerah)
 
-        # Logika Filter Treatment
-        if sel_treatment == "Sudah Treatment":
-            # Mencari baris yang tidak kosong atau berisi 'Sudah'
-            mask &= (df_crm['Status Treatment'].astype(str).str.contains('Sudah', case=False))
-        elif sel_treatment == "Belum Treatment":
-            # Mencari baris yang kosong atau tidak berisi 'Sudah'
-            mask &= (~df_crm['Status Treatment'].astype(str).str.contains('Sudah', case=False))
+        # Logika Filter Treatment (Berdasarkan kolom treatment 1 & treatment 2)
+        if 'treatment 1' in df_crm.columns and 'treatment 2' in df_crm.columns:
+            if sel_treatment == "Sudah Treatment":
+                # Sudah jika treatment 1 ATAU treatment 2 tidak kosong
+                mask &= (df_crm['treatment 1'].astype(str) != '') | (df_crm['treatment 2'].astype(str) != '')
+            elif sel_treatment == "Belum Treatment":
+                # Belum jika treatment 1 DAN treatment 2 kosong
+                mask &= (df_crm['treatment 1'].astype(str) == '') & (df_crm['treatment 2'].astype(str) == '')
         
         filtered_crm = df_crm[mask].copy()
 
@@ -125,9 +123,10 @@ try:
         col_m1.metric("Prospek Terfilter", len(filtered_crm))
         col_m2.metric("Total Database", len(df_crm))
         
-        # Tambahan metric untuk insight cepat
-        sudah_count = len(df_crm[df_crm['Status Treatment'].astype(str).str.contains('Sudah', case=False)])
-        col_m3.metric("Total Sudah Treatment", sudah_count)
+        # Hitung Total Sudah Treatment (Minimal sudah isi salah satu treatment)
+        if 'treatment 1' in df_crm.columns and 'treatment 2' in df_crm.columns:
+            sudah_count = len(df_crm[(df_crm['treatment 1'] != '') | (df_crm['treatment 2'] != '')])
+            col_m3.metric("Total Sudah Treatment", sudah_count)
 
         st.dataframe(filtered_crm, use_container_width=True, hide_index=True)
         
