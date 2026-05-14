@@ -247,10 +247,24 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         except Exception as e:
             st.error(f"⚠️ Gagal memuat grafik: {e}")
 
-    # =========================================================
-    # --- SMART IMPORTER ---
-    # =========================================================
-    with st.expander("🚀 Upload Data Insight Baru", expanded=True):
+   # --- 4. SECTION: UPLOAD MODULE ---
+    st.markdown(f"""
+        <div style="display: flex; align-items: center; gap: 12px; background: #EEF2FF; padding: 12px 18px; border-radius: 12px 12px 0 0; border: 1px solid #E0E7FF; border-bottom: none;">
+            <div style="background: white; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <img src="https://img.icons8.com/fluency/48/cloud-lighting.png" width="25">
+            </div>
+            <div style="font-size: 14px; font-weight: 800; color: #3730A3; text-transform: uppercase; letter-spacing: 1px;">
+                Data Ingestion Engine
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    with st.expander(" KLIK DI SINI UNTUK UPLOAD DATA INSIGHT BARU", expanded=True):
+        st.markdown("""
+            <p style='font-size: 12px; color: #64748B; margin-bottom: 15px;'>
+                Pastikan format file <b>.csv</b> atau <b>.xlsx</b> sesuai dengan template standar sistem.
+            </p>
+        """, unsafe_allow_html=True)
         files = st.file_uploader(
             "Upload CSV TikTok/Instagram",
             type=["csv"],
