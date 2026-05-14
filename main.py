@@ -3,13 +3,13 @@ import datetime
 import os
 import sys
 
-# --- FIX IMPORT PATH (Menjaga agar aman di server Cloud) ---
+# --- FIX IMPORT PATH ---
 root_path = os.path.dirname(os.path.abspath(__file__))
 if root_path not in sys.path:
     sys.path.append(root_path)
 
 # =====================================================================
-# 1. KONFIGURASI GLOBAL (WAJIB PALING ATAS SETELAH IMPORT DASAR)
+# 1. KONFIGURASI GLOBAL
 # =====================================================================
 st.set_page_config(
     page_title="Digmark Command Center", 
@@ -18,8 +18,8 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Import komponen setelah set_page_config
 import components.utils as utils
-from components.utils import fetch_all_master_data, set_bg_local
 from components.home import show_homepage
 from components.sosmed import show_sosmed_page
 from components.website import show_website_page
@@ -35,14 +35,13 @@ BRAND_BLUE = "#005696"
 BRAND_YELLOW = "#FDB813"
 
 # =====================================================================
-# 3. SISTEM LOGIN
+# 2. SISTEM LOGIN
 # =====================================================================
 def check_password():
-    """Fungsi Login: Berhenti di sini jika belum login"""
     if st.session_state.get("password_correct"):
         return True
     
-    set_bg_local('bg.png') 
+    utils.set_bg_local('bg.png') 
     
     _, col_mid, _ = st.columns([1, 3, 1])
     with col_mid:
@@ -66,62 +65,48 @@ def check_password():
                     st.error("Username atau Password salah!")
     return False
 
-# Jalankan Proteksi Login
 if not check_password():
     st.stop()
 
 # =====================================================================
-# 4. DATA ENGINE (LOGIKA SINKRONISASI)
+# 3. DATA ENGINE (SINKRONISASI BUNDLE)
 # =====================================================================
-
-# Inisialisasi Session State Halaman
 if 'page' not in st.session_state:
     st.session_state.page = "🏠 HOMEPAGE"
 
 def go_to_page(page_name):
     st.session_state.page = page_name
 
-# SINKRONISASI DATA MASTER
+# Tarik Bundle Data Master (Hanya dijalankan sekali saat awal/refresh)
 if 'bundle' not in st.session_state:
-    with st.spinner("Mencoba koneksi ke Google Sheets..."):
-        data_nyasar = fetch_all_master_data()
-        if data_nyasar is None:
-            st.error("Gagal total mengambil data. Cek Logs di pojok kanan bawah Streamlit Cloud!")
-            st.info("Pastikan email Service Account sudah di-Share ke Google Sheets sebagai Editor.")
+    with st.spinner("Mensinkronisasi Data Master..."):
+        data_master = utils.fetch_all_master_data()
+        if data_master is None:
+            st.error("Gagal sinkronisasi. Cek koneksi API Google Sheets!")
             st.stop() 
         else:
-            st.session_state.bundle = data_nyasar
-            st.sidebar.success("✅ Koneksi Master Berhasil!")
+            st.session_state.bundle = data_master
 
 # =====================================================================
-# 5. ROUTER HALAMAN & NAVIGASI
+# 4. ROUTER HALAMAN & NAVIGASI
 # =====================================================================
-
 page = st.session_state.page
 bundle = st.session_state.bundle 
 
-# Pasang Background Dashboard
-set_bg_local('bg.png')
+# Pasang Background
+utils.set_bg_local('bg.png')
 
-# --- LOGIKA TOMBOL KEMBALI (YANG SUDAH DIPERBAIKI) ---
-if st.session_state.page != "🏠 HOMEPAGE":
-    col_back, col_space = st.columns([1, 8])
+# Tombol Kembali
+if page != "🏠 HOMEPAGE":
+    col_back, _ = st.columns([1, 8])
     with col_back:
         if st.button("⬅️ Kembali", use_container_width=True):
             st.session_state.page = "🏠 HOMEPAGE"
             st.rerun()
-            
     st.markdown("<br>", unsafe_allow_html=True)
 
-# --- LOGIKA PEMANGGILAN HALAMAN ---
+# Eksekusi Halaman
 try:
-    # 1. Pastikan data mentah tersedia untuk digunakan di Homepage maupun metrik lainnya
-    # Kita ambil menggunakan utils agar ter-cache dengan baik
-    df_wa = utils.load_wa_admin()      # Index 3
-    df_sos = utils.load_sosmed()      # Index 0
-    df_web = utils.load_website()     # Index 1
-    df_ins = utils.load_insight()     # Index 2 (PENTING untuk Target Tahunan)
-    
     if page == "🏠 HOMEPAGE":
         show_homepage(BRAND_BLUE, go_to_page, bundle)
 
@@ -141,20 +126,23 @@ try:
         show_crm_page()
 
     elif page == "📱 DM SOSMED":
+        # Menggunakan data cepat (Fast Lane) di dalam komponen halamannya
         show_dm_sosmed_page(BRAND_BLUE, BRAND_YELLOW)
 
     elif page == "📈 ADS ANALYTICS":
         show_ads_analytics_page(BRAND_BLUE)
 
 except Exception as e:
-    st.error(f"Terjadi kesalahan saat memuat halaman {page}: {e}")
+    st.error(f"⚠️ Sistem mengalami kendala saat memuat {page}: {e}")
+    if st.button("🔄 Coba Segarkan Ulang"):
+        st.cache_data.clear()
+        st.rerun()
 
 # =====================================================================
-# 6. SYSTEM RUNNER
+# 5. SYSTEM RUNNER
 # =====================================================================
 if __name__ == "__main__":
     if not st.runtime.exists():
-        import sys
         from streamlit.web import cli as stcli
         sys.argv = ["streamlit", "run", sys.argv[0]]
         sys.exit(stcli.main())
