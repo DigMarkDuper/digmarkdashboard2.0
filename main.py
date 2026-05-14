@@ -175,7 +175,7 @@ try:
         show_dm_sosmed_page(BRAND_BLUE, BRAND_YELLOW)
 
     elif page == "📈 ADS ANALYTICS":
-        show_ads_analytics_page(BRAND_BLUE)
+        show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW)
 
 except Exception as e:
     st.error(f"⚠️ Sistem mengalami kendala saat memuat {page}: {e}")
