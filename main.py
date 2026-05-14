@@ -35,11 +35,9 @@ BRAND_BLUE = "#005696"
 BRAND_YELLOW = "#FDB813"
 
 # =====================================================================
-# 2. SISTEM LOGIN (ULTRA COMPACT & MINIMALIST)
+# 2. SISTEM LOGIN (ULTRA COMPACT - NUCLEAR RESET)
 # =====================================================================
 def check_password():
-    """Halaman login dengan kotak kecil minimalis tepat di tengah."""
-    
     if st.session_state.get("password_correct"):
         return True
     
@@ -48,123 +46,117 @@ def check_password():
     except:
         pass 
 
-    # --- CSS KUSTOM: KUNCI UKURAN & POSISI ---
+    # --- CSS KUSTOM DENGAN SELECTOR YANG LEBIH AGRESIF ---
     st.markdown(f'''
         <style>
-            /* 1. Background Dasar */
-            .stApp {{
+            /* 1. Paksa Reset Total Halaman */
+            [data-testid="stAppViewContainer"] {{
                 background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
             }}
             
-            /* 2. Matikan elemen bawaan Streamlit agar tidak geser */
-            header, footer, [data-testid="stHeader"] {{ visibility: hidden; }}
-            .main .block-container {{ padding: 0 !important; }}
+            /* Sembunyikan semua elemen default Streamlit */
+            [data-testid="stHeader"], [data-testid="stSidebar"], footer {{
+                display: none !important;
+            }}
+            
+            .main .block-container {{
+                padding: 0 !important;
+                max-width: 100% !important;
+            }}
 
-            /* 3. Container Utama (The Gatekeeper) */
-            .login-wrapper {{
+            /* 2. Container Centering Mutlak */
+            .wrapper_login_final {{
                 position: fixed;
-                top: 0; left: 0; width: 100vw; height: 100vh;
+                top: 0; left: 0; 
+                width: 100vw; height: 100vh;
+                background: rgba(0,0,0,0.4); /* Overlay gelap sedikit */
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                z-index: 9999;
+                z-index: 999999;
             }}
 
-            /* 4. Kotak Glassmorphism: KECIL & COMPACT */
-            .glass-box {{
-                background: rgba(255, 255, 255, 0.07);
-                backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px);
-                border-radius: 20px;
-                padding: 35px 25px;
-                width: 300px; /* KUNCI LEBAR DISINI */
-                border: 1px solid rgba(255, 255, 255, 0.12);
-                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-                text-align: center;
+            /* 3. Kotak Kaca Compact */
+            .box_glass_final {{
+                background: rgba(255, 255, 255, 0.08) !important;
+                backdrop-filter: blur(25px) !important;
+                -webkit-backdrop-filter: blur(25px) !important;
+                border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                border-radius: 20px !important;
+                padding: 30px 25px !important;
+                width: 300px !important; /* KUNCI MATI LEBAR */
+                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5) !important;
+                text-align: center !important;
             }}
 
-            /* 5. Paksa Form Streamlit agar ikut kecil */
-            [data-testid="stForm"] {{
-                width: 100% !important;
+            /* 4. Paksa Elemen Form Streamlit agar Kecil */
+            .box_glass_final [data-testid="stForm"] {{
                 border: none !important;
                 padding: 0 !important;
+                background: transparent !important;
             }}
-            
-            /* 6. Input Minimalis */
-            .stTextInput label p {{
-                color: rgba(255, 255, 255, 0.8) !important;
-                font-size: 10px !important;
-                font-weight: 700 !important;
+
+            /* Label Putih Terang */
+            .box_glass_final label p {{
+                color: white !important;
+                font-size: 11px !important;
+                font-weight: 800 !important;
+                text-transform: uppercase;
                 letter-spacing: 1px;
-                text-align: left;
+                text-align: left !important;
                 margin-bottom: -10px !important;
             }}
-            
-            .stTextInput input {{
-                background-color: transparent !important;
+
+            /* Input Field */
+            .box_glass_final input {{
+                background: transparent !important;
                 border: none !important;
-                border-bottom: 1.5px solid rgba(255,255,255,0.2) !important;
+                border-bottom: 2px solid rgba(255,255,255,0.2) !important;
                 color: white !important;
+                border-radius: 0px !important;
                 font-size: 14px !important;
-                height: 30px !important;
-                padding: 0 !important;
             }}
 
-            /* 7. Tombol Login Kecil */
-            div[data-testid="stFormSubmitButton"] > button {{
-                width: 100% !important;
+            /* Tombol Biru Rapi */
+            .box_glass_final button {{
                 background: {BRAND_BLUE} !important;
                 color: white !important;
                 border: none !important;
-                border-radius: 8px !important;
-                padding: 5px 0px !important;
-                font-size: 12px !important;
-                font-weight: 800 !important;
-                margin-top: 15px;
-                height: 35px;
-            }}
-
-            /* Hilangkan garis merah error agar tidak merusak kotak */
-            .stAlert {{
-                padding: 5px 10px !important;
-                font-size: 11px !important;
+                width: 100% !important;
+                border-radius: 10px !important;
+                font-weight: bold !important;
+                margin-top: 20px !important;
+                height: 40px !important;
             }}
         </style>
     ''', unsafe_allow_html=True)
 
-    # --- RENDER STRUKTUR ---
+    # --- RENDER STRUKTUR BARU ---
     placeholder = st.empty()
-    
     with placeholder.container():
-        # Membuka wrapper utama untuk centering
-        st.markdown('<div class="login-wrapper"><div class="glass-box">', unsafe_allow_html=True)
+        # Membungkus dengan ID Class Baru (wrapper_login_final)
+        st.markdown('<div class="wrapper_login_final"><div class="box_glass_final">', unsafe_allow_html=True)
         
-        # Logo & Header
-        st.image(LOGO_URL, width=100) # Logo diperkecil agar proporsional
-        st.markdown(f'''
-            <div style="color:white; font-size: 11px; letter-spacing:3px; font-weight:300; margin-top:10px; margin-bottom:20px;">
-                DM <span style="font-weight:800; color:{BRAND_YELLOW};">LOGIN</span>
-            </div>
-        ''', unsafe_allow_html=True)
+        # Logo
+        st.image(LOGO_URL, width=100)
+        st.markdown(f'<div style="color:white; font-size:12px; font-weight:200; letter-spacing:3px; margin: 15px 0;">DM <span style="font-weight:800; color:{BRAND_YELLOW}">LOGIN</span></div>', unsafe_allow_html=True)
 
-        # Form Login
-        with st.form("login_form"):
-            u_name = st.text_input("USERNAME").strip().lower()
-            u_pass = st.text_input("PASSWORD", type="password")
+        # Form dengan Key Baru ("login_v2")
+        with st.form(key="login_v2"):
+            u_name = st.text_input("Username").strip().lower()
+            u_pass = st.text_input("Password", type="password")
             
-            if st.form_submit_button("LOGIN SYSTEM"):
+            if st.form_submit_button("MASUK KE DASHBOARD"):
                 if "credentials" in st.secrets and u_name in st.secrets["credentials"] and st.secrets["credentials"][u_name] == u_pass:
                     st.session_state["password_correct"] = True
                     st.rerun()
                 else:
                     st.error("Gagal")
         
-        # Menutup wrapper
         st.markdown('</div></div>', unsafe_allow_html=True)
 
     return False
 
-# --- Jalankan Gerbang Login ---
 if not check_password():
     st.stop()
 
