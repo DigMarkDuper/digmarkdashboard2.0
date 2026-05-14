@@ -1,28 +1,20 @@
 import streamlit as st
 import pandas as pd
 import datetime
-from components.utils import append_sheet_rows, fetch_all_master_data
+from components.utils import append_sheet_rows, fetch_single_sheet
 
 def show_dm_sosmed_page(BRAND_BLUE):
     st.title("📥 Input & Tracker DM Sosmed")
-    st.markdown("Fitur rekap cepat calon siswa dari Instagram, TikTok, dan Facebook.")
+    
+    # --- 1. FAST LOADING LOGIC ---
+    # Gunakan kunci khusus 'dm_data' agar tidak bercampur dengan bundle besar
+    if 'dm_data' not in st.session_state:
+        with st.spinner("Menghubungkan ke Database..."):
+            st.session_state.dm_data = fetch_single_sheet(5)
 
-    # --- 1. OPTIMIZED LOADING (LAZY LOADING) ---
-    # Cek apakah data sudah ada di session_state agar tidak tarik ulang terus-menerus
-    if 'df_dm_local' not in st.session_state:
-        if 'bundle' in st.session_state and st.session_state.bundle is not None:
-            # Ambil dari bundle yang sudah ada (Index 5)
-            st.session_state.df_dm_local = st.session_state.bundle.get(5, pd.DataFrame())
-        else:
-            # Jika bundle kosong, baru tarik data
-            with st.spinner("Mengambil data tracker..."):
-                new_bundle = fetch_all_master_data()
-                st.session_state.bundle = new_bundle
-                st.session_state.df_dm_local = new_bundle.get(5, pd.DataFrame())
+    df_dm = st.session_state.dm_data
 
-    df_dm = st.session_state.df_dm_local
-
-    # --- 2. FORM INPUT (SANGAT ENTENG KARENA TIDAK TRIGGER FETCH) ---
+    # --- 2. FORM INPUT (INSTANT FEEL) ---
     with st.form("form_input_dm", clear_on_submit=True):
         st.markdown("### 📝 Form Prospek Baru")
         c1, c2 = st.columns(2)
@@ -42,33 +34,43 @@ def show_dm_sosmed_page(BRAND_BLUE):
                 uname_clean = username.strip().replace("@", "")
                 link_final = f"https://{platform.lower()}.com/{uname_clean}"
                 tgl_hari_ini = datetime.date.today().strftime("%Y-%m-%d")
+                
+                # Buat data baru untuk dikirim ke Google Sheets
+                # Urutan sesuai kolom di Sheets: No, Platform, Nama, Link, No HP, Domisili, Status, Tag, Tanggal
                 no_urut = len(df_dm) + 1
+                new_row_data = [no_urut, platform, username, link_final, no_hp, domisili, status_dm, tag_dm, tgl_hari_ini]
                 
-                data_dm_baru = [no_urut, platform, username, link_final, no_hp, domisili, status_dm, tag_dm, tgl_hari_ini]
-                
-                if append_sheet_rows(5, [data_dm_baru]):
-                    st.success("✅ Berhasil disimpan!")
-                    # Hapus cache lokal agar saat reload data terbaru muncul
-                    if 'df_dm_local' in st.session_state:
-                        del st.session_state.df_dm_local
-                    st.cache_data.clear()
-                    st.session_state.bundle = fetch_all_master_data()
-                    st.rerun()
+                with st.spinner("Menyimpan ke Cloud..."):
+                    if append_sheet_rows(5, [new_row_data]):
+                        # --- OPTIMISTIC UPDATE (INI RAHASIA KECEPATANNYA) ---
+                        # Alih-alih tarik data lagi, kita tempel langsung data baru ke tabel lokal
+                        new_row_df = pd.DataFrame([new_row_data], columns=df_dm.columns)
+                        st.session_state.dm_data = pd.concat([st.session_state.dm_data, new_row_df], ignore_index=True)
+                        
+                        st.toast("✅ Data Berhasil Masuk!", icon="🔥")
+                        st.rerun()
 
     st.markdown("---")
 
-    # --- 3. DISPLAY TABLE (RINGAN) ---
+    # --- 3. TABEL DATA (PASTI MUNCUL) ---
     st.markdown("### 📑 Tabel Database Terkini")
-    if not df_dm.empty:
-        # Tampilkan 15 data terbaru saja agar browser tidak berat render ribuan baris
-        st.dataframe(df_dm.iloc[::-1].head(15), use_container_width=True, hide_index=True)
+    
+    if not st.session_state.dm_data.empty:
+        # Kita tampilkan 20 data terbaru di paling atas
+        # Menggunakan session_state.dm_data secara langsung agar sinkron
+        df_display = st.session_state.dm_data.copy()
+        
+        # Pastikan kolom Tanggal Masuk (atau kolom terakhir) ada untuk sorting jika perlu
+        # Kita tampilkan data terbaru di atas
+        st.dataframe(
+            df_display.iloc[::-1].head(20), 
+            use_container_width=True, 
+            hide_index=True
+        )
     else:
-        st.info("Belum ada data di database.")
+        st.info("Database kosong atau sedang sinkronisasi. Coba tekan tombol Refresh di bawah.")
 
-    # Tombol Refresh Manual jika dibutuhkan
-    if st.button("🔄 Refresh Data Tabel"):
-        if 'df_dm_local' in st.session_state:
-            del st.session_state.df_dm_local
-        st.cache_data.clear()
-        st.session_state.bundle = fetch_all_master_data()
+    # Tombol Refresh untuk Sinkronisasi Paksa
+    if st.button("🔄 Sinkronisasi Ulang dengan Google Sheets"):
+        del st.session_state.dm_data
         st.rerun()
