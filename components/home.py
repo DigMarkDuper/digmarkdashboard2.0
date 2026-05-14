@@ -13,7 +13,7 @@ try:
 except:
     indo_coords = {}
 
-def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
+def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
     # --- 1. AMBIL DATA DARI UTILS ---
     df_wa = utils.load_wa_admin()
     df_sos = utils.load_sosmed()
