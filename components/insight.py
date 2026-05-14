@@ -99,7 +99,8 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     # --- LOAD DATABASE ---
     df_db_main = st.session_state.get('bundle', {}).get(2, pd.DataFrame())
 
-    # --- SUMMARY & CHARTS ---
+    # TOTAL SUMMARY & CHARTS
+
     if not df_db_main.empty:
         df_calc = df_db_main.copy()
         if len(df_calc.columns) >= len(header_names):
@@ -109,7 +110,11 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
             if col in df_calc.columns:
                 df_calc[col] = pd.to_numeric(df_calc[col], errors='coerce').fillna(0)
 
-        st.markdown(f"""<div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left:10px solid {BRAND_YELLOW};"><h2 style="margin:0; color:white; font-size:18px;">🌍 TOTAL PERFORMA GABUNGAN</h2></div>""", unsafe_allow_html=True)
+        st.markdown(f"""
+            <div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left:10px solid {BRAND_YELLOW};">
+                <h2 style="margin:0; color:white; font-size:18px;">🌍 TOTAL PERFORMA GABUNGAN</h2>
+            </div>
+        """, unsafe_allow_html=True)
         
         g1, g2, g3, g4 = st.columns(4)
         g1.metric("Grand Total Views", f"{int(df_calc['View'].sum()):,}")
@@ -117,33 +122,37 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         g3.metric("Grand Interaksi", f"{int(df_calc['Interaction'].sum()):,}")
         g4.metric("Grand Followers", f"{int(df_calc['Follow'].sum()):,}")
 
-        # --- FITUR GRAFIK (TAMBAHAN BARU) ---
+        # --- VISUALISASI PER PLATFORM ---
         try:
             df_trend = df_calc.copy()
             df_trend['Date'] = pd.to_datetime(df_trend['Date'], dayfirst=True, errors='coerce')
             df_trend = df_trend.dropna(subset=['Date']).sort_values('Date')
 
-            # Performa TikTok
+            # --- SECTION TIKTOK ---
             df_tk = df_trend[df_trend['Platform'] == 'TikTok']
             if not df_tk.empty:
-                st.subheader("🎵 Tren Pertumbuhan TikTok")
+                st.write("") # Spacer
+                st.markdown("### 🎵 **TikTok** Growth Trend")
+                st.markdown("---")
                 tk1, tk2 = st.columns(2)
                 with tk1:
                     st.plotly_chart(create_modern_chart(df_tk, 'View', BRAND_BLUE, "TikTok Video Views"), use_container_width=True)
                 with tk2:
                     st.plotly_chart(create_modern_chart(df_tk, 'Follow', "#00CC96", "TikTok New Followers"), use_container_width=True)
 
-            # Performa Instagram
+            # --- SECTION INSTAGRAM ---
             df_ig = df_trend[df_trend['Platform'] == 'Instagram']
             if not df_ig.empty:
-                st.subheader("📸 Tren Pertumbuhan Instagram")
+                st.write("") # Spacer
+                st.markdown("### 📸 **Instagram** Growth Trend")
+                st.markdown("---")
                 ig1, ig2 = st.columns(2)
                 with ig1:
                     st.plotly_chart(create_modern_chart(df_ig, 'View', "#E1306C", "Instagram Views"), use_container_width=True)
                 with ig2:
                     st.plotly_chart(create_modern_chart(df_ig, 'Follow', "#833AB4", "Instagram New Followers"), use_container_width=True)
-        except:
-            pass
+        except Exception as e:
+            st.error(f"Gagal memuat grafik: {e}")
 
     st.markdown("---")
 
