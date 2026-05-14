@@ -207,25 +207,25 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
     # ==========================================================
     nav_data = [
         # 1. Sosmed (Ikon Berbagi/Megaphone Modern - Tidak Neko-neko)
-        ("https://cdn-icons-png.flaticon.com/512/1216/1216654.png", "Sosmed", "Jadwal PIC", "📱 SOSIAL MEDIA", "btn_sos"),
+        ("https://github.com/DigMarkDuper/digmarkdashboard2.0/blob/main/asset/instagram.png?raw=true", "Sosmed", "Jadwal PIC", "📱 SOSIAL MEDIA", "btn_sos"),
         
         # 2. Website (Ikon Laptop/Browser Garis Bersih)
-        ("https://www.flaticon.com/free-icon/internet_12953846?term=web&page=1&position=46&origin=tag&related_id=12953846", "Website", "SEO Audit", "🌐 WEBSITE AUDIT", "btn_web"),
+        ("https://github.com/DigMarkDuper/digmarkdashboard2.0/blob/main/asset/internet.png?raw=true", "Website", "SEO Audit", "🌐 WEBSITE AUDIT", "btn_web"),
         
         # 3. Insight (Ikon Grafik Analitik Batang & Garis)
-        ("https://cdn-icons-png.flaticon.com/512/1216/1216670.png", "Insight", "Analytics", "📈 INSIGHTS & ANALYTICS", "btn_in"),
+        ("https://github.com/DigMarkDuper/digmarkdashboard2.0/blob/main/asset/investigation.png?raw=true", "Insight", "Analytics", "📈 INSIGHTS & ANALYTICS", "btn_in"),
         
         # 4. WA Admin (Ikon Bubble Chat dengan Tanda Titik-titik Chat Modern)
-        ("https://cdn-icons-png.flaticon.com/512/1216/1216584.png", "WA Admin", "Closing Funnel", "💬 WA ADMIN REPORT", "btn_wa"),
+        ("https://github.com/DigMarkDuper/digmarkdashboard2.0/blob/main/asset/social.png?raw=true", "WA Admin", "Closing Funnel", "💬 WA ADMIN REPORT", "btn_wa"),
         
         # 5. Database (Ikon Tumpukan Server/Database Rapi)
         ("https://github.com/DigMarkDuper/digmarkdashboard2.0/blob/main/asset/database.png?raw=true", "Database", "CRM Kontak", "📂 DATABASE NOMOR", "btn_db"),
         
         # 6. DM Sosmed (Ikon Pesan Masuk/Envelope)
-        ("https://cdn-icons-png.flaticon.com/512/1216/1216641.png", "DM Sosmed", "Tracker Inbox", "📱 DM SOSMED", "btn_dm"),
+        ("https://github.com/DigMarkDuper/digmarkdashboard2.0/blob/main/asset/direct-instagram.png?raw=true", "DM Sosmed", "Tracker Inbox", "📱 DM SOSMED", "btn_dm"),
         
         # 7. Ads Report (Ikon Target Bullseye & Panah Konversi)
-        ("https://cdn-icons-png.flaticon.com/512/1216/1216647.png", "Ads Report", "ROI & CPL", "📈 ADS ANALYTICS", "btn_ads")
+        ("https://github.com/DigMarkDuper/digmarkdashboard2.0/blob/main/asset/report.png?raw=true", "Ads Report", "ROI & CPL", "📈 ADS ANALYTICS", "btn_ads")
     ]
 
     # Render Baris 1
