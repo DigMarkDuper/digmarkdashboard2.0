@@ -20,7 +20,7 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
     df_web = utils.load_website()
     df_ins = utils.load_insight()
 
-    # --- 2. CSS CUSTOM (VERSI ANTI-GAGAL) ---
+    # --- 2. CSS CUSTOM (FORCE VERTICAL STYLE) ---
     st.markdown("""
         <style>
         .kpi-card {
@@ -31,9 +31,8 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
             border: 1px solid #F0F2F6 !important;
             min-height: 110px !important;
             width: 100% !important;
-            display: block !important; /* Block layout otomatis susun ke bawah */
+            display: block !important; 
         }
-        
         .metric-title { 
             display: block !important; 
             font-size: 10px !important; 
@@ -44,7 +43,6 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
             line-height: 1.2 !important;
             width: 100% !important;
         }
-        
         .metric-value { 
             display: block !important; 
             font-size: 22px !important; 
@@ -54,10 +52,11 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
         }
         </style>
     """, unsafe_allow_html=True)
-    # --- 2. HEADER ---
+
+    # --- 3. HEADER ---
     st.markdown('<div class="feature-header" style="text-align: center; margin-bottom:20px;">🚀 DIGITAL MARKETING COMMAND CENTER</div>', unsafe_allow_html=True)
 
-    # --- 3. NAVIGASI MENU (CARD) ---
+    # --- 4. NAVIGASI MENU ---
     def create_square_card(icon, title, subtitle, target_page, button_key):
         with st.container(border=True):
             st.markdown(f"""
@@ -91,14 +90,18 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
 
     st.markdown("---")
 
-    # --- 4. LOGIKA DATA & ROI DASHBOARD ---
+    # --- 5. LOGIKA DATA SNAPSHOT (BULANAN) ---
     try:
         sekarang = datetime.datetime.now()
         bulan_ini = sekarang.month
         tahun_ini = sekarang.year
         BIAYA_PELATIHAN = 12995000 
 
-        # B. PERHITUNGAN BULANAN (KHUSUS MEI - UNTUK SNAPSHOT)
+        # Identifikasi Kolom Status Sekali Saja
+        status_col = None
+        if not df_wa.empty:
+            status_col = next((c for c in df_wa.columns if 'Status' in str(c)), None)
+
         total_leads_mei, total_closing_mei = 0, 0
         if not df_wa.empty:
             df_wa['tgl_p'] = pd.to_datetime(df_wa['Tanggal Masuk'], dayfirst=True, errors='coerce')
@@ -107,8 +110,7 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
             if status_col:
                 total_closing_mei = len(df_current[df_current[status_col].astype(str).str.contains('Closing', case=False, na=False)])
 
-
-        # D. RENDER EXECUTIVE SNAPSHOT (DATA BULANAN)
+        # RENDER SNAPSHOT
         st.markdown(f'<div style="font-weight: 800; margin-bottom: 15px;">📊 EXECUTIVE SNAPSHOT (MEI {tahun_ini})</div>', unsafe_allow_html=True)
         k1, k2, k3, k4 = st.columns(4)
 
@@ -128,7 +130,6 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
         with k1: render_kpi("🎯", "Mei: Close/Leads", f"{total_closing_mei} / {total_leads_mei}", f"Conv: {conv_mei:.1f}%")
         with k2: render_kpi("💰", "Omzet Mei", f"Rp {total_closing_mei * BIAYA_PELATIHAN:,.0f}".replace(",", "."), "Bulan Berjalan")
 
-        # Hutang Sosmed & Web (Bulan Ini)
         sos_pend = 0
         if not df_sos.empty and 'PROSES' in df_sos.columns:
             col_tgl_sos = 'Tanggal Deadline' if 'Tanggal Deadline' in df_sos.columns else ('Deadline' if 'Deadline' in df_sos.columns else None)
@@ -145,43 +146,32 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
                 web_pend = len(df_web[(~df_web['Status Post'].astype(str).str.upper().isin(['DONE', 'V', '1'])) & (df_web['tgl_conv'].dt.month == bulan_ini)])
         with k4: render_kpi("🌐", "Hutang Web", f"{web_pend} Page", "Deadline Mei")
 
-        st.markdown("<br>", unsafe_allow_html=True)
-    
-    # =====================================================================
-    # E. RENDER ROI DASHBOARD (SINKRONISASI TOTAL & GLOBAL)
-    # =====================================================================
+    except Exception as e:
+        st.error(f"Gagal memuat snapshot: {e}")
+
+    # --- 6. ROI DASHBOARD (GLOBAL) ---
     try:
-        # 1. HITUNG ULANG DATA LEADS & CLOSING (ALL TIME)
         leads_total = 0
         closing_total = 0
         
         if not df_wa.empty:
-            # Hitung Leads (Semua Baris)
             leads_total = len(df_wa)
-            
-            # Cari Kolom Status
             status_col = next((c for c in df_wa.columns if 'Status' in str(c)), None)
             if status_col:
-                # Hitung yang mengandung kata 'Closing'
                 closing_total = len(df_wa[df_wa[status_col].astype(str).str.contains('Closing', case=False, na=False)])
 
-        # 2. AMBIL DATA SPEND DARI SESSION STATE (DARI HALAMAN ADS)
         sp_tk = st.session_state.get('spend_tiktok', 0)
         sp_mt = st.session_state.get('spend_meta', 0)
         sp_mk = st.session_state.get('spend_mekari', 0)
         
-        # 3. KALKULASI VARIABEL ROI
         final_spend = sp_tk + sp_mt + sp_mk
-        final_omzet = closing_total * 15000000 # Pakai Biaya Pelatihan Mas
+        final_omzet = closing_total * 15000000 
         final_cac = final_spend / closing_total if closing_total > 0 else 0
         final_roas = (final_omzet / final_spend) if final_spend > 0 else 0
 
-        # 4. TAMPILAN HEADER DASHBOARD
         st.markdown('<div style="font-weight: 800; margin-bottom: 15px; margin-top: 20px;">🌍 ULTIMATE ROI DASHBOARD (ALL TIME GLOBAL)</div>', unsafe_allow_html=True)
-        
         r = st.columns(5)
         
-        # Fungsi Render (Vertikal Style)
         def render_box(col, title, value, color="#111827"):
             with col:
                 st.markdown(f"""
@@ -191,7 +181,6 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
                     </div>
                 """, unsafe_allow_html=True)
 
-        # 5. TAMPILKAN BOX
         render_box(r[0], "💸 Total Spend Ads + Mekari", f"Rp {final_spend:,.0f}", "#8B0000")
         render_box(r[1], "👥 Leads Total", f"{leads_total}")
         render_box(r[2], "🎓 Closing Total", f"{closing_total} Swa", "#006400")
@@ -199,83 +188,45 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
         render_box(r[4], "🚀 ROAS Total", f"{final_roas:,.1f}x", "#1E3A8A")
 
         st.markdown("---")
-
     except Exception as e:
         st.error(f"Gagal memuat ROI Dashboard: {e}")
-    # --- 5. ANNUAL TARGET TRACKING (FUTURISTIC RING STYLE) ---
+
+    # --- 7. ANNUAL TARGET TRACKING ---
     try:
         st.markdown('<div style="font-weight: 800; margin-top: 20px; margin-bottom: 15px;">🎯 2026 ANNUAL TARGET PROGRESS</div>', unsafe_allow_html=True)
-        
-        # 1. Definisi Target (Label yang akan muncul di UI)
-        targets = {
-            "Total View": 10000000, 
-            "Total Reach": 2400000, 
-            "Link Click": 24000, 
-            "Engagement": 40000
-        }
-        
-        # 2. Inisialisasi angka awal
+        targets = {"Total View": 10000000, "Total Reach": 2400000, "Link Click": 24000, "Engagement": 40000}
         actual = {k: 0 for k in targets.keys()}
         
         if not df_ins.empty:
-            # SINKRONISASI KOLOM: Paksa nama kolom sesuai dengan standar di Insight Page Mas
-            header_names = ["Date", "Platform", "View", "Reach", "Interaction", "Profile Visit", "Link Clicks", "Follow"]
-            if len(df_ins.columns) >= len(header_names):
-                df_ins.columns = header_names[:len(df_ins.columns)]
+            header_names_ins = ["Date", "Platform", "View", "Reach", "Interaction", "Profile Visit", "Link Clicks", "Follow"]
+            if len(df_ins.columns) >= len(header_names_ins):
+                df_ins.columns = header_names_ins[:len(df_ins.columns)]
             
-            # 3. Mapping Manual yang Presisi (Key Target UI -> Nama Kolom Insight)
-            mapping_insight = {
-                "Total View": "View",
-                "Total Reach": "Reach",
-                "Link Click": "Link Clicks",
-                "Engagement": "Interaction"
-            }
-            
+            mapping_insight = {"Total View": "View", "Total Reach": "Reach", "Link Click": "Link Clicks", "Engagement": "Interaction"}
             for ui_label, col_name in mapping_insight.items():
                 if col_name in df_ins.columns:
-                    # Bersihkan data (buang titik/koma teks) agar bisa dijumlahkan
-                    val_clean = pd.to_numeric(
-                        df_ins[col_name].astype(str).str.replace(r'[^\d.]', '', regex=True), 
-                        errors='coerce'
-                    ).fillna(0).sum()
+                    val_clean = pd.to_numeric(df_ins[col_name].astype(str).str.replace(r'[^\d.]', '', regex=True), errors='coerce').fillna(0).sum()
                     actual[ui_label] = val_clean
 
-        # 4. Render ke UI (4 Kolom Jajar)
         cols_gauge = st.columns(4) 
-        
         for i, (label, target_val) in enumerate(targets.items()):
             current_val = actual[label]
             percentage = (current_val / target_val * 100) if target_val > 0 else 0
             display_percent = min(percentage, 100)
             
             with cols_gauge[i]:
-                # Ring Chart Minimalis
                 fig = go.Figure(go.Pie(
                     values=[display_percent, 100 - display_percent],
                     hole=0.85,
                     marker=dict(colors=[BRAND_BLUE, "#F0F2F6"]),
                     textinfo='none', hoverinfo='none', sort=False
                 ))
-                
-                fig.add_annotation(
-                    text=f"<b style='font-size:15px;'>{percentage:.1f}%</b>",
-                    x=0.5, y=0.5, showarrow=False, font=dict(color=BRAND_BLUE)
-                )
-
-                fig.update_layout(
-                    showlegend=False, height=130, margin=dict(l=10, r=10, t=5, b=5),
-                    paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                )
+                fig.add_annotation(text=f"<b style='font-size:15px;'>{percentage:.1f}%</b>", x=0.5, y=0.5, showarrow=False, font=dict(color=BRAND_BLUE))
+                fig.update_layout(showlegend=False, height=130, margin=dict(l=10, r=10, t=5, b=5), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
                 with st.container(border=True):
                     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False}, key=f"target_{label}")
-                    st.markdown(f"""
-                        <div style="text-align:center; margin-top:-5px;">
-                            <div style="font-size:9px; color:gray; font-weight:800; text-transform:uppercase;">{label}</div>
-                            <div style="font-size:11px; font-weight:bold; color:#111827;">{current_val:,.0f}</div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    
+                    st.markdown(f"""<div style="text-align:center; margin-top:-5px;"><div style="font-size:9px; color:gray; font-weight:800; text-transform:uppercase;">{label}</div><div style="font-size:11px; font-weight:bold; color:#111827;">{current_val:,.0f}</div></div>""", unsafe_allow_html=True)
     except Exception as e:
         st.error(f"⚠️ Gagal sinkronisasi data Insight: {e}")
 
