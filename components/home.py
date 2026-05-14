@@ -360,7 +360,50 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
 
     # --- 7. ANNUAL TARGET TRACKING ---
     try:
-        st.markdown('<div style="font-weight: 800; margin-top: 20px; margin-bottom: 15px;">🎯 2026 ANNUAL TARGET PROGRESS</div>', unsafe_allow_html=True)
+        TARGET_ICON = "https://cdn-icons-png.flaticon.com/512/11520/11520268.png" # Ikon Bullseye Modern
+
+        st.markdown(f"""
+            <div style="
+                display: flex; 
+                align-items: center; 
+                gap: 15px; 
+                background: linear-gradient(90deg, #1e3a8a 0%, {BRAND_BLUE} 100%); 
+                padding: 15px 25px; 
+                border-radius: 15px; 
+                margin-top: 30px;
+                margin-bottom: 25px; 
+                border-left: 12px solid {BRAND_YELLOW}; 
+                box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            ">
+                <div style="
+                    background: rgba(255, 255, 255, 0.15); 
+                    backdrop-filter: blur(8px);
+                    padding: 10px; 
+                    border-radius: 12px; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center;
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                ">
+                    <img src="{TARGET_ICON}" width="30">
+                </div>
+                <div>
+                    <h2 style="
+                        margin: 0; 
+                        color: white; 
+                        font-size: 18px; 
+                        font-weight: 900; 
+                        letter-spacing: 1.5px; 
+                        text-transform: uppercase;
+                    ">
+                        🎯 2026 <span style="color: {BRAND_YELLOW};">ANNUAL TARGET</span> PROGRESS
+                    </h2>
+                    <p style="margin: 0; color: rgba(255, 255, 255, 0.7); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                        Strategic Enrollment Goals & Institutional Growth Tracking
+                    </p>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
         targets = {"Total View": 10000000, "Total Reach": 2400000, "Link Click": 24000, "Engagement": 40000}
         actual = {k: 0 for k in targets.keys()}
         
