@@ -79,97 +79,64 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
 
     st.markdown("---")
 
-    # --- 4. LOGIKA DATA & DASHBOARD ---
+    # --- 4. LOGIKA DATA & ROI DASHBOARD ---
     try:
         sekarang = datetime.datetime.now()
         bulan_ini = sekarang.month
         tahun_ini = sekarang.year
         BIAYA_PELATIHAN = 15000000 
 
-        # A. Hitung Leads & Closing
+        # A. Hitung Leads & Closing (Pastikan variabel ini yang dipakai di bawah)
         total_leads, total_closing = 0, 0
         if not df_wa.empty:
+            # Samakan format tanggal agar filter akurat
             df_wa['tgl_p'] = pd.to_datetime(df_wa['Tanggal Masuk'], dayfirst=True, errors='coerce')
             df_current = df_wa[(df_wa['tgl_p'].dt.month == bulan_ini) & (df_wa['tgl_p'].dt.year == tahun_ini)]
+            
             status_col = next((c for c in df_wa.columns if 'Status' in str(c)), None)
             total_leads = len(df_current)
             if status_col:
+                # Menghitung closing khusus bulan ini
                 total_closing = len(df_current[df_current[status_col].astype(str).str.contains('Closing', case=False, na=False)])
 
-        # B. Hitung Spend & ROI (Kunci Perbaikan: Perhitungan harus sebelum Render)
+        # B. Ambil Data Spend (Marketing)
+        # Agar sinkron, pastikan di Page Ads Report Mas sudah ada baris: st.session_state['spend_tiktok'] = total_nya
         spend_tiktok = st.session_state.get('spend_tiktok', 0)
         spend_meta = st.session_state.get('spend_meta', 0)
         spend_mekari = st.session_state.get('spend_mekari', 0)
         
         global_spend = spend_tiktok + spend_meta + spend_mekari
         global_omzet = total_closing * BIAYA_PELATIHAN 
+        
+        # Perhitungan rasio
         global_cac = global_spend / total_closing if total_closing > 0 else 0
         global_roas = (global_omzet / global_spend) if global_spend > 0 else 0
 
-        # C. Render ROI Dashboard
+        # =====================================================================
+        # ULTIMATE ROI DASHBOARD (ALL PLATFORM)
+        # =====================================================================
         st.markdown('<div style="font-weight: 800; margin-bottom: 15px;">🌍 ULTIMATE ROI DASHBOARD (ALL PLATFORM)</div>', unsafe_allow_html=True)
+        
         r = st.columns(5)
         
-        def render_box(col, title, value, color="#111827"):
+        # Gunakan fungsi render agar ukuran box SAMA RATA
+        def render_roi_box(col, title, value, color="#111827"):
             with col:
                 st.markdown(f"""
-                    <div class="kpi-card">
-                        <div class="metric-title">{title}</div>
-                        <div class="metric-value" style="color:{color};">{value}</div>
+                    <div class="kpi-card" style="min-height: 100px; flex-direction: column; align-items: flex-start; justify-content: center;">
+                        <div style="font-size: 10px; color: gray; font-weight: 800; text-transform: uppercase;">{title}</div>
+                        <div style="font-size: 18px; font-weight: bold; color: {color};">{value}</div>
                     </div>
                 """, unsafe_allow_html=True)
 
-        render_box(r[0], "💸 Total Spend", f"Rp {global_spend:,.0f}", "#8B0000")
-        render_box(r[1], "👥 Leads (Mei)", f"{total_leads}")
-        render_box(r[2], "🎓 Closing", f"{total_closing} Swa", "#006400")
-        render_box(r[3], "🎯 CAC", f"Rp {global_cac:,.0f}", "#D2691E")
-        render_box(r[4], "🚀 ROAS", f"{global_roas:,.1f}x", "#1E3A8A")
+        render_roi_box(r[0], "💸 Total Spend", f"Rp {global_spend:,.0f}", "#8B0000")
+        render_roi_box(r[1], "👥 Leads (Mei)", f"{total_leads}")
+        render_roi_box(r[2], "🎓 Closing", f"{total_closing} Swa", "#006400")
+        render_roi_box(r[3], "🎯 CAC", f"Rp {global_cac:,.0f}", "#D2691E")
+        render_roi_box(r[4], "🚀 ROAS", f"{global_roas:,.1f}x", "#1E3A8A")
 
         if global_roas > 0:
-            st.success(f"🔥 **Status Bisnis:** Investasi **Rp {global_spend:,.0f}** menghasilkan omzet **Rp {global_omzet:,.0f}** ({global_roas:,.1f}x).")
-
-        st.markdown("---")
-
-        # D. Operational Snapshot (Hutang Sosmed/Web)
-        sos_pend = 0
-        if not df_sos.empty and 'PROSES' in df_sos.columns:
-            col_tgl_sos = 'Tanggal Deadline' if 'Tanggal Deadline' in df_sos.columns else ('Deadline' if 'Deadline' in df_sos.columns else None)
-            if col_tgl_sos:
-                df_sos['tgl_p'] = pd.to_datetime(df_sos[col_tgl_sos], dayfirst=True, errors='coerce')
-                sos_pend = len(df_sos[(df_sos['PROSES'].astype(str).str.upper() != 'DONE') & (df_sos['tgl_p'].dt.month == bulan_ini)])
-
-        web_pend = 0
-        if not df_web.empty and 'Status Post' in df_web.columns:
-            col_tgl_web = 'Deadline' if 'Deadline' in df_web.columns else ('Tanggal Deadline' if 'Tanggal Deadline' in df_web.columns else None)
-            if col_tgl_web:
-                df_web['tgl_p'] = pd.to_datetime(df_web[col_tgl_web], dayfirst=True, errors='coerce')
-                web_pend = len(df_web[(~df_web['Status Post'].astype(str).str.upper().isin(['DONE', 'V', '1'])) & (df_web['tgl_p'].dt.month == bulan_ini)])
-
-        conv_rate = (total_closing / total_leads * 100) if total_leads > 0 else 0
-        
-        st.markdown('<div style="font-weight: 800; margin-bottom: 15px;">📊 OPERATIONAL SNAPSHOT</div>', unsafe_allow_html=True)
-        k = st.columns(4)
-
-        def render_op_box(col, icon, title, value, subtext, subcolor="#059669"):
-            with col:
-                st.markdown(f"""
-                    <div class="kpi-card" style="flex-direction: row; gap: 12px; align-items: center;">
-                        <div style="font-size: 24px;">{icon}</div>
-                        <div>
-                            <div class="metric-title">{title}</div>
-                            <div class="metric-value" style="font-size: 18px;">{value}</div>
-                            <div class="metric-sub" style="color:{subcolor};">{subtext}</div>
-                        </div>
-                    </div>
-                """, unsafe_allow_html=True)
-
-        render_op_box(k[0], "🎯", "Conv. Rate", f"{conv_rate:.1f}%", "Closing Leads")
-        render_op_box(k[1], "💰", "Est. Omzet", f"Rp {global_omzet:,.0f}", "Mei 2026")
-        render_op_box(k[2], "📱", "Hutang Sosmed", f"{sos_pend} Task", "Deadline Mei", "#DC2626" if sos_pend > 0 else "#059669")
-        render_op_box(k[3], "🌐", "Hutang Web", f"{web_pend} Page", "Deadline Mei", "#DC2626" if web_pend > 0 else "#059669")
-
-    except Exception as e:
-        st.error(f"Gagal memuat metrik: {e}")
+            st.success(f"🔥 **Status Bisnis:** Investasi **Rp {global_spend:,.0f}** menghasilkan omzet **Rp {global_omzet:,.0f}**.")
         
     # --- 5. ANNUAL TARGET TRACKING (YEAR-TO-DATE) ---
     try:
