@@ -240,16 +240,22 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                     # AUTO DETECT ENCODING
                     # =================================================
 
-                    raw_bytes = f.getvalue()
-
-                    try:
-                        content = raw_bytes.decode("utf-16")
-
-                    except:
-                        content = raw_bytes.decode(
-                            "utf-8-sig",
-                            errors="ignore"
-                        )
+                        raw_bytes = f.getvalue()
+                        
+                        # DETECT UTF-16 DARI BOM
+                        if raw_bytes.startswith(b'\xff\xfe') or raw_bytes.startswith(b'\xfe\xff'):
+                        
+                            content = raw_bytes.decode(
+                                "utf-16",
+                                errors="ignore"
+                            )
+                        
+                        else:
+                        
+                            content = raw_bytes.decode(
+                                "utf-8-sig",
+                                errors="ignore"
+                            )
 
                     # =================================================
                     # TIKTOK
