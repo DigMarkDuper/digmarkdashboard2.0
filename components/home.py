@@ -580,7 +580,6 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
             st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
             
             # B. GRAFIK TREEMAP
-            with st.container(border=True):
             # --- SECTION HEADER: TREEMAP DISTRIBUTION ---
                 TREE_ICON = "https://cdn-icons-png.flaticon.com/512/1632/1632602.png" # Ikon Chart/Hierarchy
             
@@ -625,6 +624,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
                     </div>
                 """, unsafe_allow_html=True)
                 
+            with st.container(border=True):       
                 if not asal_counts.empty:
                     fig_asal = px.treemap(
                         asal_counts, 
