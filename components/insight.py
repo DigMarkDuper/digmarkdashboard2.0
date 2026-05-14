@@ -111,18 +111,27 @@ def create_modern_chart(data, y_col, color, title):
 # =========================================================
 
 def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
+    # --- 1. HEADER PROFESIONAL (CENTERED + RUNNING TEXT) ---
     st.markdown(f"""
-        <div style="display: flex; align-items: center; gap: 18px; margin-bottom: 35px; padding-bottom: 20px; border-bottom: 2px solid #F3F4F6;">
-            <div style="background-color: {BRAND_BLUE}; padding: 12px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center;">
-                <img src="https://img.icons8.com/fluency/48/combo-chart.png" width="40">
+        <div style="text-align: center; margin-bottom: 40px;">
+            <div style="display: inline-flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+                <div style="background-color: {BRAND_BLUE}; padding: 12px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center;">
+                    <img src="https://img.icons8.com/fluency/48/combo-chart.png" width="40">
+                </div>
+                <div style="text-align: left;">
+                    <h1 style="margin: 0; font-size: 36px; font-weight: 900; color: {BRAND_BLUE}; letter-spacing: -1.5px; text-transform: uppercase; line-height: 1;">
+                        Content Insight Engine
+                    </h1>
+                    <p style="margin: 5px 0 0 0; color: #6B7280; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">
+                        <span style="color: {BRAND_YELLOW};">●</span> Global Performance & Growth Monitoring
+                    </p>
+                </div>
             </div>
-            <div>
-                <h1 style="margin: 0; font-size: 36px; font-weight: 900; color: {BRAND_BLUE}; letter-spacing: -1.5px; text-transform: uppercase; line-height: 1;">
-                    Content Insight Engine
-                </h1>
-                <p style="margin: 5px 0 0 0; color: #6B7280; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">
-                    <span style="color: {BRAND_YELLOW};">●</span> Global Performance & Growth Monitoring
-                </p>
+
+            <div style="width: 80%; margin: 0 auto; border-top: 1px solid #E5E7EB; border-bottom: 1px solid #E5E7EB; padding: 5px 0;">
+                <marquee scrollamount="6" style="color: #6B7280; font-family: 'Courier New', Courier, monospace; font-size: 12px; font-weight: 700;">
+                    SINKRONISASI DATA KONTEN AKTIF • MENGANALISIS TREND TIKTOK & INSTAGRAM • LAPORAN PERFORMA GENERASI 2026 • TOTAL INSIGHT TERKUMPUL • STATUS: STABLE
+                </marquee>
             </div>
         </div>
     """, unsafe_allow_html=True)
