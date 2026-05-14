@@ -210,7 +210,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
         ("https://cdn-icons-png.flaticon.com/512/1216/1216654.png", "Sosmed", "Jadwal PIC", "📱 SOSIAL MEDIA", "btn_sos"),
         
         # 2. Website (Ikon Laptop/Browser Garis Bersih)
-        ("https://cdn-icons-png.flaticon.com/512/1216/1216630.png", "Website", "SEO Audit", "🌐 WEBSITE AUDIT", "btn_web"),
+        ("https://www.flaticon.com/free-icon/internet_12953846?term=web&page=1&position=46&origin=tag&related_id=12953846", "Website", "SEO Audit", "🌐 WEBSITE AUDIT", "btn_web"),
         
         # 3. Insight (Ikon Grafik Analitik Batang & Garis)
         ("https://cdn-icons-png.flaticon.com/512/1216/1216670.png", "Insight", "Analytics", "📈 INSIGHTS & ANALYTICS", "btn_in"),
