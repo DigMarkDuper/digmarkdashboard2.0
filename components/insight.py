@@ -254,7 +254,7 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                 <img src="https://img.icons8.com/color/48/upload-to-cloud--v1.png" width="28">
             </div>
             <div>
-                <h2 style="margin:0; color:white; font-size:18px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">🚀 Upload Data Insight Baru</h2>
+                <h2 style="margin:0; color:white; font-size:18px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">Upload Data Insight Baru</h2>
                 <p style="margin:0; color: rgba(255,255,255,0.7); font-size: 11px; font-weight: 600;">Import file terbaru untuk memperbarui dashboard</p>
             </div>
         </div>
