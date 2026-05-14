@@ -385,8 +385,58 @@ def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
         mk2.metric("💬 Total Interaksi WA", f"{total_pesan_mekari:,.0f} Pesan")
         
         st.markdown("<br>", unsafe_allow_html=True)
+        
+        # 2. Uploader Section
+        with st.container(border=True):
+            st.markdown("### 📤 Upload Laporan Mekari Baru")
+            up_mk = st.file_uploader("Upload Laporan Mekari (CSV)", type=['csv'], key="up_mk_final_ads")
+            
+            if up_mk is not None:
+                try:
+                    df_up = pd.read_csv(up_mk)
+                    df_up.columns = [str(c).strip().lower() for c in df_up.columns]
+                    
+                    up_spend, up_msgs = 0.0, 0
+                    jenis_lap = "Tidak Dikenali"
+                    col_d = None
+                    
+                    if 'deducted balance' in df_up.columns and 'broadcast amount' in df_up.columns:
+                        jenis_lap = "WA Campaign Logs"
+                        up_spend = pd.to_numeric(df_up['deducted balance'], errors='coerce').fillna(0).sum()
+                        up_msgs = pd.to_numeric(df_up['broadcast amount'], errors='coerce').fillna(0).sum()
+                        col_d = next((c for c in df_up.columns if 'created at' in c or 'date' in c), None)
+                        
+                    elif 'credit' in df_up.columns:
+                        jenis_lap = "WA Billing Logs (Per Message)"
+                        up_spend = pd.to_numeric(df_up['credit'], errors='coerce').fillna(0).sum()
+                        up_msgs = len(df_up)
+                        col_d = next((c for c in df_up.columns if 'created_at' in c or 'date' in c), None)
 
-     # ---------------- UPLOADER ----------------
+                    if jenis_lap == "Tidak Dikenali":
+                        st.error("❌ Format file tidak dikenali. Pastikan file adalah hasil export 'Billing Logs' atau 'Campaign Logs' dari Mekari.")
+                    else:
+                        p_data = "Tanggal Tidak Terdeteksi"
+                        if col_d:
+                            td = pd.to_datetime(df_up[col_d], utc=True, errors='coerce')
+                            if not td.dropna().empty:
+                                p_data = f"{td.min().strftime('%d %b %Y')} s/d {td.max().strftime('%d %b %Y')}"
+                        
+                        st.success(f"✅ Terdeteksi: **{jenis_lap}**")
+                        st.info(f"📅 **Periode:** {p_data}\n\n💬 **Total Pesan:** {up_msgs:,.0f} Interaksi\n\n📊 **Total Biaya:** Rp {up_spend:,.0f}")
+                        
+                        if st.button("📥 Catat ke Database", use_container_width=True, key="btn_save_mekari"):
+                            tgl_skrg = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+                            fmt_cost = f"Rp{int(up_spend):,}".replace(',', '.')
+                            row = [tgl_skrg, p_data, jenis_lap, up_msgs, fmt_cost]
+                            
+                            if utils.append_sheet_rows(8, [row]):
+                                st.success("Berhasil Disimpan!")
+                                st.cache_data.clear()
+                                if 'bundle' in st.session_state: del st.session_state['bundle']
+                                st.rerun()
+                except Exception as e:
+                    st.error(f"Gagal memproses file: {e}")
+ # ---------------- UPLOADER ----------------
         UPLOAD_ICON = "https://cdn-icons-png.flaticon.com/512/338/338910.png" # Ikon Cloud/Folder Upload
     
         # 2. Render Header Upload File Report
@@ -441,57 +491,6 @@ def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
             </div>
         """, unsafe_allow_html=True)
         
-        # 2. Uploader Section
-        with st.container(border=True):
-            st.markdown("### 📤 Upload Laporan Mekari Baru")
-            up_mk = st.file_uploader("Upload Laporan Mekari (CSV)", type=['csv'], key="up_mk_final_ads")
-            
-            if up_mk is not None:
-                try:
-                    df_up = pd.read_csv(up_mk)
-                    df_up.columns = [str(c).strip().lower() for c in df_up.columns]
-                    
-                    up_spend, up_msgs = 0.0, 0
-                    jenis_lap = "Tidak Dikenali"
-                    col_d = None
-                    
-                    if 'deducted balance' in df_up.columns and 'broadcast amount' in df_up.columns:
-                        jenis_lap = "WA Campaign Logs"
-                        up_spend = pd.to_numeric(df_up['deducted balance'], errors='coerce').fillna(0).sum()
-                        up_msgs = pd.to_numeric(df_up['broadcast amount'], errors='coerce').fillna(0).sum()
-                        col_d = next((c for c in df_up.columns if 'created at' in c or 'date' in c), None)
-                        
-                    elif 'credit' in df_up.columns:
-                        jenis_lap = "WA Billing Logs (Per Message)"
-                        up_spend = pd.to_numeric(df_up['credit'], errors='coerce').fillna(0).sum()
-                        up_msgs = len(df_up)
-                        col_d = next((c for c in df_up.columns if 'created_at' in c or 'date' in c), None)
-
-                    if jenis_lap == "Tidak Dikenali":
-                        st.error("❌ Format file tidak dikenali. Pastikan file adalah hasil export 'Billing Logs' atau 'Campaign Logs' dari Mekari.")
-                    else:
-                        p_data = "Tanggal Tidak Terdeteksi"
-                        if col_d:
-                            td = pd.to_datetime(df_up[col_d], utc=True, errors='coerce')
-                            if not td.dropna().empty:
-                                p_data = f"{td.min().strftime('%d %b %Y')} s/d {td.max().strftime('%d %b %Y')}"
-                        
-                        st.success(f"✅ Terdeteksi: **{jenis_lap}**")
-                        st.info(f"📅 **Periode:** {p_data}\n\n💬 **Total Pesan:** {up_msgs:,.0f} Interaksi\n\n📊 **Total Biaya:** Rp {up_spend:,.0f}")
-                        
-                        if st.button("📥 Catat ke Database", use_container_width=True, key="btn_save_mekari"):
-                            tgl_skrg = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-                            fmt_cost = f"Rp{int(up_spend):,}".replace(',', '.')
-                            row = [tgl_skrg, p_data, jenis_lap, up_msgs, fmt_cost]
-                            
-                            if utils.append_sheet_rows(8, [row]):
-                                st.success("Berhasil Disimpan!")
-                                st.cache_data.clear()
-                                if 'bundle' in st.session_state: del st.session_state['bundle']
-                                st.rerun()
-                except Exception as e:
-                    st.error(f"Gagal memproses file: {e}")
-
         # 3. Tabel Riwayat
         st.markdown("---")
         col_ref1, col_ref2 = st.columns([0.85, 0.15])
