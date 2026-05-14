@@ -44,7 +44,6 @@ def universal_date_parser(d_str):
 
 
 def create_modern_chart(data, y_col, color, title):
-
     fig = px.area(
         data,
         x='Date',
@@ -96,7 +95,6 @@ def create_modern_chart(data, y_col, color, title):
 # --- 2. FUNGSI UTAMA HALAMAN ---
 
 def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
-
     st.title("📈 ANALITIK KONTEN")
 
     header_names = [
@@ -135,7 +133,6 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     # =========================================================
 
     if not df_db_main.empty:
-
         df_calc = df_db_main.copy()
 
         if len(df_calc.columns) >= len(header_names):
@@ -198,7 +195,6 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     # =========================================================
 
     with st.expander("🚀 Upload Data Insight Baru", expanded=True):
-
         files = st.file_uploader(
             "Upload CSV TikTok/Instagram",
             type=["csv"],
@@ -207,21 +203,16 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         )
 
         if files:
-
             all_platform_data = []
 
             for f in files:
-
                 try:
-
                     fn = f.name.lower()
 
                     # =====================================================
                     # AUTO DETECT ENCODING
                     # =====================================================
-
                     raw_bytes = f.getvalue()
-
                     try:
                         content = raw_bytes.decode("utf-16")
                     except:
@@ -233,13 +224,15 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                     # =====================================================
                     # TIKTOK
                     # =====================================================
-
                     if "overview" in fn or "followerhistory" in fn:
-
+                        # AUTO SEPARATOR DETECTION
                         df_raw = pd.read_csv(
-                            io.StringIO(content)
+                            io.StringIO(content),
+                            sep=None,
+                            engine='python'
                         )
 
+                        # BERSIHKAN NAMA KOLOM
                         df_raw.columns = [
                             str(c).replace('"', '').strip()
                             for c in df_raw.columns
@@ -248,9 +241,9 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                         # -------------------------
                         # OVERVIEW
                         # -------------------------
-
                         if "overview" in fn:
-
+                            # PAKSA AMBIL 6 KOLOM PERTAMA
+                            df_raw = df_raw.iloc[:, :6]
                             df_raw.columns = [
                                 'Date',
                                 'View',
@@ -260,21 +253,18 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                                 'Share'
                             ]
 
+                            # CLEAN NUMERIC
+                            for col in ['View', 'Profile Visit', 'Like', 'Comment', 'Share']:
+                                df_raw[col] = pd.to_numeric(
+                                    df_raw[col],
+                                    errors='coerce'
+                                ).fillna(0)
+
+                            # HITUNG INTERACTION
                             df_raw['Interaction'] = (
-                                pd.to_numeric(
-                                    df_raw['Like'],
-                                    errors='coerce'
-                                ).fillna(0)
-                                +
-                                pd.to_numeric(
-                                    df_raw['Comment'],
-                                    errors='coerce'
-                                ).fillna(0)
-                                +
-                                pd.to_numeric(
-                                    df_raw['Share'],
-                                    errors='coerce'
-                                ).fillna(0)
+                                df_raw['Like']
+                                + df_raw['Comment']
+                                + df_raw['Share']
                             )
 
                             res = pd.DataFrame({
@@ -288,14 +278,22 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                         # -------------------------
                         # FOLLOWER HISTORY
                         # -------------------------
-
                         else:
+                            # PAKSA 3 KOLOM PERTAMA
+                            df_raw = df_raw.iloc[:, :3]
 
-                            df_raw.columns = [
-                                'Date',
-                                'Total',
-                                'Follow'
-                            ]
+                            # JIKA HANYA 2 KOLOM
+                            if len(df_raw.columns) == 2:
+                                df_raw.columns = ['Date', 'Follow']
+                            # JIKA 3 KOLOM
+                            else:
+                                df_raw.columns = ['Date', 'Total', 'Follow']
+
+                            # CLEAN FOLLOW
+                            df_raw['Follow'] = pd.to_numeric(
+                                df_raw['Follow'],
+                                errors='coerce'
+                            ).fillna(0)
 
                             res = pd.DataFrame({
                                 'Date': df_raw['Date'],
@@ -303,22 +301,15 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                                 'Follow': df_raw['Follow']
                             })
 
-                        res['Date'] = res['Date'].apply(
-                            universal_date_parser
-                        )
-
+                        # FORMAT DATE
+                        res['Date'] = res['Date'].apply(universal_date_parser)
                         all_platform_data.append(res)
-
-                        st.success(
-                            f"✅ TikTok detected: {f.name}"
-                        )
+                        st.success(f"✅ TikTok detected: {f.name}")
 
                     # =====================================================
                     # INSTAGRAM
                     # =====================================================
-
                     else:
-
                         mapping = {
                             "follows": "Follow",
                             "visits": "Profile Visit",
@@ -329,37 +320,21 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                         }
 
                         target_col = next(
-                            (
-                                v for k, v in mapping.items()
-                                if k in fn
-                            ),
+                            (v for k, v in mapping.items() if k in fn),
                             None
                         )
 
                         if target_col:
-
-                            # =================================================
                             # READ CSV INSTAGRAM
-                            # =================================================
-
                             df_raw = pd.read_csv(
                                 io.StringIO(content),
                                 skiprows=2
                             )
 
-                            # =================================================
                             # RENAME
-                            # =================================================
+                            df_raw.columns = ['Date', 'Value']
 
-                            df_raw.columns = [
-                                'Date',
-                                'Value'
-                            ]
-
-                            # =================================================
                             # CLEAN VALUE
-                            # =================================================
-
                             df_raw['Value'] = (
                                 df_raw['Value']
                                 .astype(str)
@@ -369,27 +344,16 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                                 .str.strip()
                             )
 
-                            # =================================================
                             # TO NUMERIC
-                            # =================================================
-
                             df_raw['Value'] = pd.to_numeric(
                                 df_raw['Value'],
                                 errors='coerce'
                             ).fillna(0)
 
-                            # =================================================
                             # FORMAT DATE
-                            # =================================================
+                            df_raw['Date'] = df_raw['Date'].apply(universal_date_parser)
 
-                            df_raw['Date'] = df_raw['Date'].apply(
-                                universal_date_parser
-                            )
-
-                            # =================================================
                             # FINAL DATAFRAME
-                            # =================================================
-
                             res = pd.DataFrame({
                                 'Date': df_raw['Date'],
                                 'Platform': 'Instagram',
@@ -397,23 +361,15 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                             })
 
                             all_platform_data.append(res)
-
-                            st.success(
-                                f"✅ Instagram {target_col} detected: {f.name}"
-                            )
+                            st.success(f"✅ Instagram {target_col} detected: {f.name}")
 
                 except Exception as e:
-
-                    st.error(
-                        f"⚠️ Gagal memproses {f.name}: {e}"
-                    )
+                    st.error(f"⚠️ Gagal memproses {f.name}: {e}")
 
             # =========================================================
             # MERGE ALL DATA
             # =========================================================
-
             if all_platform_data:
-
                 df_merged = pd.concat(
                     all_platform_data,
                     ignore_index=True
@@ -440,19 +396,15 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                     if col not in df_merged.columns:
                         df_merged[col] = 0
 
-                # Urutkan kolom
+                # Urutkan kolom sesuai standar header
                 df_merged = df_merged[header_names]
-
                 st.session_state.preview_data = df_merged
 
     # =========================================================
     # PREVIEW
     # =========================================================
-
     if st.session_state.preview_data is not None:
-
         st.markdown("### 🔍 Preview Penggabungan")
-
         st.dataframe(
             st.session_state.preview_data,
             use_container_width=True,
@@ -463,44 +415,30 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
             "🚀 SIMPAN KE SPREADSHEET",
             use_container_width=True
         ):
-
             if utils.append_sheet_rows(
                 2,
                 st.session_state.preview_data.values.tolist()
             ):
-
-                st.success(
-                    "🔥 Data Berhasil Disimpan!"
-                )
-
+                st.success("🔥 Data Berhasil Disimpan!")
                 st.session_state.preview_data = None
-
                 st.session_state.uploader_key += 1
-
                 st.cache_data.clear()
-
-                st.session_state.bundle = (
-                    utils.fetch_all_master_data()
-                )
-
+                st.session_state.bundle = utils.fetch_all_master_data()
                 st.rerun()
 
     # =========================================================
     # RIWAYAT DATABASE
     # =========================================================
-
     st.markdown("---")
     st.markdown("### 🗄️ Riwayat Data di Spreadsheet")
 
     if not df_db_main.empty:
-
         df_history = df_db_main.copy()
 
         if len(df_history.columns) >= len(header_names):
             df_history.columns = header_names[:len(df_history.columns)]
 
         try:
-
             df_history['SortDate'] = pd.to_datetime(
                 df_history['Date'],
                 dayfirst=True,
@@ -515,7 +453,6 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                 )
                 .drop(columns=['SortDate'])
             )
-
         except:
             pass
 
@@ -528,16 +465,10 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     # =========================================================
     # REFRESH
     # =========================================================
-
     if st.button(
         "🔄 Refresh Tabel Riwayat",
         use_container_width=True
     ):
-
         st.cache_data.clear()
-
-        st.session_state.bundle = (
-            utils.fetch_all_master_data()
-        )
-
+        st.session_state.bundle = utils.fetch_all_master_data()
         st.rerun()
