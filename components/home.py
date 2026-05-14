@@ -219,7 +219,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
         ("https://cdn-icons-png.flaticon.com/512/1216/1216584.png", "WA Admin", "Closing Funnel", "💬 WA ADMIN REPORT", "btn_wa"),
         
         # 5. Database (Ikon Tumpukan Server/Database Rapi)
-        ("https://cdn-icons-png.flaticon.com/512/1216/1216664.png", "Database", "CRM Kontak", "📂 DATABASE NOMOR", "btn_db"),
+        ("https://github.com/DigMarkDuper/digmarkdashboard2.0/blob/main/asset/database.png?raw=true", "Database", "CRM Kontak", "📂 DATABASE NOMOR", "btn_db"),
         
         # 6. DM Sosmed (Ikon Pesan Masuk/Envelope)
         ("https://cdn-icons-png.flaticon.com/512/1216/1216641.png", "DM Sosmed", "Tracker Inbox", "📱 DM SOSMED", "btn_dm"),
