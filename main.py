@@ -44,44 +44,41 @@ def check_password():
     # Set Background
     utils.set_bg_local('bg.png') 
     
-    # CSS Minimalis: Hanya untuk mempercantik, bukan merubah struktur posisi
+    # --- CSS KUSTOM: BACKGROUND DARK MODE ---
     st.markdown(f'''
         <style>
-            /* Menggelapkan background sedikit agar teks putih kelihatan */
+            /* 1. Paksa background dasar menjadi sangat gelap */
             .stApp {{
-                background-color: #0f172a !important;
-            }}
-            
-            /* Membuat kotak form terlihat seperti kaca */
-            [data-testid="stForm"] {{
-                background: rgba(255, 255, 255, 0.05) !important;
-                backdrop-filter: blur(15px);
-                border-radius: 20px;
-                padding: 30px !important;
-                border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                background-color: #0f172a !important; /* Biru Midnight */
             }}
 
-            /* Warna label putih solid agar terlihat jelas */
+            /* 2. Berikan efek overlay gelap di atas gambar bg.png */
+            /* Ini akan membuat bg.png Mas terlihat "dimmed" / gelap */
+            [data-testid="stAppViewContainer"]::before {{
+                content: "";
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0, 0, 0, 0.7); /* Angka 0.7 = tingkat kegelapan (0.0 - 1.0) */
+                z-index: -1;
+            }}
+            
+            /* 3. Rapikan padding halaman */
+            .main .block-container {{
+                padding-top: 2rem !important;
+            }}
+
+            /* 4. Pastikan teks label Putih Terang agar tidak tenggelam */
             .stTextInput label p {{
                 color: white !important;
-                font-weight: bold !important;
+                font-weight: 800 !important;
+                text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
             }}
 
-            /* Input text putih */
-            .stTextInput input {{
-                color: white !important;
-            }}
-
-            /* Tombol login */
-            div[data-testid="stFormSubmitButton"] > button {{
-                background: {BRAND_BLUE} !important;
-                color: white !important;
-                width: 100%;
-                border-radius: 10px;
-                font-weight: bold;
-            }}
-            
-            header, footer {{visibility: hidden;}}
+            /* 5. Hilangkan header streamlit */
+            header {{visibility: hidden;}}
         </style>
     ''', unsafe_allow_html=True)
 
