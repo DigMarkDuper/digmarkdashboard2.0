@@ -460,122 +460,98 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                     fig_status.update_layout(showlegend=False, height=550, paper_bgcolor='white', plot_bgcolor='white', yaxis_title="")
                     st.plotly_chart(fig_status, use_container_width=True)
                 
-                # 7. FUNNEL & SUMBER
+                # ==========================================================
+                # 7. FUNNEL & SUMBER (KIRI & KANAN)
+                # ==========================================================
                 c1, c2 = st.columns(2)
                 
+                # ---------------------------------------------
+                # KOLOM KIRI (c1): FUNNEL KONVERSI
+                # ---------------------------------------------
                 with c1:
-                    # --- SUB-HEADER KIRI: FUNNEL KONVERSI ---
-                    FUNNEL_ICON = "https://cdn-icons-png.flaticon.com/512/1951/1951336.png" # Ikon Funnel/Corong
-        
+                    FUNNEL_ICON = "https://cdn-icons-png.flaticon.com/512/1951/1951336.png"
                     st.markdown(f"""
-                        <div style="
-                            display: flex; 
-                            align-items: center; 
-                            gap: 12px; 
-                            background: #FFFFFF; 
-                            padding: 10px 15px; 
-                            border-radius: 10px; 
-                            margin-bottom: 15px; 
-                            border-left: 6px solid {BRAND_BLUE}; 
-                            border: 1px solid #E2E8F0;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-                        ">
-                            <div style="
-                                background: #F8FAFC; 
-                                padding: 6px; 
-                                border-radius: 6px; 
-                                display: flex; 
-                                align-items: center; 
-                                justify-content: center;
-                                border: 1px solid #F1F5F9;
-                            ">
+                        <div style="display: flex; align-items: center; gap: 12px; background: #FFFFFF; padding: 10px 15px; border-radius: 10px; margin-bottom: 15px; border-left: 6px solid {BRAND_BLUE}; border: 1px solid #E2E8F0; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                            <div style="background: #F8FAFC; padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px solid #F1F5F9;">
                                 <img src="{FUNNEL_ICON}" width="18">
                             </div>
                             <div>
-                                <div style="
-                                    margin: 0; 
-                                    color: #1E293B; 
-                                    font-size: 13px; 
-                                    font-weight: 800; 
-                                    letter-spacing: 0.5px; 
-                                    text-transform: uppercase;
-                                ">
+                                <div style="margin: 0; color: #1E293B; font-size: 13px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">
                                     📊 Funnel <span style="color: {BRAND_BLUE};">Konversi Prospek</span>
                                 </div>
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
                     
-                    # --- LOGIKA FUNNEL AMAN ---
-                    total_leads_saat_ini = len(df_wa) # Menghitung total data yang difilter saat ini
-                    funnel_order = ["Follow Up", "Daftar", "Interview", "Closing"]
-                    funnel_data = [dict(Tahap="Total Leads", Jumlah=total_leads_saat_ini)]
-                    
-                    if 'Status' in df_wa.columns:
-                        for tahap in funnel_order:
-                            count = len(df_wa[df_wa['Status'].str.contains(tahap, case=False, na=False)])
-                            funnel_data.append(dict(Tahap=tahap, Jumlah=count))
+                    with st.container(border=True):
+                        if not df_wa.empty:
+                            total_leads_saat_ini = len(df_wa)
+                            funnel_order = ["Follow Up", "Daftar", "Interview", "Closing"]
+                            funnel_data = [dict(Tahap="Total Leads", Jumlah=total_leads_saat_ini)]
                             
-                    df_f = pd.DataFrame(funnel_data)
-                    df_f['Pct'] = (df_f['Jumlah'] / total_leads_saat_ini * 100).round(1) if total_leads_saat_ini > 0 else 0
-                    
-                    fig_funnel = px.bar(
-                        df_f, x='Jumlah', y='Tahap', orientation='h',
-                        text=df_f.apply(lambda r: f"{r['Jumlah']} ({r['Pct']}%)", axis=1),
-                        color='Tahap', color_discrete_sequence=[BRAND_BLUE, "#006bbd", "#0080e0", BRAND_YELLOW, "#32CD32"]
-                    )
-                    fig_funnel.update_layout(paper_bgcolor='white', plot_bgcolor='white', showlegend=False, yaxis={'categoryorder':'total descending'})
-                    st.plotly_chart(fig_funnel, use_container_width=True)
+                            if 'Status' in df_wa.columns:
+                                for tahap in funnel_order:
+                                    count = len(df_wa[df_wa['Status'].astype(str).str.contains(tahap, case=False, na=False)])
+                                    funnel_data.append(dict(Tahap=tahap, Jumlah=count))
+                                    
+                            df_f = pd.DataFrame(funnel_data)
+                            df_f['Pct'] = (df_f['Jumlah'] / total_leads_saat_ini * 100).round(1) if total_leads_saat_ini > 0 else 0
+                            
+                            fig_funnel = px.bar(
+                                df_f, x='Jumlah', y='Tahap', orientation='h',
+                                text=df_f.apply(lambda r: f"{r['Jumlah']} ({r['Pct']}%)", axis=1),
+                                color='Tahap', color_discrete_sequence=[BRAND_BLUE, "#006bbd", "#0080e0", BRAND_YELLOW, "#32CD32"]
+                            )
+                            fig_funnel.update_layout(height=350, margin=dict(t=20, b=20, l=20, r=20), paper_bgcolor='white', plot_bgcolor='white', showlegend=False, yaxis={'categoryorder':'total descending'})
+                            st.plotly_chart(fig_funnel, use_container_width=True)
+                        else:
+                            st.warning("Data kosong")
         
+                # ---------------------------------------------
+                # KOLOM KANAN (c2): SUMBER PROSPEK
+                # ---------------------------------------------
                 with c2:
-                    # --- SUB-HEADER KANAN: SUMBER PROSPEK ---
-                    SOURCE_ICON = "https://cdn-icons-png.flaticon.com/512/876/876019.png" # Ikon Network/Sumber
-                    
+                    SOURCE_ICON = "https://cdn-icons-png.flaticon.com/512/876/876019.png"
                     st.markdown(f"""
-                        <div style="
-                            display: flex; 
-                            align-items: center; 
-                            gap: 12px; 
-                            background: #FFFFFF; 
-                            padding: 10px 15px; 
-                            border-radius: 10px; 
-                            margin-bottom: 15px; 
-                            border-left: 6px solid {BRAND_BLUE}; 
-                            border: 1px solid #E2E8F0;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-                        ">
-                            <div style="
-                                background: #F8FAFC; 
-                                padding: 6px; 
-                                border-radius: 6px; 
-                                display: flex; 
-                                align-items: center; 
-                                justify-content: center;
-                                border: 1px solid #F1F5F9;
-                            ">
+                        <div style="display: flex; align-items: center; gap: 12px; background: #FFFFFF; padding: 10px 15px; border-radius: 10px; margin-bottom: 15px; border-left: 6px solid {BRAND_BLUE}; border: 1px solid #E2E8F0; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                            <div style="background: #F8FAFC; padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px solid #F1F5F9;">
                                 <img src="{SOURCE_ICON}" width="18">
                             </div>
                             <div>
-                                <div style="
-                                    margin: 0; 
-                                    color: #1E293B; 
-                                    font-size: 13px; 
-                                    font-weight: 800; 
-                                    letter-spacing: 0.5px; 
-                                    text-transform: uppercase;
-                                ">
+                                <div style="margin: 0; color: #1E293B; font-size: 13px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">
                                     🌐 Sumber <span style="color: {BRAND_BLUE};">Prospek</span>
                                 </div>
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
                     
-                if 'Sumber (Ads/Organik/Sales)' in df_wa.columns:
-                    sumber_counts = df_wa['Sumber (Ads/Organik/Sales)'].value_counts().reset_index()
-                    sumber_counts.columns = ['Sumber', 'Jumlah']
-                    fig_sumber = px.pie(sumber_counts, names='Sumber', values='Jumlah', hole=0.4, color_discrete_sequence=[BRAND_BLUE, BRAND_YELLOW, "#003A66"])
-                    fig_sumber.update_traces(textinfo='label+percent')
-                    st.plotly_chart(fig_sumber, use_container_width=True)
+                    with st.container(border=True):
+                        if not df_wa.empty:
+                            sumber_col = next((col for col in df_wa.columns if 'Sumber' in str(col)), None)
+                            
+                            if sumber_col:
+                                sumber_counts = df_wa[sumber_col].value_counts().reset_index()
+                                sumber_counts.columns = ['Sumber', 'Jumlah']
+                                sumber_counts = sumber_counts[~sumber_counts['Sumber'].astype(str).isin(['', '-', 'Nan', 'None', 'nan'])]
+                                
+                                if not sumber_counts.empty:
+                                    fig_sumber = px.pie(
+                                        sumber_counts, names='Sumber', values='Jumlah', hole=0.45, 
+                                        color_discrete_sequence=[BRAND_BLUE, BRAND_YELLOW, "#003A66", "#E5E7EB", "#94A3B8"]
+                                    )
+                                    fig_sumber.update_traces(textinfo='percent+label', textposition='outside', marker=dict(line=dict(color='#FFFFFF', width=2)))
+                                    
+                                    # Tinggi chart disamakan dengan Funnel (350px) agar sejajar rapi
+                                    fig_sumber.update_layout(height=350, margin=dict(t=20, b=20, l=20, r=20), showlegend=False)
+                                    
+                                    # PASTIKAN BARIS INI MASUK KE KANAN SEJAJAR DENGAN UPDATE_LAYOUT
+                                    st.plotly_chart(fig_sumber, use_container_width=True)
+                                else:
+                                    st.info("Data sumber prospek kosong.")
+                            else:
+                                st.error("Kolom 'Sumber' tidak ditemukan.")
+                        else:
+                            st.warning("Data kosong")
 
                 # 8. MAPPING ASAL (TREEMAP)
                 st.markdown('<div class="feature-header">📍 Sebaran Domisili Prospek (TreeMap)</div>', unsafe_allow_html=True)
