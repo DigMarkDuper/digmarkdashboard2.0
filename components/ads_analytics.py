@@ -93,6 +93,23 @@ def show_ads_analytics_page(BRAND_BLUE):
         total_pesan_mekari = pd.to_numeric(df_db_mekari[col_interaksi], errors='coerce').fillna(0).sum() if col_interaksi else 0
 
     # =====================================================================
+    # 2. PERHITUNGAN GLOBAL & SINKRONISASI KE HOME
+    # =====================================================================
+    global_spend = total_spend_tiktok + total_spend_meta + total_spend_mekari
+    global_omzet = global_closing * BIAYA_PELATIHAN 
+    
+    global_cpl = global_spend / global_leads if global_leads > 0 else 0
+    global_cac = global_spend / global_closing if global_closing > 0 else 0
+    global_roas = (global_omzet / global_spend) if global_spend > 0 else 0
+
+    # --- ACTION: SIMPAN KE SESSION STATE AGAR HALAMAN HOME BISA BACA ---
+    st.session_state['spend_tiktok'] = total_spend_tiktok
+    st.session_state['spend_meta'] = total_spend_meta
+    st.session_state['spend_mekari'] = total_spend_mekari
+    st.session_state['global_leads'] = global_leads
+    st.session_state['global_closing'] = global_closing
+
+    # =====================================================================
     # 2. TAMPILAN RINGKASAN GLOBAL
     # =====================================================================
     global_spend = total_spend_tiktok + total_spend_meta + total_spend_mekari
