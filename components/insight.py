@@ -20,13 +20,8 @@ def universal_date_parser(d_str):
     d_str = d_str.split('T')[0].split('t')[0]
 
     formats = [
-        '%B %d',
-        '%b %d',
-        '%d-%m-%Y',
-        '%Y-%m-%d',
-        '%m/%d/%Y',
-        '%d/%m/%Y',
-        '%B %d, %Y'
+        '%B %d', '%b %d', '%d-%m-%Y', '%Y-%m-%d',
+        '%m/%d/%Y', '%d/%m/%Y', '%B %d, %Y'
     ]
 
     for fmt in formats:
@@ -75,15 +70,8 @@ def create_modern_chart(data, y_col, color, title):
         margin=dict(l=10, r=10, t=60, b=10),
         template="plotly_white",
         hovermode="x unified",
-        xaxis=dict(
-            showgrid=False,
-            tickformat="%b %Y"
-        ),
-        yaxis=dict(
-            showgrid=True,
-            gridcolor='#F3F4F6',
-            tickformat=","
-        ),
+        xaxis=dict(showgrid=False, tickformat="%b %Y"),
+        yaxis=dict(showgrid=True, gridcolor='#F3F4F6', tickformat=","),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
     )
@@ -98,335 +86,124 @@ def create_modern_chart(data, y_col, color, title):
 def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     st.title("📈 ANALITIK KONTEN")
 
-    header_names = [
-        "Date",
-        "Platform",
-        "View",
-        "Reach",
-        "Interaction",
-        "Profile Visit",
-        "Link Clicks",
-        "Follow"
-    ]
+    header_names = ["Date", "Platform", "View", "Reach", "Interaction", "Profile Visit", "Link Clicks", "Follow"]
+    numeric_cols = ["View", "Reach", "Interaction", "Profile Visit", "Link Clicks", "Follow"]
 
-    numeric_cols = [
-        "View",
-        "Reach",
-        "Interaction",
-        "Profile Visit",
-        "Link Clicks",
-        "Follow"
-    ]
-
-    # =====================================================
-    # SESSION STATE
-    # =====================================================
-
+    # --- SESSION STATE ---
     if 'preview_data' not in st.session_state:
         st.session_state.preview_data = None
 
     if 'uploader_key' not in st.session_state:
         st.session_state.uploader_key = 0
 
-    # =====================================================
-    # LOAD DATABASE
-    # =====================================================
+    # --- LOAD DATABASE ---
+    df_db_main = st.session_state.get('bundle', {}).get(2, pd.DataFrame())
 
-    df_db_main = st.session_state.get(
-        'bundle',
-        {}
-    ).get(2, pd.DataFrame())
-
-    # =====================================================
-    # TOTAL SUMMARY
-    # =====================================================
-
+    # --- SUMMARY ---
     if not df_db_main.empty:
         df_calc = df_db_main.copy()
-
         if len(df_calc.columns) >= len(header_names):
             df_calc.columns = header_names[:len(df_calc.columns)]
 
         for col in numeric_cols:
             if col in df_calc.columns:
-                df_calc[col] = pd.to_numeric(
-                    df_calc[col],
-                    errors='coerce'
-                ).fillna(0)
+                df_calc[col] = pd.to_numeric(df_calc[col], errors='coerce').fillna(0)
 
-        st.markdown(
-            f"""
-            <div style="
-                background-color:{BRAND_BLUE};
-                padding:20px;
-                border-radius:15px;
-                margin-bottom:25px;
-                border-left:10px solid {BRAND_YELLOW};
-            ">
-                <h2 style="
-                    margin:0;
-                    color:white;
-                    font-size:18px;
-                ">
-                    🌍 TOTAL PERFORMA GABUNGAN
-                </h2>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
+        st.markdown(f"""<div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left:10px solid {BRAND_YELLOW};"><h2 style="margin:0; color:white; font-size:18px;">🌍 TOTAL PERFORMA GABUNGAN</h2></div>""", unsafe_allow_html=True)
+        
         g1, g2, g3, g4 = st.columns(4)
-
-        g1.metric(
-            "Grand Total Views",
-            f"{int(df_calc['View'].sum()):,}"
-        )
-
-        g2.metric(
-            "Grand Total Reach",
-            f"{int(df_calc['Reach'].sum()):,}"
-        )
-
-        g3.metric(
-            "Grand Interaksi",
-            f"{int(df_calc['Interaction'].sum()):,}"
-        )
-
-        g4.metric(
-            "Grand Followers",
-            f"{int(df_calc['Follow'].sum()):,}"
-        )
+        g1.metric("Grand Total Views", f"{int(df_calc['View'].sum()):,}")
+        g2.metric("Grand Total Reach", f"{int(df_calc['Reach'].sum()):,}")
+        g3.metric("Grand Interaksi", f"{int(df_calc['Interaction'].sum()):,}")
+        g4.metric("Grand Followers", f"{int(df_calc['Follow'].sum()):,}")
 
     st.markdown("---")
 
-    # =====================================================
-    # SMART IMPORTER
-    # =====================================================
-
+    # --- SMART IMPORTER ---
     with st.expander("🚀 Upload Data Insight Baru", expanded=True):
         files = st.file_uploader(
             "Upload CSV TikTok/Instagram",
             type=["csv"],
             accept_multiple_files=True,
-            key=f"ins_v22_{st.session_state.uploader_key}"
+            key=f"ins_v23_{st.session_state.uploader_key}"
         )
 
+        # LOGIKA PERBAIKAN: Jika ada file diproses, jika tidak ada (disilang) preview dihapus
         if files:
             all_platform_data = []
 
             for f in files:
                 try:
                     fn = f.name.lower()
-
-                    # =================================================
-                    # AUTO DETECT ENCODING
-                    # =================================================
                     raw_bytes = f.getvalue()
                     
-                    # DETECT UTF-16 DARI BOM
+                    # DETECT ENCODING
                     if raw_bytes.startswith(b'\xff\xfe') or raw_bytes.startswith(b'\xfe\xff'):
-                        content = raw_bytes.decode(
-                            "utf-16",
-                            errors="ignore"
-                        )
+                        content = raw_bytes.decode("utf-16", errors="ignore")
                     else:
-                        content = raw_bytes.decode(
-                            "utf-8-sig",
-                            errors="ignore"
-                        )
+                        content = raw_bytes.decode("utf-8-sig", errors="ignore")
 
-                    # =================================================
-                    # TIKTOK
-                    # =================================================
+                    # --- TIKTOK ---
                     if "overview" in fn or "followerhistory" in fn:
                         df_raw = pd.read_csv(io.StringIO(content))
+                        df_raw.columns = [str(c).replace('"', '').strip() for c in df_raw.columns]
 
-                        # CLEAN HEADER
-                        df_raw.columns = [
-                            str(c).replace('"', '').strip()
-                            for c in df_raw.columns
-                        ]
-
-                        # OVERVIEW
                         if "overview" in fn:
-                            # AMBIL 6 KOLOM PERTAMA
                             df_raw = df_raw.iloc[:, :6]
-                            df_raw.columns = [
-                                'Date',
-                                'View',
-                                'Profile Visit',
-                                'Like',
-                                'Comment',
-                                'Share'
-                            ]
-
-                            # CLEAN NUMERIC
+                            df_raw.columns = ['Date', 'View', 'Profile Visit', 'Like', 'Comment', 'Share']
                             for col in ['View', 'Profile Visit', 'Like', 'Comment', 'Share']:
-                                df_raw[col] = pd.to_numeric(
-                                    df_raw[col],
-                                    errors='coerce'
-                                ).fillna(0)
-
-                            # HITUNG INTERACTION
-                            df_raw['Interaction'] = (
-                                df_raw['Like']
-                                + df_raw['Comment']
-                                + df_raw['Share']
-                            )
-
-                            # FINAL DATAFRAME
-                            res = pd.DataFrame({
-                                'Date': df_raw['Date'],
-                                'Platform': 'TikTok',
-                                'View': df_raw['View'],
-                                'Interaction': df_raw['Interaction'],
-                                'Profile Visit': df_raw['Profile Visit']
-                            })
-
-                        # FOLLOWER HISTORY
+                                df_raw[col] = pd.to_numeric(df_raw[col], errors='coerce').fillna(0)
+                            df_raw['Interaction'] = df_raw['Like'] + df_raw['Comment'] + df_raw['Share']
+                            res = pd.DataFrame({'Date': df_raw['Date'], 'Platform': 'TikTok', 'View': df_raw['View'], 'Interaction': df_raw['Interaction'], 'Profile Visit': df_raw['Profile Visit']})
                         else:
-                            # AMBIL 3 KOLOM PERTAMA
                             df_raw = df_raw.iloc[:, :3]
-                            df_raw.columns = [
-                                'Date',
-                                'Total',
-                                'Follow'
-                            ]
+                            df_raw.columns = ['Date', 'Total', 'Follow']
+                            df_raw['Follow'] = pd.to_numeric(df_raw['Follow'], errors='coerce').fillna(0)
+                            res = pd.DataFrame({'Date': df_raw['Date'], 'Platform': 'TikTok', 'Follow': df_raw['Follow']})
 
-                            # CLEAN FOLLOW
-                            df_raw['Follow'] = pd.to_numeric(
-                                df_raw['Follow'],
-                                errors='coerce'
-                            ).fillna(0)
-
-                            # FINAL DATAFRAME
-                            res = pd.DataFrame({
-                                'Date': df_raw['Date'],
-                                'Platform': 'TikTok',
-                                'Follow': df_raw['Follow']
-                            })
-
-                        # FORMAT DATE
                         res['Date'] = res['Date'].apply(universal_date_parser)
                         all_platform_data.append(res)
                         st.success(f"✅ TikTok detected: {f.name}")
 
-                    # =================================================
-                    # INSTAGRAM
-                    # =================================================
+                    # --- INSTAGRAM ---
                     else:
-                        mapping = {
-                            "follows": "Follow",
-                            "visits": "Profile Visit",
-                            "link clicks": "Link Clicks",
-                            "interactions": "Interaction",
-                            "reach": "Reach",
-                            "views": "View"
-                        }
-
-                        target_col = next(
-                            (v for k, v in mapping.items() if k in fn),
-                            None
-                        )
+                        mapping = {"follows": "Follow", "visits": "Profile Visit", "link clicks": "Link Clicks", "interactions": "Interaction", "reach": "Reach", "views": "View"}
+                        target_col = next((v for k, v in mapping.items() if k in fn), None)
 
                         if target_col:
-                            df_raw = pd.read_csv(
-                                io.StringIO(content),
-                                skiprows=2
-                            )
-
-                            # AMBIL 2 KOLOM PERTAMA
+                            df_raw = pd.read_csv(io.StringIO(content), skiprows=2)
                             df_raw = df_raw.iloc[:, :2]
                             df_raw.columns = ['Date', 'Value']
-
-                            # CLEAN VALUE
-                            df_raw['Value'] = (
-                                df_raw['Value']
-                                .astype(str)
-                                .str.replace('"', '', regex=False)
-                                .str.replace("'", "", regex=False)
-                                .str.replace(",", "", regex=False)
-                                .str.strip()
-                            )
-
-                            # TO NUMERIC
-                            df_raw['Value'] = pd.to_numeric(
-                                df_raw['Value'],
-                                errors='coerce'
-                            ).fillna(0)
-
-                            # FORMAT DATE
+                            df_raw['Value'] = df_raw['Value'].astype(str).str.replace('"', '', regex=False).str.replace("'", "", regex=False).str.replace(",", "", regex=False).str.strip()
+                            df_raw['Value'] = pd.to_numeric(df_raw['Value'], errors='coerce').fillna(0)
                             df_raw['Date'] = df_raw['Date'].apply(universal_date_parser)
-
-                            # FINAL DATAFRAME
-                            res = pd.DataFrame({
-                                'Date': df_raw['Date'],
-                                'Platform': 'Instagram',
-                                target_col: df_raw['Value']
-                            })
-
+                            res = pd.DataFrame({'Date': df_raw['Date'], 'Platform': 'Instagram', target_col: df_raw['Value']})
                             all_platform_data.append(res)
                             st.success(f"✅ Instagram {target_col} detected: {f.name}")
 
                 except Exception as e:
                     st.error(f"⚠️ Gagal memproses {f.name}: {e}")
 
-            # =====================================================
-            # MERGE DATA
-            # =====================================================
             if all_platform_data:
-                df_merged = pd.concat(
-                    all_platform_data,
-                    ignore_index=True
-                )
-
-                # CLEAN NUMERIC
+                df_merged = pd.concat(all_platform_data, ignore_index=True)
                 for col in numeric_cols:
                     if col in df_merged.columns:
-                        df_merged[col] = pd.to_numeric(
-                            df_merged[col],
-                            errors='coerce'
-                        ).fillna(0)
-
-                # GROUP DATA
-                df_merged = (
-                    df_merged
-                    .groupby(['Date', 'Platform'])
-                    .sum(numeric_only=True)
-                    .reset_index()
-                )
-
-                # PASTIKAN SEMUA KOLOM ADA
+                        df_merged[col] = pd.to_numeric(df_merged[col], errors='coerce').fillna(0)
+                df_merged = df_merged.groupby(['Date', 'Platform']).sum(numeric_only=True).reset_index()
                 for col in header_names:
-                    if col not in df_merged.columns:
-                        df_merged[col] = 0
+                    if col not in df_merged.columns: df_merged[col] = 0
+                st.session_state.preview_data = df_merged[header_names]
+        
+        else:
+            # RESET: Jika list file kosong (disilang), hapus preview
+            st.session_state.preview_data = None
 
-                # URUTKAN KOLOM
-                df_merged = df_merged[header_names]
-
-                # SAVE TO SESSION
-                st.session_state.preview_data = df_merged
-
-    # =====================================================
-    # PREVIEW DATA
-    # =====================================================
-
+    # --- PREVIEW DATA ---
     if st.session_state.preview_data is not None:
         st.markdown("### 🔍 Preview Penggabungan")
-        st.dataframe(
-            st.session_state.preview_data,
-            use_container_width=True,
-            hide_index=True
-        )
-
-        # =================================================
-        # SAVE BUTTON
-        # =================================================
+        st.dataframe(st.session_state.preview_data, use_container_width=True, hide_index=True)
         if st.button("🚀 SIMPAN KE SPREADSHEET", use_container_width=True):
-            if utils.append_sheet_rows(
-                2,
-                st.session_state.preview_data.values.tolist()
-            ):
+            if utils.append_sheet_rows(2, st.session_state.preview_data.values.tolist()):
                 st.success("🔥 Data Berhasil Disimpan!")
                 st.session_state.preview_data = None
                 st.session_state.uploader_key += 1
@@ -434,46 +211,18 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                 st.session_state.bundle = utils.fetch_all_master_data()
                 st.rerun()
 
-    # =====================================================
-    # HISTORY TABLE
-    # =====================================================
-
+    # --- HISTORY TABLE ---
     st.markdown("---")
     st.markdown("### 🗄️ Riwayat Data di Spreadsheet")
-
     if not df_db_main.empty:
         df_history = df_db_main.copy()
-
         if len(df_history.columns) >= len(header_names):
             df_history.columns = header_names[:len(df_history.columns)]
-
         try:
-            df_history['SortDate'] = pd.to_datetime(
-                df_history['Date'],
-                dayfirst=True,
-                errors='coerce'
-            )
-
-            df_history = (
-                df_history
-                .sort_values(
-                    by='SortDate',
-                    ascending=False
-                )
-                .drop(columns=['SortDate'])
-            )
-        except:
-            pass
-
-        st.dataframe(
-            df_history,
-            use_container_width=True,
-            hide_index=True
-        )
-
-    # =====================================================
-    # REFRESH
-    # =====================================================
+            df_history['SortDate'] = pd.to_datetime(df_history['Date'], dayfirst=True, errors='coerce')
+            df_history = df_history.sort_values(by='SortDate', ascending=False).drop(columns=['SortDate'])
+        except: pass
+        st.dataframe(df_history, use_container_width=True, hide_index=True)
 
     if st.button("🔄 Refresh Tabel Riwayat", use_container_width=True):
         st.cache_data.clear()
