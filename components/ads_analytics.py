@@ -198,9 +198,65 @@ def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
 
     st.markdown("<br>", unsafe_allow_html=True)
 
+    # 1. Ikon Multi-Platform (Representasi Lintas Channel)
+    PLATFORM_ICON = "https://cdn-icons-png.flaticon.com/512/9431/9431186.png" # Ikon 3D Chart / Nodes
+
+    # 2. Render Header Ads Per Platform
+    st.markdown(f"""
+        <div style="
+            display: flex; 
+            align-items: center; 
+            gap: 20px; 
+            background: linear-gradient(90deg, #1e40af 0%, {BRAND_BLUE} 100%); 
+            padding: 20px 30px; 
+            border-radius: 18px; 
+            margin-bottom: 35px; 
+            border-left: 14px solid {BRAND_YELLOW}; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        ">
+            <div style="
+                background: rgba(255, 255, 255, 0.15); 
+                backdrop-filter: blur(10px);
+                padding: 12px; 
+                border-radius: 14px; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            ">
+                <img src="{PLATFORM_ICON}" width="40">
+            </div>
+            <div>
+                <h1 style="
+                    margin: 0; 
+                    color: white; 
+                    font-size: 26px; 
+                    font-weight: 900; 
+                    letter-spacing: 1.5px; 
+                    text-transform: uppercase;
+                    line-height: 1.2;
+                ">
+                    📊 ADS PER <span style="color: {BRAND_YELLOW};">PLATFORM</span>
+                </h1>
+                <p style="
+                    margin: 0; 
+                    color: rgba(255, 255, 255, 0.7); 
+                    font-size: 11px; 
+                    font-weight: 700; 
+                    text-transform: uppercase; 
+                    letter-spacing: 1px; 
+                    margin-top: 5px;
+                ">
+                    Multi-Channel Tracking: Meta, TikTok, & Google Ads Performance Breakdown
+                </p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
     # =====================================================================
     # 3. TAB UNTUK RINCIAN PER PLATFORM
     # =====================================================================
+    
     tab_tiktok, tab_meta, tab_mekari = st.tabs([
         "📱 Rincian TikTok Ads", 
         "🟦 Rincian Meta Ads", 
