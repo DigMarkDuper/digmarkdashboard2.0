@@ -130,7 +130,7 @@ def check_password():
                     font-weight: 300; 
                     letter-spacing: 2px; 
                     margin: 0; 
-                    font-size: 16px; 
+                    font-size: 24px; 
                     line-height: 1.2;
                     text-transform: uppercase;
                 ">
@@ -139,7 +139,7 @@ def check_password():
                 <h2 style="
                     color: {BRAND_YELLOW}; 
                     font-weight: 800; 
-                    font-size: 24px; 
+                    font-size: 12px; 
                     margin: 0; 
                     letter-spacing: 1px;
                     text-transform: uppercase;
