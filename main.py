@@ -44,41 +44,45 @@ def check_password():
    # Set Background
     utils.set_bg_local('bg.png') 
     
-    # --- CSS KUSTOM: BACKGROUND DARK BLUE OVERLAY (FIXED) ---
+    # --- CSS KUSTOM: DEEP DARK BLUE 80% ---
     st.markdown(f'''
         <style>
-            /* 1. Paksa warna dasar aplikasi menjadi Biru Tua Gelap */
+            /* 1. Reset Dasar */
             .stApp {{
-                background-color: #020617 !important; /* Slate 950 / Biru Midnight */
+                background-color: #020617 !important;
             }}
 
-            /* 2. Overlay Biru Tua dengan Opacity 60% */
-            /* Menggunakan rgba(2, 6, 23, 0.6) untuk nuansa biru gelap transparan */
-            .main {{
-                background: rgba(2, 6, 23, 0.6) !important; 
-                position: relative;
+            /* 2. Overlay Biru Tua 80% (0.8) */
+            /* Kita gunakan pseudo-element agar menimpa gambar background dari utils */
+            [data-testid="stAppViewContainer"]::before {{
+                content: "";
+                position: fixed;
+                top: 0; left: 0; width: 100vw; height: 100vh;
+                background: rgba(2, 6, 23, 0.8) !important; /* Biru Midnight 80% */
+                z-index: 0; /* Di atas gambar, di bawah konten */
+                pointer-events: none;
             }}
             
-            /* 3. Redupkan gambar latar belakang agar tidak terlalu terang */
+            /* 3. Pastikan konten utama berada di atas overlay */
+            .main {{
+                position: relative;
+                z-index: 1;
+                background: transparent !important;
+            }}
+
+            /* 4. Redupkan gambar asli agar tidak 'bocor' cahayanya */
             [data-testid="stAppViewContainer"] {{
-                filter: brightness(50%) contrast(110%); 
+                filter: brightness(40%);
             }}
 
-            /* 4. Rapikan padding halaman */
-            .main .block-container {{
-                padding-top: 2rem !important;
-            }}
-
-            /* 5. Teks label Putih Terang agar kontras dengan Biru */
+            /* 5. Teks label Putih Solid */
             .stTextInput label p {{
-                color: white !important;
+                color: #FFFFFF !important;
                 font-weight: 800 !important;
-                text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
             }}
 
-            /* 6. Hilangkan header & footer */
             header, footer {{visibility: hidden !important;}}
-            [data-testid="stHeader"] {{background: transparent !important;}}
         </style>
     ''', unsafe_allow_html=True)
 
