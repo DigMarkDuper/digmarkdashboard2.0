@@ -35,10 +35,10 @@ BRAND_BLUE = "#005696"
 BRAND_YELLOW = "#FDB813"
 
 # =====================================================================
-# 2. SISTEM LOGIN (PREMIUM GLASSMORPHISM - COMPACT VERSION)
+# 2. SISTEM LOGIN (PREMIUM COMPACT & CENTERED)
 # =====================================================================
 def check_password():
-    """Halaman login dengan layout logo di atas dan ukuran form yang kecil/compact."""
+    """Halaman login compact: Logo di atas, form kecil di tengah."""
     
     if st.session_state.get("password_correct"):
         return True
@@ -48,95 +48,94 @@ def check_password():
     except:
         pass 
 
-    # --- CSS KUSTOM (COMPACT & LOGO FIX) ---
+    # --- CSS KUSTOM (TOTAL CONTROL) ---
     st.markdown(f'''
         <style>
+            /* Reset Background & Container */
             .stApp {{
                 background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
             }}
-            
             .main .block-container {{
                 padding: 0 !important;
             }}
+            
+            /* Sembunyikan elemen bawaan yang bikin berantakan */
+            header, footer, [data-testid="stHeader"] {{
+                display: none !important;
+            }}
 
-            /* Pemaku kotak tepat di tengah layar */
-            .login-wrapper {{
+            /* Pemaku kotak tepat di tengah layar tanpa melar */
+            .fixed-center {{
                 position: fixed;
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%);
-                z-index: 1000;
-                width: 100%;
-                display: flex;
-                justify-content: center;
-                align-items: center;
+                z-index: 9999;
+                width: 320px; /* Kunci lebar kotak agar tidak melebar */
             }}
 
-            /* Kotak Kaca yang lebih COMPACT (Lebar dikurangi) */
             .glass-box {{
                 background: rgba(255, 255, 255, 0.08);
-                backdrop-filter: blur(25px);
-                -webkit-backdrop-filter: blur(25px);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
                 border-radius: 20px;
-                padding: 30px 25px; /* Padding dikurangi agar compact */
-                width: 320px;       /* Lebar diperkecil dari 380px ke 320px */
+                padding: 30px;
                 border: 1px solid rgba(255, 255, 255, 0.15);
                 box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
                 text-align: center;
             }}
 
-            /* Label Input lebih kecil & rapat */
+            /* Kecilkan input form */
             .stTextInput label p {{
-                color: #FFFFFF !important;
-                font-weight: 600 !important;
-                font-size: 11px !important; /* Font lebih kecil */
-                letter-spacing: 1px;
-                margin-bottom: -5px !important;
-            }}
-
-            /* Kolom input lebih pendek */
-            .stTextInput input {{
                 color: white !important;
+                font-size: 11px !important;
+                font-weight: 700 !important;
+                margin-bottom: -5px !important;
+                text-align: left !important;
+            }}
+            
+            .stTextInput input {{
                 background-color: transparent !important;
                 border: none !important;
                 border-bottom: 1.5px solid rgba(255,255,255,0.3) !important;
-                border-radius: 0px !important;
-                padding: 5px 0px !important;
+                color: white !important;
                 height: 35px !important;
+                font-size: 14px !important;
             }}
 
-            /* Tombol lebih ramping */
+            /* Tombol Kecil & Compact */
             div[data-testid="stFormSubmitButton"] > button {{
                 width: 100% !important;
                 background: {BRAND_BLUE} !important;
                 color: white !important;
-                font-weight: 700 !important;
                 border-radius: 8px !important;
-                border: none !important;
-                padding: 8px !important;
-                margin-top: 15px;
+                padding: 5px !important;
                 font-size: 12px !important;
+                font-weight: bold !important;
+                margin-top: 10px;
             }}
-
-            header, footer {{visibility: hidden !important;}}
         </style>
     ''', unsafe_allow_html=True)
 
     # --- RENDER STRUKTUR ---
+    # Pakai container kosong agar Streamlit tidak naruh elemen di luar kontrol
     placeholder = st.empty()
     
     with placeholder.container():
-        # Membuka container kaca
+        # Kita buka pembungkus HTML-nya
+        st.markdown('<div class="fixed-center"><div class="glass-box">', unsafe_allow_html=True)
+        
+        # 1. Logo (Paling Atas)
+        st.image(LOGO_URL, width=100) # Ukuran logo diperkecil
+        
+        # 2. Judul (Di bawah logo)
         st.markdown(f'''
-            <div class="login-wrapper">
-                <div class="glass-box">
-                    <img src="{LOGO_URL}" width="120" style="margin-bottom: 15px;">
-                    <div style="color:white; font-size: 14px; letter-spacing:2px; font-weight:300; margin-bottom:20px;">
-                        DM <span style="font-weight:800; color:{BRAND_YELLOW};">DASHBOARD</span>
-                    </div>
+            <div style="color:white; font-size: 13px; letter-spacing:2px; font-weight:300; margin: 15px 0;">
+                DM <span style="font-weight:800; color:{BRAND_YELLOW};">DASHBOARD</span>
+            </div>
         ''', unsafe_allow_html=True)
 
-        # Form di dalam kotak kaca
+        # 3. Form (Username & Password)
         with st.form("login_form"):
             u_name = st.text_input("USERNAME").strip().lower()
             u_pass = st.text_input("PASSWORD", type="password")
@@ -148,12 +147,12 @@ def check_password():
                 else:
                     st.error("Gagal")
         
-        # Menutup container kaca
+        # Tutup pembungkus HTML
         st.markdown('</div></div>', unsafe_allow_html=True)
 
     return False
 
-# --- Jalankan Gerbang Login ---
+# --- Jalankan di bagian paling luar ---
 if not check_password():
     st.stop()
 
