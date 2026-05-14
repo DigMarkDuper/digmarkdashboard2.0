@@ -20,40 +20,44 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
     df_web = utils.load_website()
     df_ins = utils.load_insight()
 
-    # --- 1. CSS CUSTOM (VERTIKAL STYLE) ---
+    # --- 1. CSS CUSTOM (FORCE VERTICAL STYLE) ---
     st.markdown("""
         <style>
         .kpi-card {
-            background-color: #FFFFFF;
-            border-radius: 12px;
-            padding: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            border: 1px solid #F0F2F6;
-            display: flex;
-            flex-direction: column; /* MEMAKSA ATAS BAWAH */
-            justify-content: center;
-            align-items: flex-start; /* Rata kiri agar lebih rapi */
-            min-height: 110px;
-            transition: all 0.3s ease;
+            background-color: #FFFFFF !important;
+            border-radius: 12px !important;
+            padding: 15px !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05) !important;
+            border: 1px solid #F0F2F6 !important;
+            
+            /* INI KUNCINYA: Paksa susunan vertikal */
+            display: flex !important;
+            flex-direction: column !important; 
+            justify-content: center !important;
+            align-items: flex-start !important; 
+            
+            min-height: 110px !important;
+            width: 100% !important;
         }
-        .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        
         .metric-title { 
-            font-size: 10px; 
-            color: #6B7280; 
-            font-weight: 800; 
-            text-transform: uppercase; 
-            margin-bottom: 8px; /* Jarak antara judul dan angka */
-            line-height: 1.2;
+            display: block !important; /* Paksa jadi baris sendiri */
+            font-size: 10px !important; 
+            color: #6B7280 !important; 
+            font-weight: 800 !important; 
+            text-transform: uppercase !important; 
+            margin-bottom: 10px !important; /* Jarak ke angka di bawahnya */
+            line-height: 1.2 !important;
         }
+        
         .metric-value { 
-            font-size: 19px; 
-            font-weight: 800; 
-            color: #111827; 
-            line-height: 1;
+            display: block !important; /* Paksa jadi baris sendiri */
+            font-size: 20px !important; 
+            font-weight: 800 !important; 
+            line-height: 1 !important;
         }
         </style>
     """, unsafe_allow_html=True)
-
     # --- 2. HEADER ---
     st.markdown('<div class="feature-header" style="text-align: center; margin-bottom:20px;">🚀 DIGITAL MARKETING COMMAND CENTER</div>', unsafe_allow_html=True)
 
