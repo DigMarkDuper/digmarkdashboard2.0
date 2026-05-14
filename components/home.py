@@ -166,26 +166,29 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
         st.markdown("<br>", unsafe_allow_html=True)
     
         # --- E. RENDER ROI DASHBOARD ---
-        try:
-            st.markdown('<div style="font-weight: 800; margin-bottom: 15px;">🌍 ULTIMATE ROI DASHBOARD (ALL TIME GLOBAL)</div>', unsafe_allow_html=True)
-            r = st.columns(5)
-            
-            def render_box(col, title, value, color="#111827"):
-                with col:
-                    st.markdown(f"""
-                        <div class="kpi-card">
-                            <div class="metric-title">{title}</div>
-                            <div class="metric-value" style="color:{color};">{value}</div>
-                        </div>
-                    """, unsafe_allow_html=True)
-    
-            render_box(r[0], "💸 Total Spend Ads + Mekari", f"Rp {global_spend:,.0f}", "#8B0000")
-            render_box(r[1], "👥 Leads Total", f"{global_leads}")
-            render_box(r[2], "🎓 Closing Total", f"{global_closing} Swa", "#006400")
-            render_box(r[3], "🎯 Biaya per Siswa (CAC)", f"Rp {global_cac:,.0f}", "#D2691E")
-            render_box(r[4], "🚀 ROAS Total", f"{global_roas:,.1f}x", "#1E3A8A")
-    
-            st.markdown("---")
+    try:
+        st.markdown('<div style="font-weight: 800; margin-bottom: 15px;">🌍 ULTIMATE ROI DASHBOARD (ALL TIME GLOBAL)</div>', unsafe_allow_html=True)
+        r = st.columns(5)
+        
+        def render_box(col, title, value, color="#111827"):
+            with col:
+                st.markdown(f"""
+                    <div class="kpi-card">
+                        <div class="metric-title">{title}</div>
+                        <div class="metric-value" style="color:{color};">{value}</div>
+                    </div>
+                """, unsafe_allow_html=True)
+
+        render_box(r[0], "💸 Total Spend Ads + Mekari", f"Rp {global_spend:,.0f}", "#8B0000")
+        render_box(r[1], "👥 Leads Total", f"{global_leads}")
+        render_box(r[2], "🎓 Closing Total", f"{global_closing} Swa", "#006400")
+        render_box(r[3], "🎯 Biaya per Siswa (CAC)", f"Rp {global_cac:,.0f}", "#D2691E")
+        render_box(r[4], "🚀 ROAS Total", f"{global_roas:,.1f}x", "#1E3A8A")
+
+        st.markdown("---")
+
+    except Exception as e:
+        st.error(f"Gagal memuat metrik: {e}")
     
         except Exception as e:
             st.error(f"Gagal memuat metrik: {e}")
