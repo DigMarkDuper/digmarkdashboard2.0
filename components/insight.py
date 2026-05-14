@@ -127,37 +127,6 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                     </p>
                 </div>
             </div>
-
-            <style>
-                @keyframes marquee_run {{
-                    0% {{ transform: translateX(100%); }}
-                    100% {{ transform: translateX(-100%); }}
-                }}
-                .custom-marquee-container {{
-                    width: 85%;
-                    margin: 0 auto;
-                    overflow: hidden;
-                    white-space: nowrap;
-                    border-top: 1px solid #E5E7EB;
-                    border-bottom: 1px solid #E5E7EB;
-                    padding: 10px 0;
-                }}
-                .custom-marquee-text {{
-                    display: inline-block;
-                    animation: marquee_run 20s linear infinite !important;
-                    color: #6B7280;
-                    font-family: 'Courier New', Courier, monospace;
-                    font-size: 12px;
-                    font-weight: 800;
-                }}
-            </style>
-
-            <div class="custom-marquee-container">
-                <div class="custom-marquee-text">
-                    SINKRONISASI DATA KONTEN AKTIF • MENGANALISIS TREND TIKTOK & INSTAGRAM • LAPORAN PERFORMA GENERASI 2026 • TOTAL INSIGHT TERKUMPUL • STATUS: STABLE • LPK DUTA PERSADA DIGITAL SYSTEM • 
-                </div>
-            </div>
-        </div>
     """, unsafe_allow_html=True)
 
     header_names = ["Date", "Platform", "View", "Reach", "Interaction", "Profile Visit", "Link Clicks", "Follow"]
