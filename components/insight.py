@@ -113,10 +113,37 @@ def create_modern_chart(data, y_col, color, title):
 def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     # --- 1. HEADER PROFESIONAL (CENTERED + RUNNING TEXT) ---
     st.markdown(f"""
+        <style>
+            /* Animasi Running Text Modern */
+            @keyframes scroll {{
+                0% {{ transform: translateX(100%); }}
+                100% {{ transform: translateX(-100%); }}
+            }}
+            .marquee-viewport {{
+                width: 80%;
+                margin: 0 auto;
+                overflow: hidden;
+                white-space: nowrap;
+                border-top: 1px solid #E5E7EB;
+                border-bottom: 1px solid #E5E7EB;
+                padding: 8px 0;
+                position: relative;
+            }}
+            .marquee-content {{
+                display: inline-block;
+                animation: scroll 25s linear infinite;
+                color: #6B7280;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 12px;
+                font-weight: 700;
+                padding-left: 100%; /* Memastikan teks mulai dari paling kanan */
+            }}
+        </style>
+
         <div style="text-align: center; margin-bottom: 40px;">
-            <div style="display: inline-flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+            <div style="display: inline-flex; align-items: center; gap: 20px; margin-bottom: 25px;">
                 <div style="background-color: {BRAND_BLUE}; padding: 12px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center;">
-                    <img src="https://img.icons8.com/fluency/48/combo-chart.png" width="40">
+                    <img src="https://img.icons8.com/color/48/analytics.png" width="40">
                 </div>
                 <div style="text-align: left;">
                     <h1 style="margin: 0; font-size: 36px; font-weight: 900; color: {BRAND_BLUE}; letter-spacing: -1.5px; text-transform: uppercase; line-height: 1;">
@@ -128,10 +155,10 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                 </div>
             </div>
 
-            <div style="width: 80%; margin: 0 auto; border-top: 1px solid #E5E7EB; border-bottom: 1px solid #E5E7EB; padding: 5px 0;">
-                <marquee scrollamount="6" style="color: #6B7280; font-family: 'Courier New', Courier, monospace; font-size: 12px; font-weight: 700;">
-                    SINKRONISASI DATA KONTEN AKTIF • MENGANALISIS TREND TIKTOK & INSTAGRAM • LAPORAN PERFORMA GENERASI 2026 • TOTAL INSIGHT TERKUMPUL • STATUS: STABLE
-                </marquee>
+            <div class="marquee-viewport">
+                <div class="marquee-content">
+                    SINKRONISASI DATA KONTEN AKTIF • MENGANALISIS TREND TIKTOK & INSTAGRAM • LAPORAN PERFORMA GENERASI 2026 • TOTAL INSIGHT TERKUMPUL • STATUS: STABLE • LPK DUTA PERSADA DIGITAL SYSTEM
+                </div>
             </div>
         </div>
     """, unsafe_allow_html=True)
