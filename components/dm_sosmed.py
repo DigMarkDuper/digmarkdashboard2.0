@@ -2,23 +2,23 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import datetime
-from components.utils import load_dm_sosmed_fast, append_sheet_rows_fast
+# Pastikan kedua fungsi append terimpor di sini
+from components.utils import load_dm_sosmed_fast, append_sheet_rows_fast, append_sheet_rows
 
 def show_dm_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
     st.title("📥 TRACKER DM SOSMED")
-    st.markdown("Rekapitulasi calon siswa dari Instagram, TikTok, dan Facebook.")
+    st.markdown("Rekapitulasi calon siswa dari Instagram, TikTok, and Facebook.")
 
-    # --- 1. OPTIMIZED DATA LOADING (FAST & STABLE) ---
-    if 'dm_data' not in st.session_state:
+    # --- 1. FAST LOADING LOGIC ---
+    # Menggunakan cache lokal agar tidak interupsi bundle master yang berat
+    if 'dm_data_cache' not in st.session_state:
         with st.spinner("Menghubungkan ke Database DM..."):
-            # Kita hanya tarik Tab Index 5 agar ringan
-            st.session_state.dm_data = fetch_single_sheet(5)
+            st.session_state.dm_data_cache = load_dm_sosmed_fast()
 
-    df_dm = load_dm_sosmed_fast()
+    df_dm = st.session_state.dm_data_cache
 
-    # --- 2. SUMMARY METRICS (MODERN LOOK) ---
+    # --- 2. SUMMARY METRICS ---
     if not df_dm.empty:
-        # Penanganan Kolom & Filter
         df_calc = df_dm.copy()
         kolom_plat = 'Platform' if 'Platform' in df_calc.columns else df_calc.columns[1]
         
@@ -34,23 +34,12 @@ def show_dm_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # --- 3. MODERN PIE CHARTS (GRID 2x2) ---
+        # --- 3. MODERN PIE CHARTS ---
         c_pie1, c_pie2 = st.columns(2)
         
-        # Style Chart Premium (VERSI FIX)
         def style_pie(fig):
-            fig.update_traces(
-                textposition='inside', 
-                textinfo='percent+label', 
-                hole=0.5, 
-                marker=dict(line=dict(color='white', width=2)) # SUDAH DIPERBAIKI: '#white' jadi 'white'
-            )
-            fig.update_layout(
-                margin=dict(l=20, r=20, t=40, b=20), 
-                height=300, 
-                paper_bgcolor='rgba(0,0,0,0)', 
-                plot_bgcolor='rgba(0,0,0,0)'
-            )
+            fig.update_traces(textposition='inside', textinfo='percent+label', hole=0.5, marker=dict(line=dict(color='white', width=2)))
+            fig.update_layout(margin=dict(l=20, r=20, t=40, b=20), height=300, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
             return fig
 
         with c_pie1:
@@ -68,7 +57,7 @@ def show_dm_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
 
     st.markdown("---")
 
-    # --- 4. FORM INPUT (INSTANT SAVE) ---
+    # --- 4. FORM INPUT (OPTIMIZED) ---
     with st.form("form_dm_new", clear_on_submit=True):
         st.markdown("### 📝 Input Data Prospek Baru")
         c1, c2 = st.columns(2)
@@ -87,38 +76,33 @@ def show_dm_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
             if not username:
                 st.warning("⚠️ Nama/Username wajib diisi!")
             else:
-                # Logika Auto-Link & Phone Format
                 uname_clean = username.strip().replace("@", "")
                 if platform == "Instagram": link_final = f"https://instagram.com/{uname_clean}"
                 elif platform == "Tiktok": link_final = f"https://tiktok.com/@{uname_clean}"
                 else: link_final = f"https://facebook.com/{uname_clean}"
                 
-                # Format HP untuk Sheets
                 hp_val = str(no_hp).strip()
                 no_hp_final = "'" + ("62" + hp_val[1:] if hp_val.startswith("0") else hp_val) if hp_val else ""
-
                 tgl_hari_ini = datetime.date.today().strftime("%Y-%m-%d")
-                no_urut = len(df_dm) + 1
                 
-                # Data Baru (Struktur 9 Kolom)
+                # Hitung nomor urut berdasarkan data yang ada
+                no_urut = len(df_dm) + 1
                 data_baru = [no_urut, platform, username, link_final, no_hp_final, domisili, status_dm, tag_dm, tgl_hari_ini]
                 
-                if append_sheet_rows(5, [data_baru]):
-                    # OPTIMISTIC UPDATE: Tempel langsung ke tabel di layar tanpa tunggu refresh
-                    new_row_df = pd.DataFrame([data_baru], columns=df_dm.columns if not df_dm.empty else None)
-                    st.session_state.dm_data = pd.concat([st.session_state.dm_data, new_row_df], ignore_index=True)
-                    
+                # MENGGUNAKAN append_sheet_rows_fast agar sinkron dengan cache
+                if append_sheet_rows_fast(5, [data_baru]):
                     st.success(f"🔥 Berhasil menyimpan {username}!")
+                    # Update cache lokal agar data baru langsung tampil di tabel bawah
+                    st.session_state.dm_data_cache = load_dm_sosmed_fast()
                     st.rerun()
 
     # --- 5. DATABASE TABLE ---
     st.markdown("### 📑 15 Update Terakhir")
-    if not st.session_state.dm_data.empty:
-        # Sortir data terbaru di atas
-        df_display = st.session_state.dm_data.copy()
+    if not st.session_state.dm_data_cache.empty:
+        df_display = st.session_state.dm_data_cache.copy()
         st.dataframe(df_display.iloc[::-1].head(15), use_container_width=True, hide_index=True)
     
     if st.button("🔄 Sinkronisasi Ulang Database"):
-        del st.session_state.dm_data
         st.cache_data.clear()
+        st.session_state.dm_data_cache = load_dm_sosmed_fast()
         st.rerun()
