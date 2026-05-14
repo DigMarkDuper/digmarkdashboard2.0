@@ -35,143 +35,117 @@ BRAND_BLUE = "#005696"
 BRAND_YELLOW = "#FDB813"
 
 # =====================================================================
-# 2. SISTEM LOGIN (PREMIUM GLASSMORPHISM EDITION) - FIXED LAYOUT
+# 2. SISTEM LOGIN (PREMIUM GLASSMORPHISM - ANTI-ERROR EDITION)
 # =====================================================================
 def check_password():
-    """Fungsi login dengan tampilan Glassmorphism premium dan logika utuh."""
+    """Fungsi login dengan tampilan Glassmorphism dan proteksi visual."""
     
-    # 1. Jika sudah login, langsung return True
+    # 1. Cek apakah sudah login sebelumnya
     if st.session_state.get("password_correct"):
         return True
     
-    # 2. Set Latar Belakang (Pastikan file bg.png ada)
-    utils.set_bg_local('bg.png') 
-    
-    # --- CSS KUSTOM: INI JANTUNG DESAINNYA ---
-    # Kita suntikkan CSS untuk menimpa gaya standar Streamlit di dalam container login.
+    # 2. Coba pasang background local
+    try:
+        utils.set_bg_local('bg.png')
+    except:
+        pass # Jika gagal, CSS di bawah akan menghandle warna cadangan
+
+    # --- CSS KUSTOM ---
     st.markdown(f'''
         <style>
-            /* 1. Reset Padding Halaman Utama agar Kotak Login di Tengah */
-            .main > .block-container {{
-                padding-top: 0rem !important;
-                padding-bottom: 0rem !important;
+            /* Background Cadangan jika bg.png gagal load (warna gelap) */
+            .stApp {{
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+                background-attachment: fixed;
             }}
             
-            /* 2. Container Utama Login di Tengah */
+            .main > .block-container {{
+                padding: 0 !important;
+            }}
+
+            /* Container utama agar form tepat di tengah */
             .login-wrapper {{
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                min-height: 90vh; /* Agar tepat di tengah layar secara vertikal */
+                min-height: 100vh;
                 width: 100%;
             }}
-            
-            /* 3. Kotak Glassmorphism (Efek Kaca Buram) */
+
+            /* Kotak Kaca */
             .glass-box {{
-                background: rgba(255, 255, 255, 0.08); /* Latar putih sangat tipis */
-                backdrop-filter: blur(25px); /* EFEK KACA BURAM UTAMA */
-                -webkit-backdrop-filter: blur(25px); /* Untuk Safari */
-                border-radius: 20px; /* Tepi membulat */
-                padding: 40px 30px;
-                width: 400px; /* Lebar kotak pas */
-                border: 1px solid rgba(255, 255, 255, 0.15); /* Border tipis transparan */
-                box-shadow: 0 15px 35px rgba(0,0,0,0.2); /* Bayangan lembut */
+                background: rgba(255, 255, 255, 0.05);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border-radius: 25px;
+                padding: 50px 40px;
+                width: 400px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
                 text-align: center;
             }}
-            
-            /* 4. Perbaikan Elemen Login Menumpuk */
-            /* Kita gunakan z-index agar elemen input selalu berada di depan teks HTML kustom */
-            .glass-box * {{
-                position: relative;
-                z-index: 2;
-            }}
-            
-            /* 5. Menghapus Gaya Formulir Bawaan Streamlit */
+
+            /* Menghilangkan dekorasi form bawaan Streamlit */
             [data-testid="stForm"] {{
                 border: none !important;
-                background: transparent !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                display: block !important;
-            }}
-            
-            /* 6. Menyamakan Ukuran Kotak Input & Tombol */
-            [data-testid="stForm"] > .block-container {{
                 padding: 0 !important;
             }}
-            
-            /* 7. Gaya Minimalis untuk Kolom Input (Username & Password) */
-            .stTextInput {{
-                margin-bottom: -15px !important; /* Spasi antar input rapat */
-            }}
-            .stTextInput > div > div > input {{
-                background-color: rgba(255, 255, 255, 0.05) !important; /* Latar input semi-transparan */
-                border: none !important; /* Hapus border kotak */
-                border-bottom: 2px solid rgba(255, 255, 255, 0.3) !important; /* Hanya border bawah */
+
+            /* Styling Input */
+            .stTextInput input {{
+                background-color: transparent !important;
+                border: none !important;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.3) !important;
+                color: white !important;
                 border-radius: 0px !important;
-                color: #FFFFFF !important; /* Teks putih */
-                font-size: 14px !important;
-                padding: 10px 0px 10px 5px !important; /* Padding minimalis */
+                font-size: 16px !important;
             }}
-            
-            /* 8. Gaya Tombol Login Kustom */
+
+            /* Tombol MASUK */
             div[data-testid="stFormSubmitButton"] > button {{
-                background: linear-gradient(135deg, rgba(30, 64, 175, 0.5), rgba(15, 23, 42, 0.5)) !important; /* Biru Gelap Semi-Transparan */
-                color: white !important; /* Teks putih */
-                border-radius: 12px !important; /* Tepi tombol membulat */
-                padding: 12px 0px !important;
-                margin-top: 30px !important;
-                font-size: 13px !important;
-                text-transform: uppercase !important;
-                width: 100% !important; /* Tombol memenuhi lebar */
-                backdrop-filter: blur(10px) !important;
+                width: 100% !important;
+                background: {BRAND_BLUE} !important;
+                color: white !important;
+                border: none !important;
+                padding: 12px !important;
+                font-weight: 800 !important;
+                border-radius: 12px !important;
+                margin-top: 20px;
+                letter-spacing: 1px;
             }}
         </style>
     ''', unsafe_allow_html=True)
-    
-    # --- RENDER STRUKTUR LOGIN DI TENGAH LAYAR ---
-    # Menggunakan container kosong untuk memastikan layout tidak berantakan
+
+    # --- RENDER FORM ---
+    # Menggunakan placeholder agar bersih
     placeholder = st.empty()
     
     with placeholder.container():
-        # Gunakan kolom tengah untuk centering horizontal
-        _, col_mid, _ = st.columns([1, 4, 1])
+        # Layout kolom untuk memastikan centering horizontal di Streamlit
+        _, col_mid, _ = st.columns([0.5, 3, 0.5])
         
         with col_mid:
-            # Container pembungkus utama
-            st.markdown('<div class="login-wrapper"><div class="glass-box">', unsafe_allow_html=True)
+            # Container pembungkus kaca
+            st.markdown('<div class="login-wrapper">', unsafe_allow_html=True)
+            st.markdown('<div class="glass-box">', unsafe_allow_html=True)
             
-            # Header
-            st.markdown(f"""
-                <div style="text-align: center; margin-bottom:-10px;">
-                    <img src="{LOGO_URL}" width="180" style="mix-blend-mode: multiply;">
-                </div>
-                <h2 style="text-align: center; color: white; margin-bottom: 5px; font-weight: 700; font-size: 20px;">
-                    DIGITAL MARKETING DASHBOARD
-                </h2>
-                <p style="text-align: center; color: rgba(255, 255, 255, 0.7); margin-bottom: 20px; font-size: 14px;">
-                    LPK Duta Persada Yogyakarta
-                </p>
-            """, unsafe_allow_html=True)
+            # Header Branding
+            st.image(LOGO_URL, width=160)
+            st.markdown(f'<h2 style="color:white; font-weight:300; margin-top:15px; letter-spacing:2px;">DIGITAL MARKETING <br><span style="font-weight:800; color:{BRAND_YELLOW};">DASHBOARD</span></h2>', unsafe_allow_html=True)
 
-            # Formulir (Semua elemen input masuk ke dalam with st.form)
             with st.form("login_form"):
-                u_name = st.text_input("Username").strip().lower()
-                u_pass = st.text_input("Password", type="password")
+                u_name = st.text_input("👤 USERNAME").strip().lower()
+                u_pass = st.text_input("🔒 PASSWORD", type="password")
                 
-                submit = st.form_submit_button("MASUK SISTEM", use_container_width=True)
-                
-                if submit:
+                if st.form_submit_button("MASUK KE SISTEM"):
                     if "credentials" in st.secrets and u_name in st.secrets["credentials"] and st.secrets["credentials"][u_name] == u_pass:
                         st.session_state["password_correct"] = True
-                        st.success("Login Sukses! Mengalihkan...")
                         st.rerun()
                     else:
-                        st.error("Username atau Password salah!")
+                        st.error("Akses Ditolak: Kredensial Salah")
             
-            # Tutup Container HTML
             st.markdown('</div></div>', unsafe_allow_html=True)
-        
+
     return False
     
 if not check_password():
