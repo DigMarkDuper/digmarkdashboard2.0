@@ -38,111 +38,98 @@ def check_password():
     if st.session_state.get("password_correct"):
         return True
     
-    # 1. Pasang background asli lewat fungsi utils
+    # 1. Pasang background asli
     utils.set_bg_local('bg.png') 
     
-    # 2. CSS untuk menggelapkan & styling form
+    # 2. CSS Kustom: Fokus pada Ukuran Kotak & Centering
     st.markdown(f"""
         <style>
-        /* Mengunci overlay gelap di atas background yang sudah dipasang utils */
+        /* Overlay Gelap Biru Tua */
         [data-testid="stAppViewContainer"]::before {{
             content: "";
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(2, 6, 23, 0.85) !important; /* Biru Midnight Gelap */
+            background: rgba(2, 6, 23, 0.85) !important;
             z-index: 0;
         }}
         
-        /* Pastikan konten utama muncul di depan overlay */
         .main {{
             position: relative;
             z-index: 1;
-        }}
-
-        [data-testid="stHeader"], [data-testid="stMain"], .main {{
             background: transparent !important;
         }}
-        
-        .block-container {{
-            padding-top: 4rem !important;
-        }}
-        
-        /* Form Glassmorphism */
+
+        /* FORM COMPACT: Kunci lebar agar tetap kotak kecil */
         [data-testid="stForm"] {{
             background: rgba(255, 255, 255, 0.05) !important;
-            backdrop-filter: blur(20px) saturate(150%);
-            -webkit-backdrop-filter: blur(20px) saturate(150%);
+            backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 40px !important;
+            border-radius: 15px;
+            padding: 25px !important; /* Padding lebih rapat */
+            max-width: 320px;         /* Kunci lebar kotak */
+            margin: auto;             /* Pastikan di tengah */
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }}
+        
+        /* Input & Label */
+        .stTextInput label p {{
+            color: white !important;
+            font-weight: 700 !important;
+            font-size: 13px !important;
         }}
         
         .stTextInput input {{
             background-color: rgba(0, 0, 0, 0.2) !important;
             color: white !important;
-            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            height: 38px !important;
         }}
         
-        .stTextInput label p {{
-            color: white !important;
-            font-weight: 700 !important;
-        }}
-        
+        /* Tombol */
         div[data-testid="stFormSubmitButton"] > button {{
             width: 100%;
             background: {BRAND_YELLOW} !important;
             color: black !important;
-            border-radius: 10px !important;
+            border-radius: 8px !important;
             font-weight: 800 !important;
-            text-transform: uppercase;
             border: none !important;
+            height: 40px !important;
         }}
         
         header, footer {{ visibility: hidden !important; }}
         </style>
     """, unsafe_allow_html=True)
 
-    # --- RENDER FORM ---
-    left, mid, right = st.columns([1, 1.5, 1])
-    with mid:
-        st.markdown("<br><br><br>", unsafe_allow_html=True)
-        st.image(LOGO_URL, width=150)
-        st.markdown(f'<h3 style="color:white; margin-bottom:20px;">Digital Marketing <span style="color:{BRAND_YELLOW}">LOGIN</span></h3>', unsafe_allow_html=True)
-
-        with st.form("login_v2"):
-            u_name = st.text_input("Username").strip().lower()
-            u_pass = st.text_input("Password", type="password")
-            if st.form_submit_button("MASUK SISTEM"):
-                if "credentials" in st.secrets and u_name in st.secrets["credentials"] and st.secrets["credentials"][u_name] == u_pass:
-                    st.session_state["password_correct"] = True
-                    st.rerun()
-                else:
-                    st.error("Username atau Password Salah")
-                    
-    return False
-
-    # --- RENDER KONTEN ---
-    # Menggunakan columns seperti kode Anda sebelumnya
-    left, mid, right = st.columns([1, 1.5, 1])
+    # --- RENDER KONTEN (CENTERED) ---
+    # Gunakan perbandingan kolom yang lebih lebar di samping agar tengahnya mengecil
+    _, mid, _ = st.columns([1.5, 1, 1.5]) 
     
     with mid:
         st.markdown("<br><br><br>", unsafe_allow_html=True)
         
-        # Logo (Sekarang pasti di depan overlay biru)
-        st.image(LOGO_URL, width=150)
-        st.markdown(f'<h3 style="color:white; margin-bottom:20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">Digital Marketing <span style="color:{BRAND_YELLOW}">LOGIN</span></h3>', unsafe_allow_html=True)
+        # Centering Logo & Judul menggunakan kolom internal atau HTML
+        col_logo_1, col_logo_2, col_logo_3 = st.columns([1, 2, 1])
+        with col_logo_2:
+            st.image(LOGO_URL, use_container_width=True)
+            
+        st.markdown(f'''
+            <div style="text-align: center; margin-top: 10px; margin-bottom: 20px;">
+                <h4 style="color:white; font-weight:300; letter-spacing:1px; margin:0;">
+                    Digital Marketing <br>
+                    <span style="color:{BRAND_YELLOW}; font-weight:800;">LOGIN SYSTEM</span>
+                </h4>
+            </div>
+        ''', unsafe_allow_html=True)
 
-        with st.form("login_safe"):
+        with st.form("login_compact"):
             u_name = st.text_input("Username").strip().lower()
             u_pass = st.text_input("Password", type="password")
-            
             if st.form_submit_button("MASUK SISTEM"):
                 if "credentials" in st.secrets and u_name in st.secrets["credentials"] and st.secrets["credentials"][u_name] == u_pass:
                     st.session_state["password_correct"] = True
                     st.rerun()
                 else:
-                    st.error("Gagal: Username atau Password Salah")
+                    st.error("Gagal: Akses Ditolak")
                     
     return False
 
