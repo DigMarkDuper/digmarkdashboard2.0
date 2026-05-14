@@ -145,8 +145,8 @@ def check_password():
 
     return False
     
-            if not check_password():
-            st.stop()
+if not check_password():
+    st.stop()
 
 # =====================================================================
 # 3. DATA ENGINE (SINKRONISASI BUNDLE)
