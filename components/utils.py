@@ -194,3 +194,18 @@ def set_bg_local(main_bg):
             bin_str = base64.b64encode(f.read()).decode()
         st.markdown(f"""<style>.stApp {{ background-image: url("data:image/png;base64,{bin_str}"); background-size: cover; background-attachment: fixed; }}</style>""", unsafe_allow_html=True)
     except: pass
+
+def fetch_single_sheet(worksheet_index):
+    try:
+        client = init_connection()
+        if client:
+            sheet = client.open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(worksheet_index)
+            data = sheet.get_all_values()
+            if len(data) > 1:
+                # Ambil baris pertama sebagai header, sisanya sebagai data
+                return pd.DataFrame(data[1:], columns=data[0])
+            else:
+                return pd.DataFrame()
+    except Exception as e:
+        print(f"Error fetch single sheet: {e}")
+        return pd.DataFrame()
