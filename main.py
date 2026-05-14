@@ -35,119 +35,133 @@ BRAND_BLUE = "#005696"
 BRAND_YELLOW = "#FDB813"
 
 # =====================================================================
-# 2. SISTEM LOGIN (PREMIUM GLASSMORPHISM - ANTI-ERROR EDITION)
+# 2. SISTEM LOGIN (PREMIUM GLASSMORPHISM - NO-SCROLL EDITION)
 # =====================================================================
 def check_password():
-    """Fungsi login dengan tampilan Glassmorphism dan proteksi visual."""
+    """Fungsi login dengan tampilan Glassmorphism yang pas di tengah layar."""
     
-    # 1. Cek apakah sudah login sebelumnya
     if st.session_state.get("password_correct"):
         return True
     
-    # 2. Coba pasang background local
     try:
         utils.set_bg_local('bg.png')
     except:
-        pass # Jika gagal, CSS di bawah akan menghandle warna cadangan
+        pass 
 
-    # --- CSS KUSTOM ---
+    # --- CSS KUSTOM (FIXED SCROLL & CONTRAST) ---
     st.markdown(f'''
         <style>
-            /* Background Cadangan jika bg.png gagal load (warna gelap) */
+            /* 1. Paksa Background Gelap agar teks putih terlihat */
             .stApp {{
                 background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
-                background-attachment: fixed;
             }}
             
-            .main > .block-container {{
+            /* 2. Hilangkan scroll bar dan padding berlebih */
+            .main .block-container {{
                 padding: 0 !important;
+                max-width: 100% !important;
             }}
 
-            /* Container utama agar form tepat di tengah */
+            /* 3. Perbaikan Centering (Gunakan absolute agar tidak terdorong padding streamlit) */
             .login-wrapper {{
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
+                width: 100%;
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                min-height: 100vh;
-                width: 100%;
             }}
 
-            /* Kotak Kaca */
             .glass-box {{
-                background: rgba(255, 255, 255, 0.05);
-                backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px);
+                background: rgba(255, 255, 255, 0.07);
+                backdrop-filter: blur(25px);
+                -webkit-backdrop-filter: blur(25px);
                 border-radius: 25px;
-                padding: 50px 40px;
-                width: 400px;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+                padding: 40px;
+                width: 380px;
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
                 text-align: center;
             }}
 
-            /* Menghilangkan dekorasi form bawaan Streamlit */
-            [data-testid="stForm"] {{
-                border: none !important;
-                padding: 0 !important;
+            /* 4. Perbaikan Kontras Font (WAJIB) */
+            /* Label Username & Password */
+            .stTextInput label p {{
+                color: #FFFFFF !important; /* Putih Solid */
+                font-weight: 700 !important;
+                font-size: 13px !important;
+                letter-spacing: 1px;
+                text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
             }}
 
-            /* Styling Input */
+            /* Teks di dalam kolom input */
             .stTextInput input {{
-                background-color: transparent !important;
-                border: none !important;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.3) !important;
                 color: white !important;
+                background-color: rgba(255,255,255,0.05) !important;
+                border: none !important;
+                border-bottom: 2px solid rgba(255,255,255,0.4) !important;
                 border-radius: 0px !important;
-                font-size: 16px !important;
             }}
 
-            /* Tombol MASUK */
+            /* Pesan Error agar menyala */
+            .stAlert {{
+                background-color: rgba(220, 38, 38, 0.2) !important;
+                color: #ff9999 !important;
+                border: 1px solid #dc2626 !important;
+            }}
+
+            /* Tombol */
             div[data-testid="stFormSubmitButton"] > button {{
                 width: 100% !important;
                 background: {BRAND_BLUE} !important;
                 color: white !important;
-                border: none !important;
-                padding: 12px !important;
                 font-weight: 800 !important;
                 border-radius: 12px !important;
+                border: 1px solid rgba(255,255,255,0.2) !important;
+                padding: 10px !important;
                 margin-top: 20px;
-                letter-spacing: 1px;
             }}
+
+            /* Sembunyikan elemen Streamlit yang mengganggu saat login */
+            header, footer {{visibility: hidden !important;}}
+            [data-testid="stHeader"] {{background: transparent !important;}}
         </style>
     ''', unsafe_allow_html=True)
 
     # --- RENDER FORM ---
-    # Menggunakan placeholder agar bersih
     placeholder = st.empty()
     
     with placeholder.container():
-        # Layout kolom untuk memastikan centering horizontal di Streamlit
-        _, col_mid, _ = st.columns([0.5, 3, 0.5])
-        
-        with col_mid:
-            # Container pembungkus kaca
-            st.markdown('<div class="login-wrapper">', unsafe_allow_html=True)
-            st.markdown('<div class="glass-box">', unsafe_allow_html=True)
-            
-            # Header Branding
-            st.image(LOGO_URL, width=160)
-            st.markdown(f'<h2 style="color:white; font-weight:300; margin-top:15px; letter-spacing:2px;">DIGITAL MARKETING <br><span style="font-weight:800; color:{BRAND_YELLOW};">DASHBOARD</span></h2>', unsafe_allow_html=True)
+        # Gunakan pembungkus div langsung tanpa columns agar tidak terdorong
+        st.markdown(f'''
+            <div class="login-wrapper">
+                <div class="glass-box">
+                    <img src="{LOGO_URL}" width="160" style="margin-bottom: 20px; filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.3));">
+                    <h2 style="color:white; font-weight:300; margin-top:0px; font-size: 18px; letter-spacing:2px; line-height:1.2;">
+                        DIGITAL MARKETING <br>
+                        <span style="font-weight:800; color:{BRAND_YELLOW};">DASHBOARD</span>
+                    </h2>
+        ''', unsafe_allow_html=True)
 
-            with st.form("login_form"):
-                u_name = st.text_input("👤 USERNAME").strip().lower()
-                u_pass = st.text_input("🔒 PASSWORD", type="password")
-                
-                if st.form_submit_button("MASUK KE SISTEM"):
-                    if "credentials" in st.secrets and u_name in st.secrets["credentials"] and st.secrets["credentials"][u_name] == u_pass:
-                        st.session_state["password_correct"] = True
-                        st.rerun()
-                    else:
-                        st.error("Akses Ditolak: Kredensial Salah")
+        with st.form("login_form"):
+            u_name = st.text_input("👤 USERNAME").strip().lower()
+            u_pass = st.text_input("🔒 PASSWORD", type="password")
             
-            st.markdown('</div></div>', unsafe_allow_html=True)
+            if st.form_submit_button("MASUK KE SISTEM"):
+                if "credentials" in st.secrets and u_name in st.secrets["credentials"] and st.secrets["credentials"][u_name] == u_pass:
+                    st.session_state["password_correct"] = True
+                    st.rerun()
+                else:
+                    st.error("Akses Ditolak: Password Salah")
+        
+        st.markdown('</div></div>', unsafe_allow_html=True)
 
     return False
-    
+
+# Jalankan Gerbang Login
 if not check_password():
     st.stop()
 
