@@ -108,7 +108,7 @@ if page != "🏠 HOMEPAGE":
 # Eksekusi Halaman
 try:
     if page == "🏠 HOMEPAGE":
-        show_homepage(BRAND_BLUE, go_to_page, bundle)
+        show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page, bundle)
 
     elif page == "📱 SOSIAL MEDIA":
         show_sosmed_page(BRAND_BLUE, BRAND_YELLOW)
