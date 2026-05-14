@@ -44,41 +44,43 @@ def check_password():
     # Set Background
     utils.set_bg_local('bg.png') 
     
-    # --- CSS KUSTOM: BACKGROUND DARK MODE ---
+   # --- CSS KUSTOM: BACKGROUND DARK MODE (FIXED) ---
     st.markdown(f'''
         <style>
-            /* 1. Paksa background dasar menjadi sangat gelap */
+            /* 1. Paksa warna dasar aplikasi hitam pekat */
             .stApp {{
-                background-color: #0f172a !important; /* Biru Midnight */
+                background-color: #000000 !important;
             }}
 
-            /* 2. Berikan efek overlay gelap di atas gambar bg.png */
-            /* Ini akan membuat bg.png Mas terlihat "dimmed" / gelap */
-            [data-testid="stAppViewContainer"]::before {{
-                content: "";
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100vw;
-                height: 100vh;
-                background: rgba(0, 0, 0, 0.7); /* Angka 0.7 = tingkat kegelapan (0.0 - 1.0) */
-                z-index: -1;
+            /* 2. Overlay Gelap yang Menempel di Main Container */
+            /* Kita gunakan .main agar pasti berada di bawah konten tapi di atas bg image */
+            .main {{
+                background: rgba(0, 0, 0, 0.8) !important; /* Angka 0.8 untuk lebih gelap */
+                position: relative;
             }}
             
-            /* 3. Rapikan padding halaman */
+            /* 3. Jika utils.set_bg_local menggunakan stAppViewContainer, 
+               kita redupkan gambarnya secara langsung */
+            [data-testid="stAppViewContainer"] {{
+                background-color: #000000 !important;
+                filter: brightness(30%); /* Cara paling ampuh menggelapkan gambar */
+            }}
+
+            /* 4. Rapikan padding halaman */
             .main .block-container {{
                 padding-top: 2rem !important;
             }}
 
-            /* 4. Pastikan teks label Putih Terang agar tidak tenggelam */
+            /* 5. Pastikan teks label Putih Terang */
             .stTextInput label p {{
                 color: white !important;
                 font-weight: 800 !important;
-                text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+                text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
             }}
 
-            /* 5. Hilangkan header streamlit */
-            header {{visibility: hidden;}}
+            /* 6. Hilangkan header & footer */
+            header, footer {{visibility: hidden !important;}}
+            [data-testid="stHeader"] {{background: transparent !important;}}
         </style>
     ''', unsafe_allow_html=True)
 
