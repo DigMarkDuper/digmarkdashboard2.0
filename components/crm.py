@@ -7,7 +7,9 @@ from components.utils import sync_leads_to_crm, load_database_nomor, append_shee
 def show_crm_page():
     st.title("🗂️ CRM & DETAILED LEAD DATABASE")
     
-    # 1. AREA INPUT DATA (UPLOAD & SYNC)
+    # =========================================================
+    # 1. AREA UTILITY (SYNC & UPLOAD)
+    # =========================================================
     c_sync, c_upload = st.columns([1, 1])
     
     with c_sync:
@@ -21,116 +23,105 @@ def show_crm_page():
     with c_upload:
         st.markdown("### ⬆️ Import Data Baru")
         with st.expander("Upload File Excel (.xlsx)"):
-            st.info("💡 Format Mekari: **phone_number**, **full_name**, **customer_name**, **company**.")
+            st.info("💡 Format: **phone_number**, **full_name**, **company**.")
             
-            # --- DOWNLOAD TEMPLATE ---
-            df_template = pd.DataFrame(columns=["phone_number", "full_name", "customer_name", "company"])
+            # Template Download
+            df_template = pd.DataFrame(columns=["phone_number", "full_name", "company"])
             buffer_template = io.BytesIO()
             with pd.ExcelWriter(buffer_template, engine='xlsxwriter') as writer:
                 df_template.to_excel(writer, index=False, sheet_name='Template')
             
-            st.download_button(label="📥 Download Template", data=buffer_template.getvalue(), file_name="Template_CRM.xlsx", use_container_width=True, key="dl_v_final")
+            st.download_button(label="📥 Download Template", data=buffer_template.getvalue(), file_name="Template_CRM.xlsx", use_container_width=True)
             
-            # --- FITUR UPLOAD ---
-            uploaded_file = st.file_uploader("Upload file Excel", type=["xlsx"], key="up_v_final")
-            if uploaded_file is not None:
+            uploaded_file = st.file_uploader("Upload Excel", type=["xlsx"], key="up_v_final")
+            if uploaded_file:
                 try:
-                    df_upload = pd.read_excel(uploaded_file)
-                    df_upload.columns = [str(c).strip().lower() for c in df_upload.columns]
-                    
-                    if st.button("📥 Konfirmasi Import Massal", use_container_width=True, key="conf_v_final"):
-                        with st.spinner("Mengirim data ke Google Sheets..."):
-                            tgl_hari_ini = datetime.date.today().strftime("%d-%m-%Y")
-                            df_upload = df_upload.fillna("")
+                    df_up = pd.read_excel(uploaded_file)
+                    st.dataframe(df_up.head(3), use_container_width=True)
+                    if st.button("📥 Konfirmasi Import", use_container_width=True):
+                        with st.spinner("Mengirim data..."):
+                            tgl_in = datetime.date.today().strftime("%d-%m-%Y")
+                            df_up = df_up.fillna("")
+                            bulk = []
+                            for _, r in df_up.iterrows():
+                                bulk.append(["", str(r.get('full_name','')), "'" + str(r.get('phone_number','')), str(r.get('company','')), "", tgl_in])
                             
-                            bulk_data = []
-                            for _, row in df_upload.iterrows():
-                                data_baris = [
-                                    "",                                     # Kolom A (No)
-                                    str(row['full_name']).strip(),          # Kolom B (Nama)
-                                    "'" + str(row['phone_number']).strip(), # Kolom C (No Hp)
-                                    str(row['company']).strip(),            # Kolom D (Domisili)
-                                    "",                                     # Kolom E (DILONCATI: Tanggal Lahir)
-                                    tgl_hari_ini                            # Kolom F (TANGGAL MASUK DATABASE)
-                                ]
-                                bulk_data.append(data_baris)
-                            
-                            if append_sheet_rows(4, bulk_data):
-                                st.success(f"🚀 Berhasil! {len(bulk_data)} data masuk.")
+                            if append_sheet_rows(4, bulk):
+                                st.success("Data berhasil diimport!")
                                 st.cache_data.clear()
                                 st.rerun()
                 except Exception as e:
-                    st.error(f"Gagal baca file: {e}")
-            
+                    st.error(f"Error: {e}")
+
     st.markdown("---")
 
-# 2. LOAD DATA & FILTER SYSTEM
-try:
-    df_crm = load_database_nomor()
-    if not df_crm.empty:
+    # =========================================================
+    # 2. LOAD DATABASE & LOGIKA FILTER
+    # =========================================================
+    try:
+        df_crm = load_database_nomor()
+        if df_crm.empty:
+            st.info("Database masih kosong.")
+            return
+
         df_crm = df_crm.fillna('')
-        
-        # Filter UI
+
+        # --- UI FILTER ---
         with st.expander("🔍 Filter Strategis Database", expanded=True):
-            search_crm = st.text_input("🔎 Cari Nama/HP:", placeholder="Ketik...", key="search_v_final")
+            search_crm = st.text_input("🔎 Cari Nama atau Nomor HP:", placeholder="Ketik di sini...", key="search_crm")
             
-            c1, c2, c3 = st.columns(3)
-            
-            with c1:
+            f1, f2, f3 = st.columns(3)
+            with f1:
                 m_tag_col = 'Mekari Tag (Status Terakhir)'
                 opts_mekari = sorted(df_crm[m_tag_col].unique().tolist()) if m_tag_col in df_crm.columns else []
-                sel_mekari = st.multiselect("Mekari Tag:", options=opts_mekari, key="f_mek_v_final")
-            
-            with c2:
+                sel_mekari = st.multiselect("Mekari Tag:", options=opts_mekari)
+            with f2:
                 opts_daerah = sorted(df_crm['Domisili'].unique().tolist()) if 'Domisili' in df_crm.columns else []
-                sel_daerah = st.multiselect("Pilih Daerah:", options=opts_daerah, key="f_daer_v_final")
-            
-            with c3:
-                sel_treatment = st.selectbox(
-                    "Status Treatment:",
-                    options=["Semua", "Sudah Treatment", "Belum Treatment"],
-                    key="f_treat_v_final"
-                )
+                sel_daerah = st.multiselect("Domisili:", options=opts_daerah)
+            with f3:
+                sel_treatment = st.selectbox("Status Treatment:", ["Semua", "Sudah Treatment", "Belum Treatment"])
 
-        # Logika Filter Dasar
+        # --- EKSEKUSI FILTER ---
         mask = pd.Series([True] * len(df_crm))
         
         if search_crm:
             mask &= (df_crm['Nama'].astype(str).str.contains(search_crm, case=False) | 
                      df_crm['No Hp'].astype(str).str.contains(search_crm))
-        
         if sel_mekari:
             mask &= df_crm[m_tag_col].isin(sel_mekari)
-        
         if sel_daerah:
             mask &= df_crm['Domisili'].isin(sel_daerah)
 
-        # Logika Filter Treatment (Berdasarkan kolom treatment 1 & treatment 2)
-        if 'treatment 1' in df_crm.columns and 'treatment 2' in df_crm.columns:
+        # Filter Treatment (Cek kolom treatment 1 & 2)
+        has_t1 = 'treatment 1' in df_crm.columns
+        has_t2 = 'treatment 2' in df_crm.columns
+        
+        if has_t1 and has_t2:
             if sel_treatment == "Sudah Treatment":
-                # Sudah jika treatment 1 ATAU treatment 2 tidak kosong
                 mask &= (df_crm['treatment 1'].astype(str) != '') | (df_crm['treatment 2'].astype(str) != '')
             elif sel_treatment == "Belum Treatment":
-                # Belum jika treatment 1 DAN treatment 2 kosong
                 mask &= (df_crm['treatment 1'].astype(str) == '') & (df_crm['treatment 2'].astype(str) == '')
-        
-        filtered_crm = df_crm[mask].copy()
 
-        # Dashboard Metrics
-        st.markdown('<div class="feature-header">📑 Management Database CRM</div>', unsafe_allow_html=True)
-        
-        col_m1, col_m2, col_m3 = st.columns(3)
-        col_m1.metric("Prospek Terfilter", len(filtered_crm))
-        col_m2.metric("Total Database", len(df_crm))
-        
-        # Hitung Total Sudah Treatment (Minimal sudah isi salah satu treatment)
-        if 'treatment 1' in df_crm.columns and 'treatment 2' in df_crm.columns:
-            sudah_count = len(df_crm[(df_crm['treatment 1'] != '') | (df_crm['treatment 2'] != '')])
-            col_m3.metric("Total Sudah Treatment", sudah_count)
+        filtered_df = df_crm[mask].copy()
 
-        st.dataframe(filtered_crm, use_container_width=True, hide_index=True)
+        # =========================================================
+        # 3. DISPLAY METRICS & TABLE
+        # =========================================================
+        st.subheader("📑 Data Terfilter")
         
-    else:
-        st.info("Database masih kosong. Silakan import data.")
-except Exception as e:
-    st.error(f"Gagal memuat data CRM: {e}")
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Hasil Filter", f"{len(filtered_df)} Data")
+        m2.metric("Total Database", f"{len(df_crm)} Data")
+        
+        # Hitung angka treatment untuk metric
+        if has_t1 and has_t2:
+            count_done = len(df_crm[(df_crm['treatment 1'] != '') | (df_crm['treatment 2'] != '')])
+            m3.metric("Total Sudah Treatment", f"{count_done} Orang")
+
+        # Tampilkan Tabel Utama
+        st.dataframe(filtered_df, use_container_width=True, hide_index=True)
+
+    except Exception as e:
+        st.error(f"Terjadi kesalahan saat memuat data: {e}")
+
+# Pastikan fungsi ini dipanggil di app utama
