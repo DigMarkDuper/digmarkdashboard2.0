@@ -95,41 +95,43 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                 df_wa = df_wa[~df_wa['Mekari Tag'].astype(str).str.contains(pola_hapus, case=False, na=False)]
         
             # 2. FILTER DATA DI HALAMAN UTAMA
-              # --- SUB-HEADER: FILTER DATA ---
-                FILTER_ICON = "https://cdn-icons-png.flaticon.com/512/3126/3126647.png" # Ikon Filter/Slider
+              # --- SUB-HEADER: FILTER DATA (CLEAN WHITE EDITION) ---
+                FILTER_ICON = "https://cdn-icons-png.flaticon.com/512/3126/3126647.png" 
             
                 st.markdown(f"""
                     <div style="
                         display: flex; 
                         align-items: center; 
                         gap: 12px; 
-                        background: linear-gradient(90deg, #0F172A 0%, #1e3a8a 100%); 
+                        background: #FFFFFF; 
                         padding: 10px 15px; 
                         border-radius: 10px; 
                         margin-bottom: 20px; 
-                        border-left: 6px solid {BRAND_YELLOW}; 
-                        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                        border-left: 6px solid {BRAND_BLUE}; 
+                        border: 1px solid #E2E8F0;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
                     ">
                         <div style="
-                            background: rgba(255, 255, 255, 0.1); 
+                            background: #F8FAFC; 
                             padding: 6px; 
                             border-radius: 6px; 
                             display: flex; 
                             align-items: center; 
                             justify-content: center;
+                            border: 1px solid #F1F5F9;
                         ">
                             <img src="{FILTER_ICON}" width="18">
                         </div>
                         <div>
                             <div style="
                                 margin: 0; 
-                                color: white; 
+                                color: #1E293B; 
                                 font-size: 13px; 
                                 font-weight: 800; 
-                                letter-spacing: 1px; 
+                                letter-spacing: 0.5px; 
                                 text-transform: uppercase;
                             ">
-                                🔍 Parameter <span style="color: {BRAND_YELLOW};">Filter Data</span>
+                                🔍 Parameter <span style="color: {BRAND_BLUE};">Filter Data</span>
                             </div>
                         </div>
                     </div>
