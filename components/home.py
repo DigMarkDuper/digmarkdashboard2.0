@@ -176,34 +176,64 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
     except Exception as e:
         st.error(f"Gagal memuat metrik: {e}")
 
-    # --- 5. ANNUAL TARGET TRACKING ---
+    # --- 5. ANNUAL TARGET TRACKING (FUTURISTIC STYLE) ---
     try:
         st.markdown('<div style="font-weight: 800; margin-top: 20px; margin-bottom: 15px;">🎯 2026 ANNUAL TARGET PROGRESS</div>', unsafe_allow_html=True)
+        
         targets = {"Total View": 10000000, "Total Reach": 2400000, "Link Click": 24000, "Engagement": 40000}
         actual = {"Total View": 0, "Total Reach": 0, "Link Click": 0, "Engagement": 0}
         
+        # Load data (Logika Mas tetap sama)
         if not df_ins.empty:
-            header_insight = ["Date", "Platform", "View", "Reach", "Interaction", "Profile Visit", "Link Clicks", "Follow"]
-            if len(df_ins.columns) == len(header_insight): df_ins.columns = header_insight
             col_map = {"Total View": ["View"], "Total Reach": ["Reach"], "Link Click": ["Link Clicks"], "Engagement": ["Interaction"]}
             for key, col_names in col_map.items():
                 target_col = next((c for c in df_ins.columns if c in col_names), None)
                 if target_col: actual[key] = pd.to_numeric(df_ins[target_col], errors='coerce').fillna(0).sum()
 
-        cols_gauge = st.columns(2)
+        cols_gauge = st.columns(4) # Ubah ke 4 kolom supaya lebih compact dan futuristik
+        
         for i, (label, target_val) in enumerate(targets.items()):
             current_val = actual[label]
             percentage = (current_val / target_val * 100) if target_val > 0 else 0
-            with cols_gauge[i % 2]:
+            if percentage > 100: percentage = 100 # Cap di 100% untuk visual
+            
+            with cols_gauge[i]:
+                # --- RENDER NEON RING CHART ---
+                fig = go.Figure(go.Pie(
+                    values=[percentage, 100 - percentage],
+                    hole=0.85, # Membuat lubang besar (sleek)
+                    marker=dict(colors=[BRAND_BLUE, "#F0F2F6"]), # Warna Brand & Background Abu-abu Soft
+                    textinfo='none',
+                    hoverinfo='none',
+                    sort=False
+                ))
+                
+                # Tambahkan Angka Persentase di Tengah Ring
+                fig.add_annotation(
+                    text=f"<b style='font-size:18px;'>{percentage:.1f}%</b>",
+                    x=0.5, y=0.5, showarrow=False,
+                    font=dict(color=BRAND_BLUE)
+                )
+
+                fig.update_layout(
+                    showlegend=False,
+                    height=150, # Lebih pendek dan hemat tempat
+                    margin=dict(l=10, r=10, t=10, b=10),
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)',
+                )
+
                 with st.container(border=True):
-                    fig = go.Figure(go.Indicator(
-                        mode = "gauge+number", value = current_val, title = {'text': f"<b>{label}</b>", 'font': {'size': 14}},
-                        gauge = {'axis': {'range': [None, target_val]}, 'bar': {'color': BRAND_BLUE}}
-                    ))
-                    fig.update_layout(height=180, margin=dict(l=20,r=20,t=40,b=20), paper_bgcolor='rgba(0,0,0,0)')
                     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-                    st.markdown(f"<div style='text-align:center; margin-top:-20px;'>Progress: <b>{percentage:.1f}%</b></div>", unsafe_allow_html=True)
-    except: pass
+                    # Label di bawah chart
+                    st.markdown(f"""
+                        <div style="text-align:center; margin-top:-10px;">
+                            <div style="font-size:10px; color:gray; font-weight:800; text-transform:uppercase;">{label}</div>
+                            <div style="font-size:12px; font-weight:bold; color:#111827;">{current_val:,.0f}</div>
+                        </div>
+                    """, unsafe_allow_html=True)
+    except Exception as e:
+        st.error(f"Gagal memuat Target: {e}")
 
     # ==========================================================
     # 6. PETA PERSEBARAN & GRAFIK (CLEAN & FIXED)
