@@ -37,6 +37,7 @@ def universal_date_parser(d_str):
     return d_str
 
 def create_modern_chart(data, y_col, color, title):
+    # Buat chart dasar
     fig = px.area(
         data,
         x='Date',
@@ -45,7 +46,12 @@ def create_modern_chart(data, y_col, color, title):
         line_shape='spline'
     )
 
+    # Konfigurasi agar angka muncul permanen
     fig.update_traces(
+        mode='lines+markers+text',          # Tambahkan '+text' agar angka muncul
+        text=data[y_col],                   # Ambil angka dari kolom y
+        textposition='top center',          # Posisi angka di atas titik
+        texttemplate='%{text:,.0f}',        # Format angka (ribuan dipisah koma)
         line=dict(width=3, color=color),
         fillcolor='rgba' + str(
             tuple(
@@ -55,26 +61,37 @@ def create_modern_chart(data, y_col, color, title):
                 ) + [0.15]
             )
         ),
-        mode='lines+markers',
         marker=dict(
             size=10,
             color='white',
             line=dict(width=3, color=color)
         ),
+        # Font untuk angka yang muncul permanen
+        textfont=dict(
+            family="Arial",
+            size=11,
+            color=color  # Warna angka disamakan dengan warna garis agar senada
+        ),
         hovertemplate="<b>%{y:,.0f}</b><extra></extra>"
     )
 
     fig.update_layout(
-        height=280,
+        height=320, # Ditambah sedikit tingginya agar angka tidak terpotong plafon grafik
         margin=dict(l=10, r=10, t=60, b=10),
         template="plotly_white",
         hovermode="x unified",
         xaxis=dict(
             showgrid=False, 
-            tickformat="%b %Y",  # Format Bulan & Tahun
-            dtick="M1"           # Pastikan tick muncul setiap 1 bulan
+            tickformat="%b %Y", 
+            dtick="M1"
         ),
-        yaxis=dict(showgrid=True, gridcolor='#F3F4F6', tickformat=","),
+        yaxis=dict(
+            showgrid=True, 
+            gridcolor='#F3F4F6', 
+            tickformat=",",
+            # Berikan sedikit ruang di atas (padding) agar angka tertinggi tidak menempel ke judul
+            range=[0, data[y_col].max() * 1.2 if not data.empty else 100] 
+        ),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
     )
