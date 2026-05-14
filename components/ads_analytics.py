@@ -281,7 +281,7 @@ def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
         st.markdown("---")
 
         # ---------------- UPLOADER ----------------
-        UPLOAD_ICON = "https://cdn-icons-png.flaticon.com/512/338/338910.png" # Ikon Cloud/Folder Upload
+        UPLOAD_ICON = "https://cdn-icons-png.flaticon.com/512/8138/8138543.png" # Ikon Cloud/Folder Upload
     
         # 2. Render Header Upload File Report
         st.markdown(f"""
@@ -391,7 +391,7 @@ def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
 
         st.markdown("---")
         # ---------------- UPLOADER ----------------
-        UPLOAD_ICON = "https://cdn-icons-png.flaticon.com/512/338/338910.png" # Ikon Cloud/Folder Upload
+        UPLOAD_ICON = "https://cdn-icons-png.flaticon.com/512/8138/8138543.png" # Ikon Cloud/Folder Upload
     
         # 2. Render Header Upload File Report
         st.markdown(f"""
@@ -496,7 +496,7 @@ def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
         
         st.markdown("<br>", unsafe_allow_html=True)
         # ---------------- UPLOADER ----------------
-        UPLOAD_ICON = "https://cdn-icons-png.flaticon.com/512/338/338910.png" # Ikon Cloud/Folder Upload
+        UPLOAD_ICON = "https://cdn-icons-png.flaticon.com/512/8138/8138543.png" # Ikon Cloud/Folder Upload
     
         # 2. Render Header Upload File Report
         st.markdown(f"""
