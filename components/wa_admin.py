@@ -222,7 +222,47 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                 st.markdown("---")
 
             # 4. MEKARI TAG STATUS BREAKDOWN (PIE CHART)
-                st.markdown('<div class="feature-header">🏷️ Mekari Tag Status Breakdown</div>', unsafe_allow_html=True)
+                # --- SUB-HEADER: MEKARI TAG STATUS ---
+                TAG_ICON = "https://cdn-icons-png.flaticon.com/512/2054/2054002.png" # Ikon Price Tag / Label Modern
+            
+                st.markdown(f"""
+                    <div style="
+                        display: flex; 
+                        align-items: center; 
+                        gap: 12px; 
+                        background: #FFFFFF; 
+                        padding: 10px 15px; 
+                        border-radius: 10px; 
+                        margin-bottom: 15px; 
+                        border-left: 6px solid {BRAND_BLUE}; 
+                        border: 1px solid #E2E8F0;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                    ">
+                        <div style="
+                            background: #F8FAFC; 
+                            padding: 6px; 
+                            border-radius: 6px; 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center;
+                            border: 1px solid #F1F5F9;
+                        ">
+                            <img src="{TAG_ICON}" width="18">
+                        </div>
+                        <div>
+                            <div style="
+                                margin: 0; 
+                                color: #1E293B; 
+                                font-size: 13px; 
+                                font-weight: 800; 
+                                letter-spacing: 0.5px; 
+                                text-transform: uppercase;
+                            ">
+                                🏷️ Mekari <span style="color: {BRAND_BLUE};">Tag Status</span> Breakdown
+                            </div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
                 
                 if 'Mekari Tag' in df_full_tags.columns:
                     # 1. Pembersihan & Perhitungan Data
