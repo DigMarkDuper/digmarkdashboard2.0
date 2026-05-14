@@ -34,72 +34,76 @@ LOGO_URL = "https://www.dutapersadajogja.com/assets/img/logo.png"
 BRAND_BLUE = "#005696"
 BRAND_YELLOW = "#FDB813"
 
-# =====================================================================
-# 2. SISTEM LOGIN (CLEAN & FUNCTIONAL)
-# =====================================================================
 def check_password():
     if st.session_state.get("password_correct"):
         return True
     
-   # Set Background
+    # Set Background dasar dari utils
     utils.set_bg_local('bg.png') 
     
-    # --- CSS KUSTOM: DEEP DARK BLUE 80% ---
+    # --- CSS KUSTOM: FIXED LAYERING ---
     st.markdown(f'''
         <style>
-            /* 1. Reset Dasar */
+            /* 1. Background dasar aplikasi */
             .stApp {{
                 background-color: #020617 !important;
             }}
 
-            /* 2. Overlay Biru Tua 80% (0.8) */
-            /* Kita gunakan pseudo-element agar menimpa gambar background dari utils */
+            /* 2. Overlay Biru Tua (Lapisan Tengah) */
+            /* Kita gunakan fixed agar tidak bergeser saat scroll */
             [data-testid="stAppViewContainer"]::before {{
                 content: "";
                 position: fixed;
                 top: 0; left: 0; width: 100vw; height: 100vh;
-                background: rgba(2, 6, 23, 0.8) !important; /* Biru Midnight 80% */
-                z-index: 0; /* Di atas gambar, di bawah konten */
-                pointer-events: none;
+                background: rgba(2, 6, 23, 0.8) !important;
+                z-index: 0; 
+                pointer-events: none; /* Penting: agar klik tembus ke form */
             }}
             
-            /* 3. Pastikan konten utama berada di atas overlay */
+            /* 3. PROTEKSI KONTEN (Lapisan Depan) */
+            /* Memastikan kolom utama dan semua isinya muncul di depan overlay */
             .main {{
-                position: relative;
-                z-index: 1;
+                position: relative !important;
+                z-index: 10 !important; /* Angka tinggi agar pasti di depan */
                 background: transparent !important;
             }}
 
-            /* 4. Redupkan gambar asli agar tidak 'bocor' cahayanya */
+            /* 4. Redupkan gambar asli di belakang (Lapisan Belakang) */
             [data-testid="stAppViewContainer"] {{
                 filter: brightness(40%);
+                z-index: -1;
             }}
 
-            /* 5. Teks label Putih Solid */
+            /* 5. Styling Teks & Form agar Kontras */
             .stTextInput label p {{
                 color: #FFFFFF !important;
                 font-weight: 800 !important;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            }}
+            
+            /* Membuat kotak form sedikit lebih terang agar menonjol */
+            [data-testid="stForm"] {{
+                background: rgba(255, 255, 255, 0.05) !important;
+                border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                border-radius: 15px;
+                padding: 20px !important;
             }}
 
             header, footer {{visibility: hidden !important;}}
         </style>
     ''', unsafe_allow_html=True)
 
-    # --- RENDER MENGGUNAKAN COLUMNS (Cara Paling Aman) ---
-    # Kita bagi layar jadi 3 kolom: [Kiri, Tengah, Kanan]
-    # Kolom tengah dibuat kecil (1.5) agar form-nya tidak melar
+    # --- RENDER KONTEN ---
+    # Menggunakan columns seperti kode Anda sebelumnya
     left, mid, right = st.columns([1, 1.5, 1])
     
     with mid:
-        # 1. Kasih jarak dari atas
         st.markdown("<br><br><br>", unsafe_allow_html=True)
         
-        # 2. Logo & Judul (Di luar form tapi di dalam kolom yang sama)
+        # Logo (Sekarang pasti di depan overlay biru)
         st.image(LOGO_URL, width=150)
-        st.markdown(f'<h3 style="color:white; margin-bottom:20px;">Digital Marketing <span style="color:{BRAND_YELLOW}">LOGIN</span></h3>', unsafe_allow_html=True)
+        st.markdown(f'<h3 style="color:white; margin-bottom:20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">Digital Marketing <span style="color:{BRAND_YELLOW}">LOGIN</span></h3>', unsafe_allow_html=True)
 
-        # 3. Form Login
         with st.form("login_safe"):
             u_name = st.text_input("Username").strip().lower()
             u_pass = st.text_input("Password", type="password")
