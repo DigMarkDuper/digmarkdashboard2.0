@@ -150,6 +150,31 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
 
     except Exception as e:
         st.error(f"Gagal memuat metrik: {e}")
+
+    # --- TAMPILAN ROI (BOX DISERAGAMKAN) ---
+        st.markdown('<div style="font-weight: 800; margin-bottom: 15px;">🌍 ULTIMATE ROI DASHBOARD (ALL PLATFORM)</div>', unsafe_allow_html=True)
+        r = st.columns(5)
+
+        def render_roi_box(col, title, value, color="#111827"):
+            with col:
+                st.markdown(f"""
+                    <div class="kpi-card">
+                        <div class="metric-title">{title}</div>
+                        <div class="metric-value" style="color:{color};">{value}</div>
+                    </div>
+                """, unsafe_allow_html=True)
+
+        render_roi_box(r[0], "💸 Total Spend", f"Rp {global_spend:,.0f}", "#8B0000")
+        render_roi_box(r[1], "👥 Leads (Mei)", f"{total_leads}")
+        render_roi_box(r[2], "🎓 Closing", f"{total_closing} Swa", "#006400")
+        render_roi_box(r[3], "🎯 CAC", f"Rp {global_cac:,.0f}", "#D2691E")
+        render_roi_box(r[4], "🚀 ROAS", f"{global_roas:,.1f}x", "#1E3A8A")
+
+        if global_roas > 0:
+            st.success(f"🔥 **Status Bisnis:** Investasi **Rp {global_spend:,.0f}** menghasilkan omzet **Rp {global_omzet:,.0f}** ({global_roas:,.1f}x).")
+
+        st.markdown("---")
+        
     # --- 5. ANNUAL TARGET TRACKING (YEAR-TO-DATE) ---
     try:
         st.markdown('<div style="font-weight: 800; margin-top: 20px; margin-bottom: 15px;">🎯 2026 ANNUAL TARGET PROGRESS</div>', unsafe_allow_html=True)
