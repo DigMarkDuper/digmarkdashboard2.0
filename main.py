@@ -135,17 +135,6 @@ def check_password():
                     text-transform: uppercase;
                 ">
                     DIGITAL MARKETING
-                </h4>
-                <h2 style="
-                    color: {BRAND_YELLOW}; 
-                    font-weight: 800; 
-                    font-size: 12px; 
-                    margin: 0; 
-                    letter-spacing: 1px;
-                    text-transform: uppercase;
-                ">
-                    DASHBOARD
-                </h2>
             </div>
         ''', unsafe_allow_html=True)
 
