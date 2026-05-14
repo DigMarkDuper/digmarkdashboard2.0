@@ -155,8 +155,8 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
 
         st.markdown(f"""
             <div style="display: flex; align-items: center; gap: 15px; background: linear-gradient(90deg, {BRAND_BLUE} 0%, #1e40af 100%); padding: 15px 25px; border-radius: 15px; margin-bottom: 25px; border-left: 10px solid {BRAND_YELLOW}; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                <div style="background: rgba(255,255,255,0.2); padding: 8px; border-radius: 10px;">
-                    <img src="https://img.icons8.com/fluency/48/globe.png" width="28">
+                <div style="background: rgba(255,255,255,0.2); padding: 8px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                    <img src="https://img.icons8.com/color/48/globe--v1.png" width="30">
                 </div>
                 <div>
                     <h2 style="margin:0; color:white; font-size:18px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">🌍 Total Performa Gabungan</h2>
