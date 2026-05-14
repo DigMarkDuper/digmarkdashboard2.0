@@ -14,31 +14,30 @@ except:
     indo_coords = {}
 
 def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
-    # --- AMBIL DATA DARI UTILS ---
+    # --- AMBIL DATA DARI UTILS (Sangat Rapih & Aman) ---
     df_wa = utils.load_wa_admin()
     df_sos = utils.load_sosmed()
     df_web = utils.load_website()
     df_ins = utils.load_insight()
 
-    # --- 1. CSS CUSTOM (FIX BOX SERAGAM) ---
+    # --- 1. CSS CUSTOM UNTUK TAMPILAN (SAMA RATA) ---
     st.markdown("""
         <style>
         .kpi-card {
             background-color: #FFFFFF;
             border-radius: 12px;
-            padding: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             border: 1px solid #F0F2F6;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
-            min-height: 110px;
+            align-items: center;
+            gap: 15px;
+            min-height: 120px; /* Supaya tinggi box sama semua */
             transition: all 0.3s ease;
         }
-        .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
         .metric-title { font-size: 11px; color: #6B7280; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }
-        .metric-value { font-size: 20px; font-weight: 800; color: #111827; }
-        .metric-sub { font-size: 10px; font-weight: 600; margin-top: 2px; }
+        .metric-value { font-size: 18px; font-weight: 800; color: #111827; }
         </style>
     """, unsafe_allow_html=True)
 
@@ -50,13 +49,14 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
         with st.container(border=True):
             st.markdown(f"""
                 <div style="text-align: center; padding: 10px 0px;">
-                    <div style="font-size: 40px; margin-bottom: 10px;">{icon}</div>
-                    <div style="font-size: 13px; font-weight: 800; color: #1E3A8A; text-transform: uppercase;">{title}</div>
-                    <div style="font-size: 10px; color: #666; margin-top: 5px; min-height: 30px;">{subtitle}</div>
+                    <div style="font-size: 45px; margin-bottom: 10px;">{icon}</div>
+                    <div style="font-size: 14px; font-weight: 800; color: #1E3A8A; text-transform: uppercase;">{title}</div>
+                    <div style="font-size: 11px; color: #666; margin-top: 5px; min-height: 35px;">{subtitle}</div>
                 </div>
             """, unsafe_allow_html=True)
             st.button("Masuk ➔", key=button_key, use_container_width=True, on_click=go_to_page_func, args=(target_page,))
 
+    # Data Menu
     nav_data = [
         ("📱", "Sosmed", "Jadwal PIC", "📱 SOSIAL MEDIA", "btn_sos"),
         ("🌐", "Website", "SEO Audit", "🌐 WEBSITE AUDIT", "btn_web"),
@@ -86,7 +86,7 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
         tahun_ini = sekarang.year
         BIAYA_PELATIHAN = 15000000 
 
-        # A. Hitung Leads & Closing Bulan Ini
+        # A. Hitung Leads & Closing
         total_leads, total_closing = 0, 0
         if not df_wa.empty:
             df_wa['tgl_p'] = pd.to_datetime(df_wa['Tanggal Masuk'], dayfirst=True, errors='coerce')
@@ -96,24 +96,28 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
             if status_col:
                 total_closing = len(df_current[df_current[status_col].astype(str).str.contains('Closing', case=False, na=False)])
 
-        # B. Perhitungan ROI (Diperlukan untuk Tampilan ROI di bawah)
-        global_spend = st.session_state.get('spend_tiktok', 0) + st.session_state.get('spend_meta', 0) + st.session_state.get('spend_mekari', 0)
+        # B. Perhitungan ROI
+        spend_tiktok = st.session_state.get('spend_tiktok', 0)
+        spend_meta = st.session_state.get('spend_meta', 0)
+        spend_mekari = st.session_state.get('spend_mekari', 0)
+        
+        global_spend = spend_tiktok + spend_meta + spend_mekari
         global_omzet = total_closing * BIAYA_PELATIHAN 
         global_cac = global_spend / total_closing if total_closing > 0 else 0
         global_roas = (global_omzet / global_spend) if global_spend > 0 else 0
 
-        # C. Tampilan Executive Snapshot
-        st.markdown('<div style="font-weight: 800; margin-bottom: 15px;">📊 EXECUTIVE SNAPSHOT (MEI 2026)</div>', unsafe_allow_html=True)
+        # C. Render Executive Snapshot
+        st.markdown(f'<div style="font-weight: 800; margin-bottom: 15px;">📊 EXECUTIVE SNAPSHOT (MEI {tahun_ini})</div>', unsafe_allow_html=True)
         k1, k2, k3, k4 = st.columns(4)
 
         def render_kpi(icon, title, value, subtext=""):
             st.markdown(f"""
-                <div class="kpi-card" style="flex-direction: row; gap: 12px; align-items: center;">
+                <div class="kpi-card">
                     <div style="font-size: 24px;">{icon}</div>
                     <div>
                         <div class="metric-title">{title}</div>
-                        <div class="metric-value" style="font-size: 18px;">{value}</div>
-                        <div class="metric-sub" style="color: #059669;">{subtext}</div>
+                        <div class="metric-value">{value}</div>
+                        <div style="font-size: 10px; color: #059669; font-weight: 600;">{subtext}</div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
@@ -121,8 +125,8 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
         conv_rate = (total_closing / total_leads * 100) if total_leads > 0 else 0
         with k1: render_kpi("🎯", "Closing / Leads", f"{total_closing} / {total_leads}", f"Conv: {conv_rate:.1f}%")
         with k2: render_kpi("💰", "Estimasi Omzet", f"Rp {global_omzet:,.0f}".replace(",", "."), "Bulan Ini")
-        
-        # Logika Hutang Sosmed & Web
+
+        # Hutang Sosmed
         sos_pend = 0
         if not df_sos.empty and 'PROSES' in df_sos.columns:
             col_tgl_sos = 'Tanggal Deadline' if 'Tanggal Deadline' in df_sos.columns else ('Deadline' if 'Deadline' in df_sos.columns else None)
@@ -131,6 +135,7 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
                 sos_pend = len(df_sos[(df_sos['PROSES'].astype(str).str.upper() != 'DONE') & (df_sos['tgl_conv'].dt.month == bulan_ini)])
         with k3: render_kpi("📱", "Hutang Sosmed", f"{sos_pend} Task", "Deadline Bulan Ini")
 
+        # Hutang Web
         web_pend = 0
         if not df_web.empty and 'Status Post' in df_web.columns:
             col_tgl_web = 'Deadline' if 'Deadline' in df_web.columns else ('Tanggal Deadline' if 'Tanggal Deadline' in df_web.columns else None)
@@ -139,14 +144,16 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
                 web_pend = len(df_web[(~df_web['Status Post'].astype(str).str.upper().isin(['DONE', 'V', '1'])) & (df_web['tgl_conv'].dt.month == bulan_ini)])
         with k4: render_kpi("🌐", "Hutang Web", f"{web_pend} Page", "Deadline Bulan Ini")
 
-        # D. TAMPILAN ROI (BOX DISERAGAMKAN)
-        st.markdown('<div style="font-weight: 800; margin-top: 25px; margin-bottom: 15px;">🌍 ULTIMATE ROI DASHBOARD (ALL PLATFORM)</div>', unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # D. TAMPILAN ROI (INSIDE TRY BLOCK)
+        st.markdown('<div style="font-weight: 800; margin-bottom: 15px;">🌍 ULTIMATE ROI DASHBOARD (ALL PLATFORM)</div>', unsafe_allow_html=True)
         r = st.columns(5)
 
         def render_roi_box(col, title, value, color="#111827"):
             with col:
                 st.markdown(f"""
-                    <div class="kpi-card">
+                    <div class="kpi-card" style="flex-direction: column; align-items: flex-start; justify-content: center; gap: 5px;">
                         <div class="metric-title">{title}</div>
                         <div class="metric-value" style="color:{color};">{value}</div>
                     </div>
@@ -159,7 +166,7 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
         render_roi_box(r[4], "🚀 ROAS", f"{global_roas:,.1f}x", "#1E3A8A")
 
         if global_roas > 0:
-            st.success(f"🔥 **Status Bisnis:** Investasi **Rp {global_spend:,.0f}** menghasilkan omzet **Rp {global_omzet:,.0f}** ({global_roas:,.1f}x).")
+            st.success(f"🔥 **Status Bisnis:** Investasi **Rp {global_spend:,.0f}** menghasilkan omzet **Rp {global_omzet:,.0f}**.")
 
     except Exception as e:
         st.error(f"Gagal memuat metrik: {e}")
@@ -187,11 +194,11 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
             with cols_gauge[i % 2]:
                 with st.container(border=True):
                     fig = go.Figure(go.Indicator(
-                        mode = "gauge+number", value = current_val, title = {'text': f"<b>{label}</b>"},
+                        mode = "gauge+number", value = current_val, title = {'text': f"<b>{label}</b>", 'font': {'size': 14}},
                         gauge = {'axis': {'range': [None, target_val]}, 'bar': {'color': BRAND_BLUE}}
                     ))
-                    fig.update_layout(height=200, margin=dict(l=20,r=20,t=40,b=20), paper_bgcolor='rgba(0,0,0,0)')
-                    st.plotly_chart(fig, use_container_width=True)
+                    fig.update_layout(height=180, margin=dict(l=20,r=20,t=40,b=20), paper_bgcolor='rgba(0,0,0,0)')
+                    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
                     st.markdown(f"<div style='text-align:center; margin-top:-20px;'>Progress: <b>{percentage:.1f}%</b></div>", unsafe_allow_html=True)
     except: pass
 
