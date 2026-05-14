@@ -164,60 +164,60 @@ def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
     # =====================================================================
     # 2. TAMPILAN RINGKASAN GLOBAL
     # =====================================================================
-    # ---------------- UPLOADER ----------------
-        UPLOAD_ICON = "https://cdn-icons-png.flaticon.com/512/338/338910.png" # Ikon Cloud/Folder Upload
-    
-        # 2. Render Header Upload File Report
-        st.markdown(f"""
+# ---------------- UPLOADER ----------------
+    UPLOAD_ICON = "https://cdn-icons-png.flaticon.com/512/338/338910.png" # Ikon Cloud/Folder Upload
+
+    # 2. Render Header Upload File Report
+    st.markdown(f"""
+        <div style="
+            display: flex; 
+            align-items: center; 
+            gap: 20px; 
+            background: linear-gradient(90deg, #1e40af 0%, {BRAND_BLUE} 100%); 
+            padding: 20px 30px; 
+            border-radius: 18px; 
+            margin-bottom: 35px; 
+            border-left: 14px solid {BRAND_YELLOW}; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        ">
             <div style="
+                background: rgba(255, 255, 255, 0.15); 
+                backdrop-filter: blur(10px);
+                padding: 12px; 
+                border-radius: 14px; 
                 display: flex; 
                 align-items: center; 
-                gap: 20px; 
-                background: linear-gradient(90deg, #1e40af 0%, {BRAND_BLUE} 100%); 
-                padding: 20px 30px; 
-                border-radius: 18px; 
-                margin-bottom: 35px; 
-                border-left: 14px solid {BRAND_YELLOW}; 
-                box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+                justify-content: center;
+                border: 1px solid rgba(255, 255, 255, 0.2);
             ">
-                <div style="
-                    background: rgba(255, 255, 255, 0.15); 
-                    backdrop-filter: blur(10px);
-                    padding: 12px; 
-                    border-radius: 14px; 
-                    display: flex; 
-                    align-items: center; 
-                    justify-content: center;
-                    border: 1px solid rgba(255, 255, 255, 0.2);
-                ">
-                    <img src="{UPLOAD_ICON}" width="40">
-                </div>
-                <div>
-                    <h1 style="
-                        margin: 0; 
-                        color: white; 
-                        font-size: 26px; 
-                        font-weight: 900; 
-                        letter-spacing: 1.5px; 
-                        text-transform: uppercase;
-                        line-height: 1.2;
-                    ">
-                        📤 UPLOAD FILE <span style="color: {BRAND_YELLOW};">REPORT</span> TERBARU
-                    </h1>
-                    <p style="
-                        margin: 0; 
-                        color: rgba(255, 255, 255, 0.7); 
-                        font-size: 11px; 
-                        font-weight: 700; 
-                        text-transform: uppercase; 
-                        letter-spacing: 1px; 
-                        margin-top: 5px;
-                    ">
-                        Update Central Database: Upload CSV/XLSX for Daily Marketing Sync
-                    </p>
-                </div>
+                <img src="{UPLOAD_ICON}" width="40">
             </div>
-        """, unsafe_allow_html=True)
+            <div>
+                <h1 style="
+                    margin: 0; 
+                    color: white; 
+                    font-size: 26px; 
+                    font-weight: 900; 
+                    letter-spacing: 1.5px; 
+                    text-transform: uppercase;
+                    line-height: 1.2;
+                ">
+                    📤 UPLOAD FILE <span style="color: {BRAND_YELLOW};">REPORT</span> TERBARU
+                </h1>
+                <p style="
+                    margin: 0; 
+                    color: rgba(255, 255, 255, 0.7); 
+                    font-size: 11px; 
+                    font-weight: 700; 
+                    text-transform: uppercase; 
+                    letter-spacing: 1px; 
+                    margin-top: 5px;
+                ">
+                    Update Central Database: Upload CSV/XLSX for Daily Marketing Sync
+                </p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
     global_spend = total_spend_tiktok + total_spend_meta + total_spend_mekari
     global_omzet = global_closing * BIAYA_PELATIHAN 
     
