@@ -17,7 +17,7 @@ def universal_date_parser(d_str):
         try:
             dt_obj = datetime.strptime(d_str, fmt)
             if dt_obj.year == 1900: 
-                dt_obj = dt_obj.replace(year=2026) 
+                dt_obj = dt_obj.replace(year=2026) # Target Tahun 2026
             return dt_obj.strftime('%d/%m/%Y')
         except: 
             continue
@@ -114,14 +114,15 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
 
     st.markdown("---")
 
-    # --- 3. SMART IMPORTER V7 ---
+    # --- 3. SMART IMPORTER V8 (DETECT BY FILENAME) ---
     with st.expander("🚀 Ultra-Smart Importer (TikTok & Instagram)", expanded=True):
-        files = st.file_uploader("Upload CSV TikTok/IG", type=["csv"], accept_multiple_files=True, key=f"ins_v7_{st.session_state.uploader_key}")
+        files = st.file_uploader("Upload CSV TikTok/IG", type=["csv"], accept_multiple_files=True, key=f"ins_v8_{st.session_state.uploader_key}")
         
         if files:
             all_platform_data = []
             for f in files:
                 try:
+                    fn = f.name.lower()
                     raw_bytes = f.getvalue()
                     content_str = ""
                     for enc in ["utf-8-sig", "utf-8", "latin-1"]:
@@ -132,16 +133,30 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                     
                     sample_text = content_str.lower()
                     
-                    if "video views" in sample_text:
+                    # LOGIKA TIKTOK
+                    if "overview" in fn or "followerhistory" in fn:
                         df_raw = pd.read_csv(io.StringIO(content_str))
                         df_raw['Date'] = df_raw['Date'].apply(universal_date_parser)
-                        res = pd.DataFrame({'Date': df_raw['Date'], 'Platform': 'TikTok', 'View': df_raw.get('Video Views', 0), 'Interaction': df_raw.get('Likes', 0) + df_raw.get('Comments', 0) + df_raw.get('Shares', 0), 'Profile Visit': df_raw.get('Profile Views', 0)})
+                        
+                        if "overview" in fn:
+                            res = pd.DataFrame({
+                                'Date': df_raw['Date'], 
+                                'Platform': 'TikTok', 
+                                'View': df_raw.get('Video Views', 0), 
+                                'Interaction': df_raw.get('Likes', 0) + df_raw.get('Comments', 0) + df_raw.get('Shares', 0), 
+                                'Profile Visit': df_raw.get('Profile Views', 0)
+                            })
+                            st.caption(f"🎵 TikTok Overview detected: {f.name}")
+                        else:
+                            res = pd.DataFrame({
+                                'Date': df_raw['Date'], 
+                                'Platform': 'TikTok', 
+                                'Follow': df_raw.get('Difference in followers from previous day', 0)
+                            })
+                            st.caption(f"🎵 TikTok FollowerHistory detected: {f.name}")
                         all_platform_data.append(res)
-                    elif "follower" in sample_text and "difference" in sample_text:
-                        df_raw = pd.read_csv(io.StringIO(content_str))
-                        df_raw['Date'] = df_raw['Date'].apply(universal_date_parser)
-                        res = pd.DataFrame({'Date': df_raw['Date'], 'Platform': 'TikTok', 'Follow': df_raw.get('Difference in followers from previous day', 0)})
-                        all_platform_data.append(res)
+                    
+                    # LOGIKA INSTAGRAM
                     else:
                         lines = content_str.splitlines()
                         skip_rows = 0
@@ -149,23 +164,50 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                             if "date" in line.lower() and "primary" in line.lower():
                                 skip_rows = i
                                 break
+                        
                         df_raw = pd.read_csv(io.StringIO("\n".join(lines[skip_rows:])))
-                        target_map = {"follows": "Follow", "interactions": "Interaction", "reach": "Reach", "views": "View", "link clicks": "Link Clicks"}
-                        found_target = next((v for k, v in target_map.items() if k in sample_text), None)
+                        
+                        target_map = {
+                            "follows": "Follow", 
+                            "interactions": "Interaction", 
+                            "profile visits": "Profile Visit",
+                            "reach": "Reach", 
+                            "views": "View", 
+                            "link clicks": "Link Clicks"
+                        }
+                        
+                        found_target = None
+                        # Deteksi berdasarkan konten file
+                        for key, val in target_map.items():
+                            if key in sample_text:
+                                found_target = val
+                                break
                         
                         if found_target and 'Date' in df_raw.columns:
+                            # Bersihkan format tanggal IG: 2026-01-01T01:00:00 -> 2026-01-01
                             df_raw['Date'] = df_raw['Date'].astype(str).str.split('T').str[0].apply(universal_date_parser)
-                            res = pd.DataFrame({'Date': df_raw['Date'], 'Platform': 'Instagram', found_target: df_raw.get('Primary', 0)})
+                            res = pd.DataFrame({
+                                'Date': df_raw['Date'], 
+                                'Platform': 'Instagram', 
+                                found_target: df_raw.get('Primary', 0)
+                            })
                             all_platform_data.append(res)
+                            st.caption(f"📸 Instagram {found_target} detected: {f.name}")
+                        else:
+                            st.warning(f"⚠️ Gagal mengenali format file: {f.name}")
 
                 except Exception as e:
                     st.error(f"Error pada file {f.name}: {e}")
 
             if all_platform_data:
                 df_merged = pd.concat(all_platform_data, ignore_index=True)
+                # Gabungkan data yang memiliki Tanggal & Platform yang sama
                 df_merged = df_merged.groupby(['Date', 'Platform']).sum(numeric_only=True).reset_index()
+                
+                # Pastikan semua kolom standar tersedia
                 for col in header_names:
                     if col not in df_merged.columns: df_merged[col] = 0
+                
                 st.session_state.preview_data = df_merged[header_names]
 
     # --- 4. PREVIEW & SAVE ---
