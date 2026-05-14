@@ -20,10 +20,68 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
     df_web = utils.load_website()
     df_ins = utils.load_insight()
 
-    # --- 2. CSS CUSTOM (ULTRACLEAN COMMAND CENTER) ---
-    st.markdown("""
+    # --- 2. CSS CUSTOM (ULTRACLEAN COMMAND CENTER + HEADER ANIMATION) ---
+    st.markdown(f"""
         <style>
-        .kpi-card {
+        /* 1. ANIMASI RUNNING TEXT */
+        @keyframes marquee_header {{
+            0% {{ transform: translateX(100%); }}
+            100% {{ transform: translateX(-100%); }}
+        }}
+
+        /* 2. CSS HEADER UTAMA */
+        .main-header-box {{
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            background: linear-gradient(90deg, {BRAND_BLUE} 0%, #1e40af 100%);
+            padding: 25px 30px;
+            border-radius: 20px;
+            border-left: 12px solid {BRAND_YELLOW};
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            margin-bottom: 40px;
+            overflow: hidden;
+        }}
+        .glass-logo-wrapper {{
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }}
+        .main-title-text {{
+            margin: 0;
+            color: white;
+            font-size: 38px;
+            font-weight: 900;
+            text-transform: uppercase;
+            line-height: 1.1;
+            letter-spacing: -1px;
+        }}
+        .marquee-wrapper-new {{
+            margin-top: 10px;
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 0;
+            border-radius: 5px;
+        }}
+        .marquee-text-new {{
+            display: inline-block;
+            animation: marquee_header 25s linear infinite !important;
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            font-weight: bold;
+        }}
+
+        /* 3. CSS KPI CARD (MILIK MAS) */
+        .kpi-card {{
             background-color: #FFFFFF !important;
             border-radius: 12px !important;
             padding: 18px !important;
@@ -34,38 +92,38 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
             flex-direction: column !important;
             justify-content: space-between !important;
             transition: all 0.3s ease !important;
-        }
-        .kpi-card:hover {
+        }}
+        .kpi-card:hover {{
             transform: translateY(-5px) !important;
             box-shadow: 0 8px 24px rgba(0,0,0,0.1) !important;
             border-color: #D1D5DB !important;
-        }
-        .card-header {
+        }}
+        .card-header {{
             display: flex !important;
             align-items: center !important;
             gap: 10px !important;
             margin-bottom: 10px !important;
-        }
-        .metric-title {
+        }}
+        .metric-title {{
             font-size: 10px !important;
             color: #6B7280 !important;
             font-weight: 800 !important;
             text-transform: uppercase !important;
             letter-spacing: 0.5px !important;
             line-height: 1.2 !important;
-        }
-        .metric-value {
+        }}
+        .metric-value {{
             font-size: 20px !important;
             font-weight: 800 !important;
             color: #111827 !important;
             line-height: 1 !important;
             margin-bottom: 4px !important;
-        }
-        .metric-sub {
+        }}
+        .metric-sub {{
             font-size: 10px !important;
             font-weight: 600 !important;
             color: #059669 !important;
-        }
+        }}
         </style>
     """, unsafe_allow_html=True)
 
