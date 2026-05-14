@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import datetime
-from components.utils import append_sheet_rows, fetch_single_sheet
+from components.utils import load_dm_sosmed_fast, append_sheet_rows_fast
 
 def show_dm_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
     st.title("📥 TRACKER DM SOSMED")
@@ -14,7 +14,7 @@ def show_dm_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
             # Kita hanya tarik Tab Index 5 agar ringan
             st.session_state.dm_data = fetch_single_sheet(5)
 
-    df_dm = st.session_state.dm_data
+    df_dm = load_dm_sosmed_fast()
 
     # --- 2. SUMMARY METRICS (MODERN LOOK) ---
     if not df_dm.empty:
