@@ -4,7 +4,61 @@ import plotly.express as px
 import components.utils as utils
 
 def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
-    st.title("💬 KINERJA WA ADMIN & CLOSING LPK")
+    # ==========================================================
+    # HEADER HALAMAN: WA ADMIN & CLOSING
+    # ==========================================================
+    WA_ICON = "https://cdn-icons-png.flaticon.com/512/3063/3063822.png" # Ikon Admin/CS Modern
+
+    st.markdown(f"""
+        <div style="
+            display: flex; 
+            align-items: center; 
+            gap: 20px; 
+            background: linear-gradient(90deg, #1e40af 0%, {BRAND_BLUE} 100%); 
+            padding: 20px 30px; 
+            border-radius: 18px; 
+            margin-bottom: 35px; 
+            border-left: 14px solid {BRAND_YELLOW}; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        ">
+            <div style="
+                background: rgba(255, 255, 255, 0.15); 
+                backdrop-filter: blur(10px);
+                padding: 12px; 
+                border-radius: 14px; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            ">
+                <img src="{WA_ICON}" width="40">
+            </div>
+            <div>
+                <h1 style="
+                    margin: 0; 
+                    color: white; 
+                    font-size: 26px; 
+                    font-weight: 900; 
+                    letter-spacing: 1.5px; 
+                    text-transform: uppercase;
+                    line-height: 1.2;
+                ">
+                    💬 Kinerja <span style="color: {BRAND_YELLOW};">WA Admin</span> & Closing LPK
+                </h1>
+                <p style="
+                    margin: 0; 
+                    color: rgba(255, 255, 255, 0.7); 
+                    font-size: 11px; 
+                    font-weight: 700; 
+                    text-transform: uppercase; 
+                    letter-spacing: 1px; 
+                    margin-top: 5px;
+                ">
+                    WhatsApp Conversion Funnel & Lead Management Analytics
+                </p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
     st.markdown("---")
     
     try:
