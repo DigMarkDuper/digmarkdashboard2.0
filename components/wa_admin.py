@@ -722,7 +722,45 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                         st.info("Belum ada prospek yang sedang dalam Sales Progress.")
 
                 # 10. MASTER DATABASE
-                st.markdown('<div class="feature-header">📋 Master Database WA Admin</div>', unsafe_allow_html=True)
+                # --- SUB-HEADER: MASTER DATABASE ---
+                DB_ICON = "https://cdn-icons-png.flaticon.com/512/1198/1198293.png" # Ikon Clipboard/Master Data
+            
+                st.markdown(f"""
+                    <div style="
+                        display: flex; 
+                        align-items: center; 
+                        gap: 12px; 
+                        background: {BRAND_BLUE}; 
+                        padding: 10px 15px; 
+                        border-radius: 10px; 
+                        margin-bottom: 15px; 
+                        border-left: 6px solid {BRAND_YELLOW}; 
+                        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                    ">
+                        <div style="
+                            background: rgba(255, 255, 255, 0.2); 
+                            padding: 6px; 
+                            border-radius: 6px; 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center;
+                        ">
+                            <img src="{DB_ICON}" width="18">
+                        </div>
+                        <div>
+                            <div style="
+                                margin: 0; 
+                                color: white; 
+                                font-size: 13px; 
+                                font-weight: 800; 
+                                letter-spacing: 0.5px; 
+                                text-transform: uppercase;
+                            ">
+                                📋 Master <span style="color: {BRAND_YELLOW};">Database</span> WA Admin
+                            </div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
                 col_refresh, _ = st.columns([1, 2])
                 
                 with col_refresh:
