@@ -101,22 +101,24 @@ def check_password():
     """, unsafe_allow_html=True)
 
     # --- RENDER KONTEN (CENTERED) ---
-    # Gunakan perbandingan kolom yang lebih lebar di samping agar tengahnya mengecil
     _, mid, _ = st.columns([1.5, 1, 1.5]) 
     
     with mid:
         st.markdown("<br><br><br>", unsafe_allow_html=True)
         
-        # Centering Logo & Judul menggunakan kolom internal atau HTML
-        col_logo_1, col_logo_2, col_logo_3 = st.columns([1, 2, 1])
-        with col_logo_2:
-            st.image(LOGO_URL, use_container_width=True)
+        # Centering Logo dengan ukuran yang lebih kecil (80-100px)
+        # Kita pakai container HTML agar centering-nya mutlak
+        st.markdown(f'''
+            <div style="display: flex; justify-content: center; margin-bottom: 10px;">
+                <img src="{LOGO_URL}" width="80">
+            </div>
+        ''', unsafe_allow_html=True)
             
         st.markdown(f'''
-            <div style="text-align: center; margin-top: 10px; margin-bottom: 20px;">
-                <h4 style="color:white; font-weight:300; letter-spacing:1px; margin:0;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h4 style="color:white; font-weight:300; letter-spacing:1px; margin:0; font-size: 14px;">
                     Digital Marketing <br>
-                    <span style="color:{BRAND_YELLOW}; font-weight:800;">LOGIN SYSTEM</span>
+                    <span style="color:{BRAND_YELLOW}; font-weight:800;">DASHBOARD</span>
                 </h4>
             </div>
         ''', unsafe_allow_html=True)
@@ -124,7 +126,7 @@ def check_password():
         with st.form("login_compact"):
             u_name = st.text_input("Username").strip().lower()
             u_pass = st.text_input("Password", type="password")
-            if st.form_submit_button("MASUK SISTEM"):
+            if st.form_submit_button("LOGIN"):
                 if "credentials" in st.secrets and u_name in st.secrets["credentials"] and st.secrets["credentials"][u_name] == u_pass:
                     st.session_state["password_correct"] = True
                     st.rerun()
