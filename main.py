@@ -39,73 +39,73 @@ def check_password():
         return True
     utils.set_bg_local('bg.png')
         st.markdown(f"""
-    <style>
-    
-    /* 1. Kunci background pada level container tertinggi */
-    [data-testid="stAppViewContainer"] {{
-        background-color: #020617 !important; /* Warna dasar jika gambar gagal load */
-        background-image: 
-            linear-gradient(rgba(2, 6, 23, 0.85), rgba(2, 6, 23, 0.85)), 
-            url("data:image/png;base64,{utils.get_base64_of_bin_file('bg.png')}");
-        background-size: cover !important;
-        background-position: center !important;
-        background-repeat: no-repeat !important;
-        background-attachment: fixed !important;
-    }}
-    
-    /* 2. Pastikan lapisan di atasnya tidak punya warna (transparan) */
-    [data-testid="stHeader"], [data-testid="stMain"], .main {{
-        background: transparent !important;
-    }}
-    
-    /* 3. Container utama konten */
-    .block-container {{
-        position: relative;
-        z-index: 2;
-        padding-top: 4rem !important;
-    }}
-    
-    /* 4. Form Glassmorphism yang lebih tegas kontrasnya */
-    [data-testid="stForm"] {{
-        background: rgba(255, 255, 255, 0.05) !important;
-        backdrop-filter: blur(20px) saturate(150%);
-        -webkit-backdrop-filter: blur(20px) saturate(150%);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 20px;
-        padding: 40px !important;
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-    }}
-    
-    /* 5. Input Text */
-    .stTextInput input {{
-        background-color: rgba(0, 0, 0, 0.2) !important;
-        color: white !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    }}
-    
-    /* 6. Perbaikan Label (Warna Putih Solid) */
-    .stTextInput label p {{
-        color: white !important;
-        font-weight: 700 !important;
-        font-size: 14px !important;
-    }}
-    
-    /* 7. Tombol dengan warna aksen Mas */
-    div[data-testid="stFormSubmitButton"] > button {{
-        width: 100%;
-        background: {BRAND_YELLOW} !important;
-        color: black !important;
-        border-radius: 10px !important;
-        font-weight: 800 !important;
-        text-transform: uppercase;
-        border: none !important;
-        padding: 10px !important;
-    }}
-    
-    header, footer {{ visibility: hidden !important; }}
-    
-    </style>
-    """, unsafe_allow_html=True)
+        <style>
+        
+        /* 1. Kunci background pada level container tertinggi */
+        [data-testid="stAppViewContainer"] {{
+            background-color: #020617 !important; /* Warna dasar jika gambar gagal load */
+            background-image: 
+                linear-gradient(rgba(2, 6, 23, 0.85), rgba(2, 6, 23, 0.85)), 
+                url("data:image/png;base64,{utils.get_base64_of_bin_file('bg.png')}");
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+            background-attachment: fixed !important;
+        }}
+        
+        /* 2. Pastikan lapisan di atasnya tidak punya warna (transparan) */
+        [data-testid="stHeader"], [data-testid="stMain"], .main {{
+            background: transparent !important;
+        }}
+        
+        /* 3. Container utama konten */
+        .block-container {{
+            position: relative;
+            z-index: 2;
+            padding-top: 4rem !important;
+        }}
+        
+        /* 4. Form Glassmorphism yang lebih tegas kontrasnya */
+        [data-testid="stForm"] {{
+            background: rgba(255, 255, 255, 0.05) !important;
+            backdrop-filter: blur(20px) saturate(150%);
+            -webkit-backdrop-filter: blur(20px) saturate(150%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px !important;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }}
+        
+        /* 5. Input Text */
+        .stTextInput input {{
+            background-color: rgba(0, 0, 0, 0.2) !important;
+            color: white !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }}
+        
+        /* 6. Perbaikan Label (Warna Putih Solid) */
+        .stTextInput label p {{
+            color: white !important;
+            font-weight: 700 !important;
+            font-size: 14px !important;
+        }}
+        
+        /* 7. Tombol dengan warna aksen Mas */
+        div[data-testid="stFormSubmitButton"] > button {{
+            width: 100%;
+            background: {BRAND_YELLOW} !important;
+            color: black !important;
+            border-radius: 10px !important;
+            font-weight: 800 !important;
+            text-transform: uppercase;
+            border: none !important;
+            padding: 10px !important;
+        }}
+        
+        header, footer {{ visibility: hidden !important; }}
+        
+        </style>
+        """, unsafe_allow_html=True)
 
     # --- RENDER KONTEN ---
     # Menggunakan columns seperti kode Anda sebelumnya
