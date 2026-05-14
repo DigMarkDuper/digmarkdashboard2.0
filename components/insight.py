@@ -111,7 +111,21 @@ def create_modern_chart(data, y_col, color, title):
 # =========================================================
 
 def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
-    st.title("📈 ANALITIK KONTEN")
+    st.markdown(f"""
+        <div style="display: flex; align-items: center; gap: 18px; margin-bottom: 35px; padding-bottom: 20px; border-bottom: 2px solid #F3F4F6;">
+            <div style="background-color: {BRAND_BLUE}; padding: 12px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center;">
+                <img src="https://img.icons8.com/fluency/48/combo-chart.png" width="40">
+            </div>
+            <div>
+                <h1 style="margin: 0; font-size: 36px; font-weight: 900; color: {BRAND_BLUE}; letter-spacing: -1.5px; text-transform: uppercase; line-height: 1;">
+                    Content Insight Engine
+                </h1>
+                <p style="margin: 5px 0 0 0; color: #6B7280; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">
+                    <span style="color: {BRAND_YELLOW};">●</span> Global Performance & Growth Monitoring
+                </p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
 
     header_names = ["Date", "Platform", "View", "Reach", "Interaction", "Profile Visit", "Link Clicks", "Follow"]
     numeric_cols = ["View", "Reach", "Interaction", "Profile Visit", "Link Clicks", "Follow"]
@@ -140,8 +154,14 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                 df_calc[col] = pd.to_numeric(df_calc[col], errors='coerce').fillna(0)
 
         st.markdown(f"""
-            <div style="background-color:{BRAND_BLUE}; padding:20px; border-radius:15px; margin-bottom:25px; border-left:10px solid {BRAND_YELLOW};">
-                <h2 style="margin:0; color:white; font-size:18px;">🌍 TOTAL PERFORMA GABUNGAN</h2>
+            <div style="display: flex; align-items: center; gap: 15px; background: linear-gradient(90deg, {BRAND_BLUE} 0%, #1e40af 100%); padding: 15px 25px; border-radius: 15px; margin-bottom: 25px; border-left: 10px solid {BRAND_YELLOW}; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <div style="background: rgba(255,255,255,0.2); padding: 8px; border-radius: 10px;">
+                    <img src="https://img.icons8.com/fluency/48/globe.png" width="28">
+                </div>
+                <div>
+                    <h2 style="margin:0; color:white; font-size:18px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">🌍 Total Performa Gabungan</h2>
+                    <p style="margin:0; color: rgba(255,255,255,0.7); font-size: 11px; font-weight: 600;">Data akumulasi dari seluruh platform yang terhubung</p>
+                </div>
             </div>
         """, unsafe_allow_html=True)
         
