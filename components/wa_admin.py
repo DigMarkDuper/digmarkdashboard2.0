@@ -96,44 +96,44 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
         
             # 2. FILTER DATA DI HALAMAN UTAMA
                 # --- SUB-HEADER: FILTER DATA ---
-        FILTER_ICON = "https://cdn-icons-png.flaticon.com/512/3126/3126647.png" # Ikon Filter/Slider
-    
-        st.markdown(f"""
+    FILTER_ICON = "https://cdn-icons-png.flaticon.com/512/3126/3126647.png" # Ikon Filter/Slider
+
+    st.markdown(f"""
+        <div style="
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            background: linear-gradient(90deg, #0F172A 0%, #1e3a8a 100%); 
+            padding: 10px 15px; 
+            border-radius: 10px; 
+            margin-bottom: 20px; 
+            border-left: 6px solid {BRAND_YELLOW}; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        ">
             <div style="
+                background: rgba(255, 255, 255, 0.1); 
+                padding: 6px; 
+                border-radius: 6px; 
                 display: flex; 
                 align-items: center; 
-                gap: 12px; 
-                background: linear-gradient(90deg, #0F172A 0%, #1e3a8a 100%); 
-                padding: 10px 15px; 
-                border-radius: 10px; 
-                margin-bottom: 20px; 
-                border-left: 6px solid {BRAND_YELLOW}; 
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                justify-content: center;
             ">
+                <img src="{FILTER_ICON}" width="18">
+            </div>
+            <div>
                 <div style="
-                    background: rgba(255, 255, 255, 0.1); 
-                    padding: 6px; 
-                    border-radius: 6px; 
-                    display: flex; 
-                    align-items: center; 
-                    justify-content: center;
+                    margin: 0; 
+                    color: white; 
+                    font-size: 13px; 
+                    font-weight: 800; 
+                    letter-spacing: 1px; 
+                    text-transform: uppercase;
                 ">
-                    <img src="{FILTER_ICON}" width="18">
-                </div>
-                <div>
-                    <div style="
-                        margin: 0; 
-                        color: white; 
-                        font-size: 13px; 
-                        font-weight: 800; 
-                        letter-spacing: 1px; 
-                        text-transform: uppercase;
-                    ">
-                        🔍 Parameter <span style="color: {BRAND_YELLOW};">Filter Data</span>
-                    </div>
+                    🔍 Parameter <span style="color: {BRAND_YELLOW};">Filter Data</span>
                 </div>
             </div>
-        """, unsafe_allow_html=True)
+        </div>
+    """, unsafe_allow_html=True)
             
             col_filter1, col_filter2 = st.columns(2)
             
