@@ -761,8 +761,7 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
-                col_refresh, _ = st.columns([1, 2])
-                
+                col_space, col_btn = st.columns([4, 1])
                 with col_btn:
                     if st.button("🔄 Refresh Data", use_container_width=True, key="refresh_wa_admin_bottom"):
                         st.cache_data.clear()
