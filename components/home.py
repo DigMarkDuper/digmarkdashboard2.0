@@ -35,7 +35,7 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
         }
         .metric-title { 
             display: block !important; 
-            font-size: 10px !important; 
+            font-size: 24px !important; 
             color: #6B7280 !important; 
             font-weight: 800 !important; 
             text-transform: uppercase !important; 
