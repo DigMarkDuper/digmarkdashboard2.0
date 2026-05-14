@@ -36,7 +36,6 @@ def universal_date_parser(d_str):
 
     return d_str
 
-
 def create_modern_chart(data, y_col, color, title):
     fig = px.area(
         data,
@@ -70,14 +69,17 @@ def create_modern_chart(data, y_col, color, title):
         margin=dict(l=10, r=10, t=60, b=10),
         template="plotly_white",
         hovermode="x unified",
-        xaxis=dict(showgrid=False, tickformat="%d %b"),
+        xaxis=dict(
+            showgrid=False, 
+            tickformat="%b %Y",  # Format Bulan & Tahun
+            dtick="M1"           # Pastikan tick muncul setiap 1 bulan
+        ),
         yaxis=dict(showgrid=True, gridcolor='#F3F4F6', tickformat=","),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
     )
 
     return fig
-
 
 # =========================================================
 # 2. HALAMAN INSIGHT
@@ -122,17 +124,34 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         g3.metric("Grand Interaksi", f"{int(df_calc['Interaction'].sum()):,}")
         g4.metric("Grand Followers", f"{int(df_calc['Follow'].sum()):,}")
 
-        # --- VISUALISASI PER PLATFORM ---
+        # --- VISUALISASI PER PLATFORM (MONTHLY) ---
         try:
             df_trend = df_calc.copy()
             df_trend['Date'] = pd.to_datetime(df_trend['Date'], dayfirst=True, errors='coerce')
             df_trend = df_trend.dropna(subset=['Date']).sort_values('Date')
 
+            # --- AGREGASI DATA PER BULAN ---
+            # Mengelompokkan data berdasarkan Platform dan Bulan
+            df_monthly = df_trend.groupby([
+                'Platform', 
+                df_trend['Date'].dt.to_period('M')
+            ]).sum(numeric_only=True).reset_index()
+            
+            # Kembalikan format Date ke Timestamp agar Plotly bisa membacanya
+            df_monthly['Date'] = df_monthly['Date'].dt.to_timestamp()
+
             # --- SECTION TIKTOK ---
-            df_tk = df_trend[df_trend['Platform'] == 'TikTok']
+            df_tk = df_monthly[df_monthly['Platform'] == 'TikTok']
             if not df_tk.empty:
                 st.write("") # Spacer
-                st.markdown("### 🎵 **TikTok** Growth Trend")
+                
+                # Header TikTok dengan Logo
+                t_col1, t_col2 = st.columns([0.07, 0.93])
+                with t_col1:
+                    st.image("https://img.icons8.com/color/48/tiktok.png", width=35)
+                with t_col2:
+                    st.markdown("### **TikTok** Growth Trend (Monthly)")
+                
                 st.markdown("---")
                 tk1, tk2 = st.columns(2)
                 with tk1:
@@ -141,18 +160,26 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                     st.plotly_chart(create_modern_chart(df_tk, 'Follow', "#00CC96", "TikTok New Followers"), use_container_width=True)
 
             # --- SECTION INSTAGRAM ---
-            df_ig = df_trend[df_trend['Platform'] == 'Instagram']
+            df_ig = df_monthly[df_monthly['Platform'] == 'Instagram']
             if not df_ig.empty:
                 st.write("") # Spacer
-                st.markdown("### 📸 **Instagram** Growth Trend")
+                
+                # Header Instagram dengan Logo
+                i_col1, i_col2 = st.columns([0.07, 0.93])
+                with i_col1:
+                    st.image("https://img.icons8.com/color/48/instagram-new.png", width=35)
+                with i_col2:
+                    st.markdown("### **Instagram** Growth Trend (Monthly)")
+                
                 st.markdown("---")
                 ig1, ig2 = st.columns(2)
                 with ig1:
                     st.plotly_chart(create_modern_chart(df_ig, 'View', "#E1306C", "Instagram Views"), use_container_width=True)
                 with ig2:
                     st.plotly_chart(create_modern_chart(df_ig, 'Follow', "#833AB4", "Instagram New Followers"), use_container_width=True)
+                    
         except Exception as e:
-            st.error(f"Gagal memuat grafik: {e}")
+            st.error(f"⚠️ Gagal memuat grafik: {e}")
 
     st.markdown("---")
 
