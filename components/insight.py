@@ -8,22 +8,18 @@ import components.utils as utils
 # --- 1. FUNGSI PEMBANTU ---
 
 def universal_date_parser(d_str):
-    if pd.isna(d_str) or d_str == "": 
-        return ""
-    d_str = str(d_str).strip().replace('"', '')
-    # Menangani TikTok (April 1) dan Instagram (2026-01-01T01:00:00)
-    # Kita ambil tanggalnya saja jika ada format ISO T...
-    d_str = d_str.split('t')[0].split('T')[0]
+    if pd.isna(d_str) or d_str == "": return ""
+    d_str = str(d_str).strip().replace('"', '').replace("'", "")
+    # Potong jam jika ada (format Instagram ISO)
+    d_str = d_str.split('T')[0].split('t')[0]
     
     formats = ['%B %d', '%b %d', '%d-%m-%Y', '%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y', '%B %d, %Y']
     for fmt in formats:
         try:
             dt_obj = datetime.strptime(d_str, fmt)
-            if dt_obj.year == 1900: 
-                dt_obj = dt_obj.replace(year=2026)
+            if dt_obj.year == 1900: dt_obj = dt_obj.replace(year=2026)
             return dt_obj.strftime('%d/%m/%Y')
-        except: 
-            continue
+        except: continue
     return d_str
 
 def create_modern_chart(data, y_col, color, title):
@@ -52,18 +48,15 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
     header_names = ["Date", "Platform", "View", "Reach", "Interaction", "Profile Visit", "Link Clicks", "Follow"]
     numeric_cols = ["View", "Reach", "Interaction", "Profile Visit", "Link Clicks", "Follow"]
     
-    if 'preview_data' not in st.session_state: 
-        st.session_state.preview_data = None
-    if 'uploader_key' not in st.session_state: 
-        st.session_state.uploader_key = 0
+    if 'preview_data' not in st.session_state: st.session_state.preview_data = None
+    if 'uploader_key' not in st.session_state: st.session_state.uploader_key = 0
 
     df_db_main = st.session_state.get('bundle', {}).get(2, pd.DataFrame())
 
     # --- RENDER SUMMARY & CHARTS ---
     if not df_db_main.empty:
         df_calc = df_db_main.copy()
-        if len(df_calc.columns) == len(header_names): 
-            df_calc.columns = header_names
+        if len(df_calc.columns) == len(header_names): df_calc.columns = header_names
         for col in numeric_cols: 
             df_calc[col] = pd.to_numeric(df_calc[col], errors='coerce').fillna(0)
 
@@ -98,30 +91,21 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
 
     st.markdown("---")
 
-    # --- 3. SMART IMPORTER V12 (PRO MULTI-DETECTOR) ---
-    with st.expander("🚀 Ultra-Smart Importer (TikTok & Instagram)", expanded=True):
-        files = st.file_uploader("Upload CSV TikTok/IG", type=["csv"], accept_multiple_files=True, key=f"ins_v12_{st.session_state.uploader_key}")
+    # --- 3. SMART IMPORTER V14 (FILENAME LOGIC ONLY) ---
+    with st.expander("🚀 Upload Insight (TikTok & Instagram)", expanded=True):
+        files = st.file_uploader("Pilih file ekspor CSV", type=["csv"], accept_multiple_files=True, key=f"ins_v14_{st.session_state.uploader_key}")
         
         if files:
             all_platform_data = []
-            st.info("📋 **Status Deteksi File:**")
-            
             for f in files:
                 try:
                     fn = f.name.lower()
-                    raw_bytes = f.getvalue()
-                    content_str = ""
-                    for enc in ["utf-8-sig", "utf-8", "latin-1"]:
-                        try:
-                            content_str = raw_bytes.decode(enc)
-                            break
-                        except: continue
+                    # Decode content
+                    content = f.getvalue().decode("utf-8-sig", errors="ignore")
                     
-                    lines = content_str.splitlines()
-                    
-                    # --- A. LOGIKA TIKTOK (Detection by Filename) ---
+                    # A. LOGIKA TIKTOK
                     if "overview" in fn or "followerhistory" in fn:
-                        df_raw = pd.read_csv(io.StringIO(content_str))
+                        df_raw = pd.read_csv(io.StringIO(content))
                         df_raw.columns = [c.replace('"', '').strip() for c in df_raw.columns]
                         df_raw['Date'] = df_raw['Date'].apply(universal_date_parser)
                         
@@ -132,65 +116,49 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                                 'Interaction': df_raw.get('Likes', 0) + df_raw.get('Comments', 0) + df_raw.get('Shares', 0), 
                                 'Profile Visit': df_raw.get('Profile Views', 0)
                             })
-                            st.success(f"🎵 **TikTok Overview** terdeteksi: `{f.name}`")
                         else:
                             res = pd.DataFrame({
                                 'Date': df_raw['Date'], 'Platform': 'TikTok', 
                                 'Follow': df_raw.get('Difference in followers from previous day', 0)
                             })
-                            st.success(f"🎵 **TikTok Followers** terdeteksi: `{f.name}`")
                         all_platform_data.append(res)
-                    
-                    # --- B. LOGIKA INSTAGRAM (Detection by Content Line 2) ---
+                        st.success(f"🎵 TikTok detected: {f.name}")
+
+                    # B. LOGIKA INSTAGRAM
                     else:
-                        metric_title = ""
-                        header_idx = -1
+                        mapping = {
+                            "follows": "Follow",
+                            "visits": "Profile Visit",
+                            "link clicks": "Link Clicks",
+                            "interactions": "Interaction",
+                            "reach": "Reach",
+                            "views": "View"
+                        }
                         
-                        # Cari Baris Header "Date","Primary"
-                        for i, line in enumerate(lines):
-                            clean = line.replace('"', '').lower()
-                            if i == 1: metric_title = clean # Baris kedua biasanya judul metrik
-                            if "date" in clean and "primary" in clean:
-                                header_idx = i
+                        target_col = None
+                        for key, val in mapping.items():
+                            if key in fn:
+                                target_col = val
                                 break
                         
-                        if header_idx != -1:
-                            df_raw = pd.read_csv(io.StringIO("\n".join(lines[header_idx:])))
+                        if target_col:
+                            # Instagram CSV: line 0=sep, line 1=title, line 2=header
+                            df_raw = pd.read_csv(io.StringIO(content), skiprows=2)
                             df_raw.columns = [c.replace('"', '').strip() for c in df_raw.columns]
+                            df_raw['Date'] = df_raw['Date'].apply(universal_date_parser)
                             
-                            # Mapping Metrik Berdasarkan Judul di Baris 2 atau Nama File
-                            mapping = {
-                                "follows": "Follow",
-                                "profile visits": "Profile Visit",
-                                "visits": "Profile Visit",
-                                "link clicks": "Link Clicks",
-                                "interactions": "Interaction",
-                                "reach": "Reach",
-                                "views": "View"
-                            }
-                            
-                            found_metric = None
-                            for key, val in mapping.items():
-                                if key in metric_title or key in fn:
-                                    found_metric = val
-                                    break
-                            
-                            if found_metric:
-                                df_raw['Date'] = df_raw['Date'].apply(universal_date_parser)
-                                res = pd.DataFrame({
-                                    'Date': df_raw['Date'], 
-                                    'Platform': 'Instagram', 
-                                    found_metric: pd.to_numeric(df_raw['Primary'], errors='coerce').fillna(0)
-                                })
-                                all_platform_data.append(res)
-                                st.success(f"📸 **Instagram {found_metric}** terdeteksi: `{f.name}`")
-                            else:
-                                st.warning(f"⚠️ Metrik tidak dikenal pada file: `{f.name}`")
+                            res = pd.DataFrame({
+                                'Date': df_raw['Date'], 
+                                'Platform': 'Instagram', 
+                                target_col: pd.to_numeric(df_raw['Primary'], errors='coerce').fillna(0)
+                            })
+                            all_platform_data.append(res)
+                            st.success(f"📸 Instagram {target_col} detected: {f.name}")
                         else:
-                            st.error(f"❌ Header tidak ditemukan pada file: `{f.name}`")
+                            st.warning(f"❓ File tidak dikenali dari nama: {f.name}")
 
                 except Exception as e:
-                    st.error(f"⚠️ Gagal memproses {f.name}: {e}")
+                    st.error(f"⚠️ Error {f.name}: {e}")
 
             if all_platform_data:
                 df_merged = pd.concat(all_platform_data, ignore_index=True)
@@ -201,26 +169,16 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
 
     # --- 4. PREVIEW & SAVE ---
     if st.session_state.preview_data is not None:
-        st.markdown("### 🔍 Preview Penggabungan Data")
+        st.markdown("### 🔍 Preview Penggabungan")
         st.dataframe(st.session_state.preview_data, use_container_width=True, hide_index=True)
         if st.button("🚀 SIMPAN SEMUA KE DATABASE", use_container_width=True):
-            final_list = st.session_state.preview_data.values.tolist()
-            if utils.append_sheet_rows(2, final_list):
+            if utils.append_sheet_rows(2, st.session_state.preview_data.values.tolist()):
                 st.success("🔥 Data Berhasil Disimpan!")
                 st.session_state.preview_data = None
                 st.session_state.uploader_key += 1
                 st.cache_data.clear()
                 st.session_state.bundle = utils.fetch_all_master_data()
                 st.rerun()
-
-    # --- 5. DATABASE TABLE ---
-    st.markdown("### 🗄️ Riwayat Database")
-    if not df_db_main.empty:
-        df_show = df_db_main.copy()
-        if len(df_show.columns) == len(header_names): df_show.columns = header_names
-        df_show['SortDate'] = pd.to_datetime(df_show['Date'], dayfirst=True, errors='coerce')
-        df_show = df_show.sort_values(by='SortDate', ascending=False).drop(columns=['SortDate'])
-        st.dataframe(df_show, use_container_width=True, hide_index=True)
 
     if st.button("🔄 Segarkan Data", use_container_width=True):
         st.cache_data.clear()
