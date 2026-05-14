@@ -227,7 +227,52 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
                 web_pend = len(df_web[(~df_web['Status Post'].astype(str).str.upper().isin(['DONE', 'V', '1'])) & (df_web['tgl_conv'].dt.month == bulan_ini)])
 
         # RENDER SNAPSHOT
-        st.markdown(f'<div style="font-weight: 800; margin-bottom: 15px;">📊 EXECUTIVE SNAPSHOT (MEI 2026)</div>', unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style="
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            background: linear-gradient(90deg, {BRAND_BLUE} 0%, #1e3a8a 100%); 
+            padding: 12px 20px; 
+            border-radius: 12px; 
+            margin-top: 10px;
+            margin-bottom: 25px; 
+            border-left: 10px solid {BRAND_YELLOW}; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        ">
+            <div style="
+                background: rgba(255, 255, 255, 0.2); 
+                padding: 8px; 
+                border-radius: 8px; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center;
+            ">
+                <img src="https://img.icons8.com/fluency/48/combo-chart.png" width="25">
+            </div>
+            <div>
+                <h2 style="
+                    margin: 0; 
+                    color: white; 
+                    font-size: 16px; 
+                    font-weight: 800; 
+                    letter-spacing: 1.5px; 
+                    text-transform: uppercase;
+                ">
+                    📊 Executive Snapshot <span style="color: {BRAND_YELLOW};">(MEI 2026)</span>
+                </h2>
+                <p style="
+                    margin: 0; 
+                    color: rgba(255, 255, 255, 0.7); 
+                    font-size: 10px; 
+                    font-weight: 600; 
+                    text-transform: uppercase;
+                ">
+                    Real-time Performance Metrics & Strategic Overview
+                </p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
         k = st.columns(4)
         conv_mei = (total_closing_mei / total_leads_mei * 100) if total_leads_mei > 0 else 0
         
