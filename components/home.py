@@ -86,7 +86,7 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
             """, unsafe_allow_html=True)
 
     # --- 3. HEADER ---
-    st.markdown('<div class="feature-header" style="text-align: center; margin-bottom:20px;">🚀 DIGITAL MARKETING COMMAND CENTER</div>', unsafe_allow_html=True)
+    st.markdown('<div class="feature-header" style="text-align: center; margin-bottom:48px;">🚀 DIGITAL MARKETING COMMAND CENTER</div>', unsafe_allow_html=True)
 
     # --- 4. NAVIGASI MENU ---
     def create_square_card(icon, title, subtitle, target_page, button_key):
