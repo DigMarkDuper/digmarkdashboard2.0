@@ -150,8 +150,8 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
                 <img src="{LOGO_URL}" width="80">
             </div>
             <div style="flex-grow: 1; min-width: 0;">
-                <h1 class="main-title-text">
-                    DIGITAL MARKETING <span style="color: white; -webkit-text-stroke: 1px {BRAND_BLUE};">COMMAND CENTER</span>
+                <h1 class="main-title-text" style="color: {BRAND_YELLOW}; -webkit-text-stroke: 1px {BRAND_BLUE};">
+                    DIGITAL MARKETING <span style="color: white;">COMMAND CENTER</span>
                 </h1>
                 <div class="marquee-wrapper-new">
                     <div class="marquee-text-new">
