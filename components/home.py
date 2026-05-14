@@ -440,11 +440,11 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
     except Exception as e:
         st.error(f"⚠️ Gagal sinkronisasi data Insight: {e}")
 
-    # ==========================================================
+# ==========================================================
     # 6. PETA PERSEBARAN & GRAFIK (CLEAN & FIXED)
     # ==========================================================
     # --- SECTION HEADER: GEOSPATIAL ANALYSIS ---
-    MAP_ICON = "https://cdn-icons-png.flaticon.com/512/854/854878.png" # Ikon Peta/Pin Lokasi Modern
+    MAP_ICON = "https://cdn-icons-png.flaticon.com/512/854/854878.png"
 
     st.markdown(f"""
         <div style="
@@ -489,6 +489,9 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
         </div>
     """, unsafe_allow_html=True)
     
+    # ----------------------------------------------------
+    # BLOK TRY 1: PETA PERSEBARAN
+    # ----------------------------------------------------
     try:
         # --- 1. FILTER DATA: Hanya Leads Murni ---
         df_maps = df_wa.copy()
@@ -522,11 +525,9 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
             # --- 3. LOGIKA MATCHING KOORDINAT ---
             lats, lons = [], []
             for loc in asal_counts['Lokasi']:
-                # Normalisasi input agar cocok dengan key di database_lokasi.py
                 loc_clean = str(loc).lower().replace('kabupaten', '').replace('kab.', '').replace('kota', '').replace('provinsi', '').replace('prov.', '').strip()
                 
                 matched = False
-                # Prioritas 1: Exact Match atau kecocokan kata kunci
                 for key, coords in indo_coords.items():
                     clean_key = key.lower().strip()
                     if clean_key == loc_clean or f" {clean_key} " in f" {loc_clean} " or loc_clean.startswith(f"{clean_key} ") or loc_clean.endswith(f" {clean_key}"):
@@ -535,7 +536,6 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
                         matched = True
                         break
                 
-                # Prioritas 2: Fuzzy Match Sederhana
                 if not matched:
                     for key, coords in indo_coords.items():
                         clean_key = key.lower().strip()
@@ -553,8 +553,6 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
             map_data = asal_counts.dropna(subset=['Lat', 'Lon'])
             
             # --- 4. RENDER VISUALISASI ---
-            
-            # A. PETA HEATMAP
             with st.container(border=True):
                 st.markdown("<div style='font-size:14px; color:gray; font-weight:bold; margin-bottom:10px;'>Titik Persebaran Leads - Seluruh Indonesia</div>", unsafe_allow_html=True)
                 
@@ -575,58 +573,68 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
                     )
                     fig_map.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, height=600, coloraxis_showscale=False)
                     st.plotly_chart(fig_map, use_container_width=True)
-                
-      # B. GRAFIK TREEMAP (FIXED & SYNCED)
-        # --- SECTION HEADER: TREEMAP DISTRIBUTION ---
-        TREE_ICON = "https://cdn-icons-png.flaticon.com/512/1632/1632602.png" 
-            
-        st.markdown(f"""
+                else:
+                    st.warning("⚠️ Lokasi terdeteksi tapi koordinat tidak ditemukan di database lokasi.")
+
+    # PENUTUP TRY 1 YANG HILANG SEBELUMNYA
+    except Exception as e:
+        st.error(f"Gagal memuat Peta Persebaran: {e}")
+
+    # ==========================================================
+    # B. GRAFIK TREEMAP (FIXED & SYNCED)
+    # ==========================================================
+    TREE_ICON = "https://cdn-icons-png.flaticon.com/512/1632/1632602.png" 
+        
+    st.markdown(f"""
+        <div style="
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            background: linear-gradient(90deg, {BRAND_BLUE} 0%, #1e3a8a 100%); 
+            padding: 12px 20px; 
+            border-radius: 12px; 
+            margin-top: 25px;
+            margin-bottom: 20px; 
+            border-left: 10px solid {BRAND_YELLOW}; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        ">
             <div style="
+                background: rgba(255, 255, 255, 0.2); 
+                padding: 8px; 
+                border-radius: 8px; 
                 display: flex; 
                 align-items: center; 
-                gap: 15px; 
-                background: linear-gradient(90deg, {BRAND_BLUE} 0%, #1e3a8a 100%); 
-                padding: 12px 20px; 
-                border-radius: 12px; 
-                margin-top: 25px;
-                margin-bottom: 20px; 
-                border-left: 10px solid {BRAND_YELLOW}; 
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                justify-content: center;
             ">
-                <div style="
-                    background: rgba(255, 255, 255, 0.2); 
-                    padding: 8px; 
-                    border-radius: 8px; 
-                    display: flex; 
-                    align-items: center; 
-                    justify-content: center;
-                ">
-                    <img src="{TREE_ICON}" width="25">
-                </div>
-                <div>
-                    <h2 style="
-                        margin: 0; 
-                        color: white; 
-                        font-size: 16px; 
-                        font-weight: 800; 
-                        letter-spacing: 1.5px; 
-                        text-transform: uppercase;
-                    ">
-                        📍 Sebaran Domisili Prospek <span style="color: {BRAND_YELLOW};">(TREEMAP)</span>
-                    </h2>
-                    <p style="
-                        margin: 0; 
-                        color: rgba(255, 255, 255, 0.7); 
-                        font-size: 10px; 
-                        font-weight: 600; 
-                        text-transform: uppercase;
-                    ">
-                        Hierarchical Visualization of Lead Locations & Origin
-                    </p>
-                </div>
+                <img src="{TREE_ICON}" width="25">
             </div>
-        """, unsafe_allow_html=True)
+            <div>
+                <h2 style="
+                    margin: 0; 
+                    color: white; 
+                    font-size: 16px; 
+                    font-weight: 800; 
+                    letter-spacing: 1.5px; 
+                    text-transform: uppercase;
+                ">
+                    📍 Sebaran Domisili Prospek <span style="color: {BRAND_YELLOW};">(TREEMAP)</span>
+                </h2>
+                <p style="
+                    margin: 0; 
+                    color: rgba(255, 255, 255, 0.7); 
+                    font-size: 10px; 
+                    font-weight: 600; 
+                    text-transform: uppercase;
+                ">
+                    Hierarchical Visualization of Lead Locations & Origin
+                </p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
 
+    # ----------------------------------------------------
+    # BLOK TRY 2: TREEMAP
+    # ----------------------------------------------------
     try:
         if not df_wa.empty:
             # Mencari kolom yang mengandung kata 'Asal' secara otomatis
