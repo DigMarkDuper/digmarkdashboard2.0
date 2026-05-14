@@ -4,7 +4,7 @@ import io
 import datetime
 import components.utils as utils
 
-def show_ads_analytics_page(BRAND_BLUE):
+def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
     # 1. Gunakan Ikon Ads/Target yang relevan dari GitHub Mas atau URL Premium
     ADS_ICON = "https://cdn-icons-png.flaticon.com/512/3228/3228286.png" # Ikon Target/Ads Analytics
 
