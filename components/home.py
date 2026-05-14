@@ -20,24 +20,37 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
     df_web = utils.load_website()
     df_ins = utils.load_insight()
 
-    # --- 1. CSS CUSTOM (FIX BOX SERAGAM) ---
+    # --- 1. CSS CUSTOM (VERTIKAL STYLE) ---
     st.markdown("""
         <style>
         .kpi-card {
             background-color: #FFFFFF;
             border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             border: 1px solid #F0F2F6;
             display: flex;
-            align-items: center;
-            gap: 15px;
-            min-height: 120px;
+            flex-direction: column; /* MEMAKSA ATAS BAWAH */
+            justify-content: center;
+            align-items: flex-start; /* Rata kiri agar lebih rapi */
+            min-height: 110px;
             transition: all 0.3s ease;
         }
-        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
-        .metric-title { font-size: 11px; color: #6B7280; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }
-        .metric-value { font-size: 18px; font-weight: 800; color: #111827; }
+        .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .metric-title { 
+            font-size: 10px; 
+            color: #6B7280; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            margin-bottom: 8px; /* Jarak antara judul dan angka */
+            line-height: 1.2;
+        }
+        .metric-value { 
+            font-size: 19px; 
+            font-weight: 800; 
+            color: #111827; 
+            line-height: 1;
+        }
         </style>
     """, unsafe_allow_html=True)
 
@@ -151,40 +164,6 @@ def show_homepage(BRAND_BLUE, go_to_page_func, bundle):
         with k4: render_kpi("🌐", "Hutang Web", f"{web_pend} Page", "Deadline Mei")
 
         st.markdown("<br>", unsafe_allow_html=True)
-
-    # --- 1. CSS CUSTOM (VERTIKAL STYLE) ---
-        st.markdown("""
-            <style>
-            .kpi-card {
-                background-color: #FFFFFF;
-                border-radius: 12px;
-                padding: 15px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-                border: 1px solid #F0F2F6;
-                display: flex;
-                flex-direction: column; /* MEMAKSA ATAS BAWAH */
-                justify-content: center;
-                align-items: flex-start; /* Rata kiri agar lebih rapi */
-                min-height: 110px;
-                transition: all 0.3s ease;
-            }
-            .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-            .metric-title { 
-                font-size: 10px; 
-                color: #6B7280; 
-                font-weight: 800; 
-                text-transform: uppercase; 
-                margin-bottom: 8px; /* Jarak antara judul dan angka */
-                line-height: 1.2;
-            }
-            .metric-value { 
-                font-size: 19px; 
-                font-weight: 800; 
-                color: #111827; 
-                line-height: 1;
-            }
-            </style>
-        """, unsafe_allow_html=True)
     
         # --- E. RENDER ROI DASHBOARD ---
         try:
