@@ -614,7 +614,45 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                 col_closing, col_sales = st.columns(2)
                 
                 with col_closing:
-                    st.markdown('<div class="feature-header">🎉 Detail Sukses Closing</div>', unsafe_allow_html=True)
+                    # --- SUB-HEADER KIRI: DETAIL SUKSES CLOSING (GREEN SUCCESS EDITION) ---
+                    CLOSING_ICON = "https://cdn-icons-png.flaticon.com/512/190/190411.png" # Ikon Trophy/Sukses
+                
+                    st.markdown(f"""
+                        <div style="
+                            display: flex; 
+                            align-items: center; 
+                            gap: 12px; 
+                            background: linear-gradient(90deg, #064e3b 0%, #059669 100%); 
+                            padding: 10px 15px; 
+                            border-radius: 10px; 
+                            margin-bottom: 15px; 
+                            border-left: 6px solid {BRAND_YELLOW}; 
+                            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                        ">
+                            <div style="
+                                background: rgba(255, 255, 255, 0.2); 
+                                padding: 6px; 
+                                border-radius: 6px; 
+                                display: flex; 
+                                align-items: center; 
+                                justify-content: center;
+                            ">
+                                <img src="{CLOSING_ICON}" width="18">
+                            </div>
+                            <div>
+                                <div style="
+                                    margin: 0; 
+                                    color: white; 
+                                    font-size: 13px; 
+                                    font-weight: 800; 
+                                    letter-spacing: 0.5px; 
+                                    text-transform: uppercase;
+                                ">
+                                    🎉 Detail <span style="color: {BRAND_YELLOW};">Sukses Closing</span>
+                                </div>
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
                     df_closing = df_wa[df_wa['Status'].str.contains('Closing', case=False, na=False)].copy()
                     if not df_closing.empty:
                         kolom_target = {
@@ -630,7 +668,45 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                         st.info("Belum ada data siswa yang berstatus Closing.")
                         
                 with col_sales:
-                    st.markdown('<div class="feature-header">⏳ Detail Sales Progress</div>', unsafe_allow_html=True)
+                   # --- SUB-HEADER KANAN: DETAIL SALES PROGRESS ---
+                    PROGRESS_ICON = "https://cdn-icons-png.flaticon.com/512/3142/3142730.png" # Ikon Jam Pasir/Progress
+                
+                    st.markdown(f"""
+                        <div style="
+                            display: flex; 
+                            align-items: center; 
+                            gap: 12px; 
+                            background: {BRAND_BLUE}; 
+                            padding: 10px 15px; 
+                            border-radius: 10px; 
+                            margin-bottom: 15px; 
+                            border-left: 6px solid {BRAND_YELLOW}; 
+                            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                        ">
+                            <div style="
+                                background: rgba(255, 255, 255, 0.2); 
+                                padding: 6px; 
+                                border-radius: 6px; 
+                                display: flex; 
+                                align-items: center; 
+                                justify-content: center;
+                            ">
+                                <img src="{PROGRESS_ICON}" width="18">
+                            </div>
+                            <div>
+                                <div style="
+                                    margin: 0; 
+                                    color: white; 
+                                    font-size: 13px; 
+                                    font-weight: 800; 
+                                    letter-spacing: 0.5px; 
+                                    text-transform: uppercase;
+                                ">
+                                    ⏳ Detail <span style="color: {BRAND_YELLOW};">Sales Progress</span>
+                                </div>
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
                     df_sales = df_wa[df_wa['Status'].str.contains('Sales Progress', case=False, na=False)].copy()
                     if not df_sales.empty:
                         kolom_target = {
