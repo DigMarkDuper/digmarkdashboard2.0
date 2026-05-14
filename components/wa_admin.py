@@ -324,7 +324,47 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                     st.plotly_chart(fig_mekari, use_container_width=True)
 
                 # 5. KATEGORI PESAN MASUK
-                st.markdown('<div class="feature-header">🗂️ Kategori Intensi Pesan</div>', unsafe_allow_html=True)
+                # --- SUB-HEADER: KATEGORI INTENSI PESAN ---
+                CATEGORY_ICON = "https://cdn-icons-png.flaticon.com/512/3281/3281323.png" # Ikon Folder / Kategorisasi
+            
+                st.markdown(f"""
+                    <div style="
+                        display: flex; 
+                        align-items: center; 
+                        gap: 12px; 
+                        background: #FFFFFF; 
+                        padding: 10px 15px; 
+                        border-radius: 10px; 
+                        margin-bottom: 15px; 
+                        border-left: 6px solid {BRAND_BLUE}; 
+                        border: 1px solid #E2E8F0;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                    ">
+                        <div style="
+                            background: #F8FAFC; 
+                            padding: 6px; 
+                            border-radius: 6px; 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center;
+                            border: 1px solid #F1F5F9;
+                        ">
+                            <img src="{CATEGORY_ICON}" width="18">
+                        </div>
+                        <div>
+                            <div style="
+                                margin: 0; 
+                                color: #1E293B; 
+                                font-size: 13px; 
+                                font-weight: 800; 
+                                letter-spacing: 0.5px; 
+                                text-transform: uppercase;
+                            ">
+                                🗂️ Kategori <span style="color: {BRAND_BLUE};">Intensi Pesan</span>
+                            </div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
                 if 'Kategori (Persyaratan/Biaya/Pendaftaran/Loker/dll)' in df_full_tags.columns:
                     kolom_kat = 'Kategori (Persyaratan/Biaya/Pendaftaran/Loker/dll)'
                     df_full_tags[kolom_kat] = df_full_tags[kolom_kat].astype(str).str.strip()
