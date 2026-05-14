@@ -41,7 +41,7 @@ def show_ads_analytics_page(BRAND_BLUE):
             else:
                 df_closing = pd.DataFrame()
 
-            # 2. HITUNG RINCIAN PLATFORM (Hanya cari di kolom 'Sumber' atau 'Platform', hindari 'Asal')
+            # 2. HITUNG RINCIAN PLATFORM
             kolom_sumber_wa = next((c for c in df_wa.columns if str(c).lower() in ['sumber', 'platform', 'source']), None)
             
             if kolom_sumber_wa:
@@ -93,16 +93,25 @@ def show_ads_analytics_page(BRAND_BLUE):
         total_pesan_mekari = pd.to_numeric(df_db_mekari[col_interaksi], errors='coerce').fillna(0).sum() if col_interaksi else 0
 
     # =====================================================================
-    # 2. TAMPILAN RINGKASAN GLOBAL
+    # 2. PERHITUNGAN GLOBAL & SINKRONISASI KE HOME
     # =====================================================================
     global_spend = total_spend_tiktok + total_spend_meta + total_spend_mekari
     global_omzet = global_closing * BIAYA_PELATIHAN 
     
-    # Perhitungan rasio aman dari error (dibagi nol)
     global_cpl = global_spend / global_leads if global_leads > 0 else 0
     global_cac = global_spend / global_closing if global_closing > 0 else 0
     global_roas = (global_omzet / global_spend) if global_spend > 0 else 0
 
+    # --- ACTION: SIMPAN KE SESSION STATE AGAR HALAMAN HOME BISA BACA ---
+    st.session_state['spend_tiktok'] = total_spend_tiktok
+    st.session_state['spend_meta'] = total_spend_meta
+    st.session_state['spend_mekari'] = total_spend_mekari
+    st.session_state['global_leads'] = global_leads
+    st.session_state['global_closing'] = global_closing
+
+    # =====================================================================
+    # 3. TAMPILAN DASHBOARD
+    # =====================================================================
     st.markdown('<div class="feature-header">🌍 ULTIMATE ROI DASHBOARD (SEMUA PLATFORM)</div>', unsafe_allow_html=True)
     g1, g2, g3, g4, g5 = st.columns(5)
     with g1:
@@ -110,7 +119,6 @@ def show_ads_analytics_page(BRAND_BLUE):
             st.markdown(f"<div style='font-size:12px; color:gray; font-weight:800; margin-bottom:5px;'>💸 TOTAL SPEND</div><div style='font-size:24px; font-weight:bold; color:#8B0000;'>Rp {global_spend:,.0f}</div>", unsafe_allow_html=True)
     with g2:
         with st.container(border=True):
-            # Angka Leads ini sekarang 100% mengambil dari len(df_wa)
             st.markdown(f"<div style='font-size:12px; color:gray; font-weight:800; margin-bottom:5px;'>👥 LEADS GLOBAL</div><div style='font-size:24px; font-weight:bold;'>{global_leads}</div>", unsafe_allow_html=True)
     with g3:
         with st.container(border=True):
@@ -120,17 +128,17 @@ def show_ads_analytics_page(BRAND_BLUE):
             st.markdown(f"<div style='font-size:12px; color:gray; font-weight:800; margin-bottom:5px;'>🎯 BIAYA/SISWA (CAC)</div><div style='font-size:24px; font-weight:bold; color:#D2691E;'>Rp {global_cac:,.0f}</div>", unsafe_allow_html=True)
     with g5:
         with st.container(border=True):
-            st.markdown(f"<div style='font-size:12px; color:gray; font-weight:800; margin-bottom:5px;'>🚀 ROAS (KEUNTUNGAN)</div><div style='font-size:24px; font-weight:bold; color:#1E3A8A;'>{global_roas:,.1f}x Lipat</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='font-size:12px; color:gray; font-weight:800; margin-bottom:5px;'>🚀 ROAS (KEUNTUNGAN)</div><div style='font-size:24px; font-weight:bold; color:#1E3A8A;'>{global_roas:,.1f}x</div>", unsafe_allow_html=True)
 
     if global_roas > 0:
-        st.success(f"🔥 **Status Bisnis:** Dengan total investasi **Rp {global_spend:,.0f}**, kamu menghasilkan omzet kotor **Rp {global_omzet:,.0f}**. Nilai investasimu kembali **{global_roas:,.1f} kali lipat**!")
+        st.success(f"🔥 **Status Bisnis:** Dengan investasi **Rp {global_spend:,.0f}**, omzet kotor **Rp {global_omzet:,.0f}** ({global_roas:,.1f}x).")
     elif global_spend > 0 and global_closing == 0:
-        st.error("⚠️ **Peringatan:** Saldo sudah digunakan, namun belum ada siswa yang Closing. Segera evaluasi materi iklan atau follow-up CS!")
+        st.error("⚠️ **Peringatan:** Saldo sudah digunakan, namun belum ada closing!")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
     # =====================================================================
-    # 3. TAB UNTUK RINCIAN PER PLATFORM
+    # 4. TAB UNTUK RINCIAN PER PLATFORM
     # =====================================================================
     tab_tiktok, tab_meta, tab_mekari = st.tabs([
         "📱 Rincian TikTok Ads", 
@@ -138,9 +146,7 @@ def show_ads_analytics_page(BRAND_BLUE):
         "🟩 Rincian Mekari (WA)"
     ])
 
-    # =====================================================================
-    # TAB TIKTOK
-    # =====================================================================
+    # --- TAB TIKTOK ---
     with tab_tiktok:
         cpl_tk = total_spend_tiktok / total_leads_tiktok if total_leads_tiktok > 0 else 0
         cac_tk = total_spend_tiktok / closing_tiktok if closing_tiktok > 0 else 0
@@ -153,46 +159,28 @@ def show_ads_analytics_page(BRAND_BLUE):
         t5.metric("💰 Biaya/Siswa (CAC)", f"Rp {cac_tk:,.0f}")
 
         st.markdown("---")
-
         with st.container(border=True):
             st.markdown("### 📤 Upload Laporan TikTok Ads Baru")
             up_tk = st.file_uploader("Upload File Laporan TikTok Ads", type=['csv', 'xlsx'], key="up_tk")
-
             if up_tk is not None:
                 try:
                     df_up_tk = pd.read_csv(up_tk) if up_tk.name.endswith('.csv') else pd.read_excel(up_tk)
-                    col_pertama_tk = df_up_tk.columns[0]
-                    df_clean_tk = df_up_tk[~df_up_tk[col_pertama_tk].astype(str).str.strip().str.lower().str.startswith('total')].copy()
-                    
+                    col_p = df_up_tk.columns[0]
+                    df_clean_tk = df_up_tk[~df_up_tk[col_p].astype(str).str.strip().str.lower().str.startswith('total')].copy()
                     df_calc_up = df_clean_tk.copy()
                     df_calc_up.columns = [str(c).strip().lower() for c in df_calc_up.columns]
                     col_cost_up = next((c for c in df_calc_up.columns if 'cost' in c), None)
-                    
                     up_spend_tk = pd.to_numeric(df_calc_up[col_cost_up], errors='coerce').fillna(0).sum() if col_cost_up else 0
-                    
                     st.success(f"✅ Budget TikTok yang akan ditambahkan: **Rp {up_spend_tk:,.0f}**")
-                    
-                    if st.button("📥 Import ke Spreadsheet (TikTok)", use_container_width=True, key="btn_imp_tk"):
-                        with st.spinner("Mengirim ke Tab 7..."):
-                            df_final = df_clean_tk.fillna("")
-                            bulk_data = [df_final.columns.tolist()] + df_final.values.tolist() if df_ads_tiktok_db.empty else df_final.values.tolist()
-                            if utils.append_sheet_rows(6, bulk_data):
-                                st.success("✅ Berhasil masuk ke Tab TikTok.")
-                                st.balloons()
-                                st.cache_data.clear()
-                                if 'bundle' in st.session_state: del st.session_state['bundle']
-                                st.rerun()
+                    if st.button("📥 Import ke Spreadsheet (TikTok)", use_container_width=True):
+                        df_final = df_clean_tk.fillna("")
+                        bulk = [df_final.columns.tolist()] + df_final.values.tolist() if df_ads_tiktok_db.empty else df_final.values.tolist()
+                        if utils.append_sheet_rows(6, bulk):
+                            st.success("✅ Berhasil!")
+                            st.cache_data.clear()
+                            st.rerun()
                 except Exception as e:
-                    st.error(f"Gagal memproses: {e}")
-
-        with st.expander("📑 Database TikTok Tersimpan (Klik untuk lihat & Reset)", expanded=False):
-            if not df_ads_tiktok_db.empty:
-                st.dataframe(df_ads_tiktok_db, use_container_width=True, hide_index=True)
-                if st.button("🗑️ Kosongkan Database TikTok", use_container_width=True, key="rst_tk"):
-                    utils.init_connection().open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(6).clear()
-                    st.cache_data.clear()
-                    if 'bundle' in st.session_state: del st.session_state['bundle']
-                    st.rerun()
+                    st.error(f"Error: {e}")
 
     # =====================================================================
     # TAB META
