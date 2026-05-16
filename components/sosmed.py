@@ -232,7 +232,7 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
             # --- BARIS 3: LIVE EDITOR ---
             st.markdown('<div class="feature-header">📋 Master Production Pipeline (Live Editor)</div>', unsafe_allow_html=True)
             
-            pic_map = {"Aziz": "🔵 Aziz", "Hana": "🟢 Hana", "Dea": "🟡 Dea"}
+            pic_map = {"Abi": "🔵 Abi", "Hana": "🟢 Hana", "Hanif": "🟡 Hanif"}
             out_map = {"Video": "🎬 Video", "Design": "🎨 Design"}
             stat_map = {"DONE": "✅ DONE", "PENDING": "⏳ PENDING", "ON PROGRESS": "🏗️ ON PROGRESS"}
 
