@@ -110,7 +110,7 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
                 </div>
             """, unsafe_allow_html=True)
 
-           # --- FUNGSI PEMBANTU UNTUK RENDER METRIC CARD (VERSI BACKGROUND PUTIH + LOGO) ---
+          # --- FUNGSI PEMBANTU UNTUK RENDER METRIC CARD (VERSI COMPACT KANAN-KIRI) ---
             def render_metric_card(title, value, accent_color, icon_url):
                 return f"""
                 <div style="
@@ -118,33 +118,38 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
                     border: 1px solid #e5e7eb;
                     border-left: 5px solid {accent_color};
                     border-radius: 12px; 
-                    padding: 15px 20px; 
+                    padding: 12px 15px; /* Padding diperkecil agar tidak memakan ruang */
                     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
                     display: flex;
-                    flex-direction: column;
-                    justify-content: center;
+                    align-items: center; /* Memastikan logo dan teks sejajar di tengah */
+                    gap: 15px; /* Jarak antara logo dan teks */
                 ">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                        <img src="{icon_url}" width="20" height="20">
+                    <div>
+                        <img src="{icon_url}" width="38" height="38">
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column;">
                         <p style="
                             margin: 0; 
-                            color: #6b7280; /* Warna abu-abu tua agar rapi */
-                            font-size: 11px; 
+                            color: #6b7280; 
+                            font-size: 10px; 
                             font-weight: 800; 
                             text-transform: uppercase; 
                             letter-spacing: 0.5px;
+                            margin-bottom: 2px;
                         ">
                             {title}
                         </p>
+                        <h2 style="
+                            margin: 0; 
+                            color: #111827; 
+                            font-weight: 900; 
+                            font-size: 20px; /* Ukuran font disesuaikan agar pas di kotak horizontal */
+                            line-height: 1.1;
+                        ">
+                            {value}
+                        </h2>
                     </div>
-                    <h2 style="
-                        margin: 0; 
-                        color: #111827; /* Hitam pekat untuk angka */
-                        font-weight: 900; 
-                        font-size: 26px;
-                    ">
-                        {value}
-                    </h2>
                 </div>
                 """
 
