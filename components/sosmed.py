@@ -116,10 +116,92 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
             m4.metric("Design Selesai 🎨", f"{d_done}/{d_total}")
 
             st.markdown('<div class="feature-header">📲 Status Penjadwalan (Scheduling)</div>', unsafe_allow_html=True)
+            # --- FUNGSI PEMBANTU UNTUK RENDER METRIC CARD ---
+            def render_metric_card(title, value, accent_color, icon=""):
+                return f"""
+                <div style="
+                    background: rgba(255, 255, 255, 0.05); 
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-left: 5px solid {accent_color};
+                    border-radius: 12px; 
+                    padding: 15px 20px; 
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                ">
+                    <p style="
+                        margin: 0; 
+                        color: rgba(255,255,255,0.7); 
+                        font-size: 12px; 
+                        font-weight: 700; 
+                        text-transform: uppercase; 
+                        letter-spacing: 0.5px;
+                        margin-bottom: 5px;
+                    ">
+                        {title}
+                    </p>
+                    <h2 style="
+                        margin: 0; 
+                        color: white; 
+                        font-weight: 800; 
+                        font-size: 26px;
+                    ">
+                        {value} {icon}
+                    </h2>
+                </div>
+                """
+
+            # --- BARIS 1: METRIK PRODUKSI --- 
+            m1, m2, m3, m4 = st.columns(4)
+            with m1:
+                st.markdown(render_metric_card("Total Rencana", len(filtered_df), "gray"), unsafe_allow_html=True)
+            with m2:
+                st.markdown(render_metric_card("Total DONE", v_done + d_done, "#2ECC71", "✅"), unsafe_allow_html=True)
+            with m3:
+                st.markdown(render_metric_card("Video Selesai", f"{v_done}/{v_total}", BRAND_BLUE, "🎬"), unsafe_allow_html=True)
+            with m4:
+                st.markdown(render_metric_card("Design Selesai", f"{d_done}/{d_total}", BRAND_YELLOW, "🎨"), unsafe_allow_html=True)
+
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            # --- HEADER STATUS PENJADWALAN ---
+            st.markdown(f"""
+                <div style="
+                    display: flex; 
+                    align-items: center; 
+                    gap: 12px; 
+                    background: #010101; 
+                    padding: 12px 20px; 
+                    border-radius: 12px; 
+                    margin-bottom: 25px; 
+                    border-left: 6px solid {BRAND_BLUE};
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+                ">
+                    <img src="https://img.icons8.com/fluency/48/calendar.png" width="32">
+                    <h3 style="
+                        margin: 0; 
+                        color: white; 
+                        font-weight: 800; 
+                        letter-spacing: 1px; 
+                        font-size: 18px;
+                        text-transform: uppercase;
+                    ">
+                        STATUS PENJADWALAN (SCHEDULING)
+                    </h3>
+                </div>
+            """, unsafe_allow_html=True)
+
+            # --- BARIS 2: METRIK HUTANG POSTING ---
             s1, s2, s3 = st.columns(3)
-            s1.metric("Hutang Post IG 📸", ig_p)
-            s2.metric("Hutang Post YT 🎥", yt_p)
-            s3.metric("Hutang Post TikTok 💃", tt_p)
+            with s1:
+                st.markdown(render_metric_card("Hutang Post IG", ig_p, "#E1306C", "📸"), unsafe_allow_html=True) # Warna khas Instagram
+            with s2:
+                st.markdown(render_metric_card("Hutang Post YT", yt_p, "#FF0000", "🎥"), unsafe_allow_html=True) # Warna khas YouTube
+            with s3:
+                st.markdown(render_metric_card("Hutang Post TikTok", tt_p, "#00f2fe", "💃"), unsafe_allow_html=True) # Warna khas TikTok
+
+            st.markdown("<br>", unsafe_allow_html=True)
 
             st.markdown("---")
 
