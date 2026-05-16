@@ -1,10 +1,35 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 from components.utils import load_sosmed, update_sheet_cell
 
 def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
-    st.title("🚀 SOSMED COMMAND CENTER")
+    st.markdown(f"""
+        <div style="
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            background: #010101; 
+            padding: 15px 25px; 
+            border-radius: 12px; 
+            margin-bottom: 30px; 
+            border-left: 8px solid {BRAND_YELLOW};
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        ">
+            <img src="https://img.icons8.com/fluency/48/social-media-marketing.png" width="38">
+            <h2 style="
+                margin: 0; 
+                color: white; 
+                font-weight: 800; 
+                letter-spacing: 1.5px; 
+                font-size: 22px;
+                text-transform: uppercase;
+            ">
+                SOSMED COMMAND CENTER
+            </h2>
+        </div>
+    """, unsafe_allow_html=True)
     st.markdown("---")
     
     try:
@@ -15,26 +40,37 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
 
         st.sidebar.markdown(f"<h2 style='color:{BRAND_BLUE};'>Manager Controls</h2>", unsafe_allow_html=True)
         
-        # --- SIDEBAR FILTERS ---
-        months = df['Bulan-Deadline'].dropna().unique().tolist() if 'Bulan-Deadline' in df.columns else []
-        selected_months = st.sidebar.multiselect("Bulan Deadline:", options=months, default=months, key="sos_bulan")
+        # --- FILTER HALAMAN UTAMA ---
+        # Membuat kolom agar filter tampil menyamping dan rapi
+        col_filter1, col_filter2 = st.columns(2)
         
-        list_pic = ["Ejak", "Hana", "Abi", "Hanif"] 
-        selected_pic = st.sidebar.multiselect("Pantau PIC:", options=list_pic, default=list_pic, key="sos_pic")
+        months = df['Bulan-Deadline'].dropna().unique().tolist() if 'Bulan-Deadline' in df.columns else []
+        with col_filter1:
+            selected_months = st.multiselect("📅 Bulan Deadline:", options=months, default=months, key="sos_bulan")
+        
+        list_pic = ["Aziz", "Dea", "Hana"] 
+        with col_filter2:
+            selected_pic = st.multiselect("👥 Pantau PIC:", options=list_pic, default=list_pic, key="sos_pic")
 
+        # Terapkan filter ke dataframe
         mask = (df['PIC'].isin(selected_pic)) & (df['Bulan-Deadline'].isin(selected_months))
         filtered_df = df[mask].copy()
+
+        st.markdown("<br>", unsafe_allow_html=True) # Memberi sedikit jarak ke metrik di bawahnya
 
         if not filtered_df.empty:
             # --- LOGIKA PERHITUNGAN (VERSI FIX) ---
             is_done = filtered_df['PROSES'].astype(str).str.upper() == 'DONE'
             
-            # 2. Fungsi pembantu untuk cek apakah kolom "Belum Di-post"
-            # Menganggap hutang jika: kolom kosong, False, atau bukan "V"
+            # Fungsi pembantu untuk cek apakah kolom "Sudah Di-post"
+            def is_posted(column_name):
+                return filtered_df[column_name].astype(str).str.upper().isin(['V', 'TRUE', '1', 'YES', 'CHECKED'])
+            
+            # Fungsi pembantu untuk cek apakah kolom "Belum Di-post"
             def is_not_posted(column_name):
-                return ~filtered_df[column_name].astype(str).str.upper().isin(['V', 'TRUE', '1', 'YES', 'CHECKED'])
+                return ~is_posted(column_name)
 
-            # 3. Hitung Produksi
+            # Hitung Produksi Global
             v_mask = filtered_df['Output'].str.contains('Video', case=False, na=False)
             v_total = len(filtered_df[v_mask])
             v_done = len(filtered_df[v_mask & is_done])
@@ -42,15 +78,37 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
             d_total = len(filtered_df[~v_mask])
             d_done = len(filtered_df[~v_mask & is_done])
 
-            # 4. Hitung Hutang Post (Hanya yang Produksinya sudah DONE tapi belum di-post)
+            # Hitung Hutang Post Global
             ig_p = len(filtered_df[is_done & is_not_posted('IG')])
             tt_p = len(filtered_df[is_done & is_not_posted('TIKTOK')])
-            
-            # Khusus YT, hanya hitung jika Output-nya adalah Video
             yt_p = len(filtered_df[is_done & v_mask & is_not_posted('YT')])
 
-            # --- BARIS 1: METRIK ---
-            st.markdown('<div class="feature-header">📊 Produksi & Realisasi</div>', unsafe_allow_html=True)
+            # --- BARIS 1: METRIK --- 
+            st.markdown(f"""
+                <div style="
+                    display: flex; 
+                    align-items: center; 
+                    gap: 12px; 
+                    background: #010101; 
+                    padding: 12px 20px; 
+                    border-radius: 12px; 
+                    margin-bottom: 25px; 
+                    border-left: 6px solid {BRAND_BLUE};
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+                ">
+                    <img src="https://img.icons8.com/fluency/48/combo-chart.png" width="32">
+                    <h3 style="
+                        margin: 0; 
+                        color: white; 
+                        font-weight: 800; 
+                        letter-spacing: 1px; 
+                        font-size: 18px;
+                        text-transform: uppercase;
+                    ">
+                        PRODUKSI & REALISASI
+                    </h3>
+                </div>
+            """, unsafe_allow_html=True)
             m1, m2, m3, m4 = st.columns(4)
             m1.metric("Total Rencana", len(filtered_df))
             m2.metric("Total DONE ✅", v_done + d_done)
@@ -65,20 +123,82 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
 
             st.markdown("---")
 
+            # --- PERHITUNGAN WORKLOAD PIC ---
+            workload_data = []
+            for pic in selected_pic:
+                pic_df = filtered_df[filtered_df['PIC'] == pic]
+                total_tugas = len(pic_df)
+                
+                if total_tugas > 0:
+                    # DONE Produksi
+                    done_prod = len(pic_df[pic_df['PROSES'].astype(str).str.upper() == 'DONE'])
+                    hutang_prod = total_tugas - done_prod
+                    
+                    # DONE Post (Asumsi: dihitung jika Produksi DONE dan Platform bersangkutan sudah V)
+                    # Ini menghitung total "klik centang/V" yang valid dilakukan oleh PIC
+                    done_post_ig = len(pic_df[(pic_df['PROSES'].astype(str).str.upper() == 'DONE') & pic_df['IG'].astype(str).str.upper().isin(['V', 'TRUE', '1', 'YES', 'CHECKED'])])
+                    done_post_tt = len(pic_df[(pic_df['PROSES'].astype(str).str.upper() == 'DONE') & pic_df['TIKTOK'].astype(str).str.upper().isin(['V', 'TRUE', '1', 'YES', 'CHECKED'])])
+                    
+                    # YT hanya relevan untuk output video
+                    v_mask_pic = pic_df['Output'].str.contains('Video', case=False, na=False)
+                    done_post_yt = len(pic_df[(pic_df['PROSES'].astype(str).str.upper() == 'DONE') & v_mask_pic & pic_df['YT'].astype(str).str.upper().isin(['V', 'TRUE', '1', 'YES', 'CHECKED'])])
+                    
+                    total_workload_selesai = done_prod + done_post_ig + done_post_tt + done_post_yt
+                else:
+                    done_prod = 0
+                    hutang_prod = 0
+                    total_workload_selesai = 0
+                
+                workload_data.append({
+                    'PIC': pic,
+                    'Selesai (Produksi)': done_prod,
+                    'Hutang (Produksi)': hutang_prod,
+                    'Total Workload Selesai (Prod+Post)': total_workload_selesai
+                })
+            
+            df_workload = pd.DataFrame(workload_data)
+
             # --- BARIS 2: VISUALISASI ---
             col_visual, col_audit = st.columns([1.2, 1])
 
             with col_visual:
-                st.markdown('<div class="feature-header">🏛️ Sebaran Pilar Konten</div>', unsafe_allow_html=True)
-                p_counts = filtered_df['Konten Pillar'].value_counts().reset_index()
-                fig_p = px.pie(p_counts, names='Konten Pillar', values='count', hole=0.3, color_discrete_sequence=[BRAND_BLUE, BRAND_YELLOW, "#003A66", "#FFD700"])
-                fig_p.update_layout(margin=dict(t=20, b=20, l=10, r=10), height=300)
-                st.plotly_chart(fig_p, use_container_width=True)
+                st.markdown('<div class="feature-header">🏆 Total Workload Selesai (Prod + Post)</div>', unsafe_allow_html=True)
+                # Menampilkan total workload (angka absolut dari pekerjaan yang sudah diselesaikan)
+                fig_wl = px.bar(df_workload, x='PIC', y='Total Workload Selesai (Prod+Post)', 
+                                color_discrete_sequence=[BRAND_BLUE], text_auto=True)
+                fig_wl.update_layout(margin=dict(t=20, b=20, l=10, r=10), height=250, plot_bgcolor='white')
+                st.plotly_chart(fig_wl, use_container_width=True)
 
-                st.markdown('<div class="feature-header">⚠️ Hutang Produksi per PIC</div>', unsafe_allow_html=True)
-                debt = filtered_df[filtered_df['PROSES'] != 'DONE'].groupby('PIC').size().reset_index(name='Hutang')
-                fig_d = px.bar(pd.merge(pd.DataFrame({'PIC': list_pic}), debt, on='PIC', how='left').fillna(0), x='PIC', y='Hutang', color_discrete_sequence=[BRAND_BLUE], text_auto=True)
-                fig_d.update_layout(margin=dict(t=20, b=20, l=10, r=10), height=300, plot_bgcolor='white')
+
+                st.markdown('<div class="feature-header">⚖️ Rasio Produksi: Selesai vs Hutang</div>', unsafe_allow_html=True)
+                # Membuat Stacked Bar untuk Done (Hijau) vs Hutang (Merah)
+                fig_d = go.Figure()
+                fig_d.add_trace(go.Bar(
+                    y=df_workload['PIC'],
+                    x=df_workload['Selesai (Produksi)'],
+                    name='Selesai',
+                    orientation='h',
+                    marker=dict(color='#2ECC71'), # Hijau
+                    text=df_workload['Selesai (Produksi)'],
+                    textposition='auto'
+                ))
+                fig_d.add_trace(go.Bar(
+                    y=df_workload['PIC'],
+                    x=df_workload['Hutang (Produksi)'],
+                    name='Hutang',
+                    orientation='h',
+                    marker=dict(color='#E74C3C'), # Merah
+                    text=df_workload['Hutang (Produksi)'],
+                    textposition='auto'
+                ))
+
+                fig_d.update_layout(
+                    barmode='stack',
+                    margin=dict(t=20, b=20, l=10, r=10),
+                    height=300,
+                    plot_bgcolor='white',
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                )
                 st.plotly_chart(fig_d, use_container_width=True)
 
             with col_audit:
@@ -90,6 +210,10 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
                     
                     status_emoji = "🔴" if (not pic_prod.empty or not pic_sched.empty) else "🟢"
                     with st.expander(f"{status_emoji} {name} - Status Detail"):
+                        # Info Workload
+                        wl_info = df_workload[df_workload['PIC'] == name].iloc[0]
+                        st.caption(f"🚀 Workload Selesai: {wl_info['Total Workload Selesai (Prod+Post)']} task")
+                        
                         if not pic_prod.empty:
                             st.markdown("**Hutang Produksi:**")
                             for _, r in pic_prod.iterrows():
@@ -98,7 +222,7 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
                             st.markdown("**Hutang Post:**")
                             for _, r in pic_sched.iterrows():
                                 plts = [p for p in ['IG', 'TIKTOK'] if not r[p]]
-                                if "Video" in r['Output'] and not r['YT']: plts.append("YT")
+                                if "Video" in str(r['Output']) and not r['YT']: plts.append("YT")
                                 st.warning(f"⚠️ {r['Kode Konten']} ({', '.join(plts)})")
                         if pic_prod.empty and pic_sched.empty:
                             st.success("Tugas selesai semua! ✨")
@@ -108,7 +232,7 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
             # --- BARIS 3: LIVE EDITOR ---
             st.markdown('<div class="feature-header">📋 Master Production Pipeline (Live Editor)</div>', unsafe_allow_html=True)
             
-            pic_map = {"Ejak": "🔵 Ejak", "Hana": "🟢 Hana", "Abi": "🟡 Abi", "Hanif": "🟣 Hanif"}
+            pic_map = {"Aziz": "🔵 Aziz", "Hana": "🟢 Hana", "Dea": "🟡 Dea"}
             out_map = {"Video": "🎬 Video", "Design": "🎨 Design"}
             stat_map = {"DONE": "✅ DONE", "PENDING": "⏳ PENDING", "ON PROGRESS": "🏗️ ON PROGRESS"}
 
