@@ -162,7 +162,31 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
             col_visual, col_audit = st.columns([1.2, 1])
 
             with col_visual:
-                st.markdown('<div class="feature-header">🏆 Total Workload Selesai (Prod + Post)</div>', unsafe_allow_html=True)
+                st.markdown(f"""
+                    <div style="
+                        display: flex; 
+                        align-items: center; 
+                        gap: 12px; 
+                        background: #010101; 
+                        padding: 12px 20px; 
+                        border-radius: 12px; 
+                        margin-bottom: 25px; 
+                        border-left: 6px solid {BRAND_BLUE};
+                        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+                    ">
+                        <img src="https://img.icons8.com/fluency/48/trophy.png" width="32">
+                        <h3 style="
+                            margin: 0; 
+                            color: white; 
+                            font-weight: 800; 
+                            letter-spacing: 1px; 
+                            font-size: 18px;
+                            text-transform: uppercase;
+                        ">
+                            TOTAL WORKLOAD SELESAI
+                        </h3>
+                    </div>
+                """, unsafe_allow_html=True)
                 # Menampilkan total workload (angka absolut dari pekerjaan yang sudah diselesaikan)
                 fig_wl = px.bar(df_workload, x='PIC', y='Total Workload Selesai (Prod+Post)', 
                                 color_discrete_sequence=[BRAND_BLUE], text_auto=True)
@@ -202,7 +226,31 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
                 st.plotly_chart(fig_d, use_container_width=True)
 
             with col_audit:
-                st.markdown('<div class="feature-header">📝 Detail Audit Pipeline</div>', unsafe_allow_html=True)
+                st.markdown(f"""
+                    <div style="
+                        display: flex; 
+                        align-items: center; 
+                        gap: 12px; 
+                        background: #010101; 
+                        padding: 12px 20px; 
+                        border-radius: 12px; 
+                        margin-bottom: 25px; 
+                        border-left: 6px solid {BRAND_BLUE};
+                        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+                    ">
+                        <img src="https://img.icons8.com/fluency/48/test-passed.png" width="32">
+                        <h3 style="
+                            margin: 0; 
+                            color: white; 
+                            font-weight: 800; 
+                            letter-spacing: 1px; 
+                            font-size: 18px;
+                            text-transform: uppercase;
+                        ">
+                            DETAIL AUDIT PIPELINE
+                        </h3>
+                    </div>
+                """, unsafe_allow_html=True)
                 for name in selected_pic:
                     pic_prod = filtered_df[(filtered_df['PIC'] == name) & (filtered_df['PROSES'] != 'DONE')]
                     pic_sched = filtered_df[(filtered_df['PIC'] == name) & (filtered_df['PROSES'] == 'DONE') & 
