@@ -5,29 +5,41 @@ import plotly.graph_objects as go
 from components.utils import load_sosmed, update_sheet_cell
 
 def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
-    st.markdown(f"""
+st.markdown(f"""
         <div style="
             display: flex; 
             align-items: center; 
-            gap: 15px; 
-            background: #010101; 
+            gap: 18px; 
+            background: {BRAND_BLUE}; 
             padding: 15px 25px; 
             border-radius: 12px; 
             margin-bottom: 30px; 
             border-left: 8px solid {BRAND_YELLOW};
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         ">
-            <img src="https://img.icons8.com/fluency/48/social-media-marketing.png" width="38">
-            <h2 style="
-                margin: 0; 
-                color: white; 
-                font-weight: 800; 
-                letter-spacing: 1.5px; 
-                font-size: 22px;
-                text-transform: uppercase;
-            ">
-                SOSMED COMMAND CENTER
-            </h2>
+            <img src="https://img.icons8.com/fluency/48/social-media-marketing.png" width="45">
+            <div style="display: flex; flex-direction: column;">
+                <h2 style="
+                    margin: 0; 
+                    color: white; 
+                    font-weight: 800; 
+                    letter-spacing: 1.5px; 
+                    font-size: 22px;
+                    text-transform: uppercase;
+                    line-height: 1.2;
+                ">
+                    SOSMED PRODUCTION TRACKER
+                </h2>
+                <p style="
+                    margin: 4px 0 0 0; 
+                    color: rgba(255, 255, 255, 0.85); 
+                    font-size: 13px; 
+                    font-weight: 400; 
+                    letter-spacing: 0.5px;
+                ">
+                    Pantau realisasi produksi konten, penjadwalan, dan workload PIC secara real-time.
+                </p>
+            </div>
         </div>
     """, unsafe_allow_html=True)
     st.markdown("---")
