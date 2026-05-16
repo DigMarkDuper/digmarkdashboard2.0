@@ -109,13 +109,7 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
                     </h3>
                 </div>
             """, unsafe_allow_html=True)
-            m1, m2, m3, m4 = st.columns(4)
-            m1.metric("Total Rencana", len(filtered_df))
-            m2.metric("Total DONE ✅", v_done + d_done)
-            m3.metric("Video Selesai 🎬", f"{v_done}/{v_total}")
-            m4.metric("Design Selesai 🎨", f"{d_done}/{d_total}")
 
-            st.markdown('<div class="feature-header">📲 Status Penjadwalan (Scheduling)</div>', unsafe_allow_html=True)
            # --- FUNGSI PEMBANTU UNTUK RENDER METRIC CARD (VERSI BACKGROUND PUTIH + LOGO) ---
             def render_metric_card(title, value, accent_color, icon_url):
                 return f"""
