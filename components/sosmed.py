@@ -116,17 +116,16 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
             m4.metric("Design Selesai 🎨", f"{d_done}/{d_total}")
 
             st.markdown('<div class="feature-header">📲 Status Penjadwalan (Scheduling)</div>', unsafe_allow_html=True)
-           # --- FUNGSI PEMBANTU UNTUK RENDER METRIC CARD (VERSI DARK/GLASSMORPHISM + LOGO JUDUL) ---
+           # --- FUNGSI PEMBANTU UNTUK RENDER METRIC CARD (VERSI BACKGROUND PUTIH + LOGO) ---
             def render_metric_card(title, value, accent_color, icon_url):
                 return f"""
                 <div style="
-                    background: rgba(255, 255, 255, 0.05); 
-                    backdrop-filter: blur(10px);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    background: #ffffff; 
+                    border: 1px solid #e5e7eb;
                     border-left: 5px solid {accent_color};
                     border-radius: 12px; 
                     padding: 15px 20px; 
-                    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
@@ -135,9 +134,9 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
                         <img src="{icon_url}" width="20" height="20">
                         <p style="
                             margin: 0; 
-                            color: rgba(255,255,255,0.8); 
+                            color: #6b7280; /* Warna abu-abu tua agar rapi */
                             font-size: 11px; 
-                            font-weight: 700; 
+                            font-weight: 800; 
                             text-transform: uppercase; 
                             letter-spacing: 0.5px;
                         ">
@@ -146,7 +145,7 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
                     </div>
                     <h2 style="
                         margin: 0; 
-                        color: #FFFFFF; 
+                        color: #111827; /* Hitam pekat untuk angka */
                         font-weight: 900; 
                         font-size: 26px;
                     ">
@@ -212,7 +211,6 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
                 st.markdown(render_metric_card("Hutang Post TikTok", tt_p, "#00f2fe", icon_tt), unsafe_allow_html=True) 
 
             st.markdown("<br>", unsafe_allow_html=True)
-
             st.markdown("---")
 
             # --- PERHITUNGAN WORKLOAD PIC ---
