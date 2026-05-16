@@ -48,7 +48,7 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
         with col_filter1:
             selected_months = st.multiselect("📅 Bulan Deadline:", options=months, default=months, key="sos_bulan")
         
-        list_pic = ["Aziz", "Dea", "Hana"] 
+        list_pic = ["Aziz", "Hanif", "Hana", "Ejak"] 
         with col_filter2:
             selected_pic = st.multiselect("👥 Pantau PIC:", options=list_pic, default=list_pic, key="sos_pic")
 
