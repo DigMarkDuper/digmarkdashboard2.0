@@ -116,38 +116,41 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
             m4.metric("Design Selesai 🎨", f"{d_done}/{d_total}")
 
             st.markdown('<div class="feature-header">📲 Status Penjadwalan (Scheduling)</div>', unsafe_allow_html=True)
-            # --- FUNGSI PEMBANTU UNTUK RENDER METRIC CARD (VERSI LIGHT/TEKS HITAM) ---
-            def render_metric_card(title, value, accent_color, icon=""):
+           # --- FUNGSI PEMBANTU UNTUK RENDER METRIC CARD (VERSI DARK/GLASSMORPHISM + LOGO JUDUL) ---
+            def render_metric_card(title, value, accent_color, icon_url):
                 return f"""
                 <div style="
-                    background: #ffffff; 
-                    border: 1px solid #e5e7eb;
+                    background: rgba(255, 255, 255, 0.05); 
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
                     border-left: 5px solid {accent_color};
                     border-radius: 12px; 
                     padding: 15px 20px; 
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
                 ">
-                    <p style="
-                        margin: 0; 
-                        color: #6b7280; /* Abu-abu gelap agar tidak terlalu tajam */
-                        font-size: 12px; 
-                        font-weight: 700; 
-                        text-transform: uppercase; 
-                        letter-spacing: 0.5px;
-                        margin-bottom: 5px;
-                    ">
-                        {title}
-                    </p>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <img src="{icon_url}" width="20" height="20">
+                        <p style="
+                            margin: 0; 
+                            color: rgba(255,255,255,0.8); 
+                            font-size: 11px; 
+                            font-weight: 700; 
+                            text-transform: uppercase; 
+                            letter-spacing: 0.5px;
+                        ">
+                            {title}
+                        </p>
+                    </div>
                     <h2 style="
                         margin: 0; 
-                        color: #111827; /* Hitam pekat untuk angka/value */
+                        color: #FFFFFF; 
                         font-weight: 900; 
                         font-size: 26px;
                     ">
-                        {value} {icon}
+                        {value}
                     </h2>
                 </div>
                 """
@@ -155,13 +158,17 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
             # --- BARIS 1: METRIK PRODUKSI --- 
             m1, m2, m3, m4 = st.columns(4)
             with m1:
-                st.markdown(render_metric_card("Total Rencana", len(filtered_df), "gray"), unsafe_allow_html=True)
+                icon_rencana = "https://img.icons8.com/fluency/48/task.png"
+                st.markdown(render_metric_card("Total Rencana", len(filtered_df), "gray", icon_rencana), unsafe_allow_html=True)
             with m2:
-                st.markdown(render_metric_card("Total DONE", v_done + d_done, "#2ECC71", "✅"), unsafe_allow_html=True)
+                icon_done = "https://img.icons8.com/fluency/48/checked--v1.png"
+                st.markdown(render_metric_card("Total DONE", v_done + d_done, "#2ECC71", icon_done), unsafe_allow_html=True)
             with m3:
-                st.markdown(render_metric_card("Video Selesai", f"{v_done}/{v_total}", BRAND_BLUE, "🎬"), unsafe_allow_html=True)
+                icon_video = "https://img.icons8.com/fluency/48/clapperboard.png"
+                st.markdown(render_metric_card("Video Selesai", f"{v_done}/{v_total}", BRAND_BLUE, icon_video), unsafe_allow_html=True)
             with m4:
-                st.markdown(render_metric_card("Design Selesai", f"{d_done}/{d_total}", BRAND_YELLOW, "🎨"), unsafe_allow_html=True)
+                icon_design = "https://img.icons8.com/fluency/48/paint-palette.png"
+                st.markdown(render_metric_card("Design Selesai", f"{d_done}/{d_total}", BRAND_YELLOW, icon_design), unsafe_allow_html=True)
 
             st.markdown("<br>", unsafe_allow_html=True)
 
@@ -195,11 +202,14 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
             # --- BARIS 2: METRIK HUTANG POSTING ---
             s1, s2, s3 = st.columns(3)
             with s1:
-                st.markdown(render_metric_card("Hutang Post IG", ig_p, "#E1306C", "📸"), unsafe_allow_html=True) # Warna khas Instagram
+                icon_ig = "https://img.icons8.com/fluency/48/instagram-new.png"
+                st.markdown(render_metric_card("Hutang Post IG", ig_p, "#E1306C", icon_ig), unsafe_allow_html=True) 
             with s2:
-                st.markdown(render_metric_card("Hutang Post YT", yt_p, "#FF0000", "🎥"), unsafe_allow_html=True) # Warna khas YouTube
+                icon_yt = "https://img.icons8.com/color/48/youtube-play.png"
+                st.markdown(render_metric_card("Hutang Post YT", yt_p, "#FF0000", icon_yt), unsafe_allow_html=True) 
             with s3:
-                st.markdown(render_metric_card("Hutang Post TikTok", tt_p, "#00f2fe", "💃"), unsafe_allow_html=True) # Warna khas TikTok
+                icon_tt = "https://img.icons8.com/color/48/tiktok.png"
+                st.markdown(render_metric_card("Hutang Post TikTok", tt_p, "#00f2fe", icon_tt), unsafe_allow_html=True) 
 
             st.markdown("<br>", unsafe_allow_html=True)
 
