@@ -194,7 +194,31 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
                 st.plotly_chart(fig_wl, use_container_width=True)
 
 
-                st.markdown('<div class="feature-header">⚖️ Rasio Produksi: Selesai vs Hutang</div>', unsafe_allow_html=True)
+                st.markdown(f"""
+                    <div style="
+                        display: flex; 
+                        align-items: center; 
+                        gap: 12px; 
+                        background: #010101; 
+                        padding: 12px 20px; 
+                        border-radius: 12px; 
+                        margin-bottom: 25px; 
+                        border-left: 6px solid {BRAND_BLUE};
+                        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+                    ">
+                        <img src="https://img.icons8.com/fluency/48/scales.png" width="32">
+                        <h3 style="
+                            margin: 0; 
+                            color: white; 
+                            font-weight: 800; 
+                            letter-spacing: 1px; 
+                            font-size: 18px;
+                            text-transform: uppercase;
+                        ">
+                            RASIO PRODUKSI: SELESAI VS HUTANG
+                        </h3>
+                    </div>
+                """, unsafe_allow_html=True)
                 # Membuat Stacked Bar untuk Done (Hijau) vs Hutang (Merah)
                 fig_d = go.Figure()
                 fig_d.add_trace(go.Bar(
@@ -276,9 +300,34 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
                             st.success("Tugas selesai semua! ✨")
 
             st.markdown("---")
-
+            
             # --- BARIS 3: LIVE EDITOR ---
-            st.markdown('<div class="feature-header">📋 Master Production Pipeline (Live Editor)</div>', unsafe_allow_html=True)
+            
+            st.markdown(f"""
+                <div style="
+                    display: flex; 
+                    align-items: center; 
+                    gap: 12px; 
+                    background: #010101; 
+                    padding: 12px 20px; 
+                    border-radius: 12px; 
+                    margin-bottom: 25px; 
+                    border-left: 6px solid {BRAND_BLUE};
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+                ">
+                    <img src="https://img.icons8.com/fluency/48/edit-property.png" width="32">
+                    <h3 style="
+                        margin: 0; 
+                        color: white; 
+                        font-weight: 800; 
+                        letter-spacing: 1px; 
+                        font-size: 18px;
+                        text-transform: uppercase;
+                    ">
+                        MASTER PRODUCTION PIPELINE (LIVE EDITOR)
+                    </h3>
+                </div>
+            """, unsafe_allow_html=True)
             
             pic_map = {"Abi": "🔵 Abi", "Hana": "🟢 Hana", "Hanif": "🟡 Hanif"}
             out_map = {"Video": "🎬 Video", "Design": "🎨 Design"}
