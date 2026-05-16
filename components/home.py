@@ -396,7 +396,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
 
         render_universal_card(r[0], "💸", "Total Spend Ads+Mekari", f"Rp {final_spend:,.0f}", "All Platforms", "#8B0000")
         render_universal_card(r[1], "👥", "Leads Total", f"{leads_total}", "Database")
-        render_universal_card(r[2], "🎓", "Closing Total", f"{closing_total} Swa", "Total Closing", "#006400")
+        render_universal_card(r[2], "🎓", "Closing Total", f"{closing_total} Siswa", "Total Closing", "#006400")
         render_universal_card(r[3], "🎯", "Biaya per Siswa (CAC)", f"Rp {final_cac:,.0f}", "Efisiensi")
         render_universal_card(r[4], "🚀", "ROAS Total", f"{final_roas:,.1f}x", "Profitability", "#1E3A8A")
 
@@ -450,6 +450,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
                 </div>
             </div>
         """, unsafe_allow_html=True)
+        
         targets = {"Total View": 10000000, "Total Reach": 2400000, "Link Click": 24000, "Engagement": 40000}
         actual = {k: 0 for k in targets.keys()}
         
@@ -486,7 +487,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
     except Exception as e:
         st.error(f"⚠️ Gagal sinkronisasi data Insight: {e}")
 
-# ==========================================================
+    # ==========================================================
     # 6. PETA PERSEBARAN & GRAFIK (CLEAN & FIXED)
     # ==========================================================
     # --- SECTION HEADER: GEOSPATIAL ANALYSIS ---
