@@ -116,23 +116,23 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
             m4.metric("Design Selesai 🎨", f"{d_done}/{d_total}")
 
             st.markdown('<div class="feature-header">📲 Status Penjadwalan (Scheduling)</div>', unsafe_allow_html=True)
-            # --- FUNGSI PEMBANTU UNTUK RENDER METRIC CARD ---
+            # --- FUNGSI PEMBANTU UNTUK RENDER METRIC CARD (VERSI LIGHT/TEKS HITAM) ---
             def render_metric_card(title, value, accent_color, icon=""):
                 return f"""
                 <div style="
-                    background: rgba(255, 255, 255, 0.05); 
-                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    background: #ffffff; 
+                    border: 1px solid #e5e7eb;
                     border-left: 5px solid {accent_color};
                     border-radius: 12px; 
                     padding: 15px 20px; 
-                    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
                 ">
                     <p style="
                         margin: 0; 
-                        color: rgba(255,255,255,0.7); 
+                        color: #6b7280; /* Abu-abu gelap agar tidak terlalu tajam */
                         font-size: 12px; 
                         font-weight: 700; 
                         text-transform: uppercase; 
@@ -143,8 +143,8 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
                     </p>
                     <h2 style="
                         margin: 0; 
-                        color: white; 
-                        font-weight: 800; 
+                        color: #111827; /* Hitam pekat untuk angka/value */
+                        font-weight: 900; 
                         font-size: 26px;
                     ">
                         {value} {icon}
