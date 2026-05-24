@@ -175,25 +175,68 @@ def sync_leads_to_crm():
         # Ambil list nomor HP yang sudah ada di CRM agar tidak duplikat
         existing_numbers = set()
         if not df_crm.empty and 'No Hp' in df_crm.columns:
-            existing_numbers = set(df_crm['No Hp'].astype(str).unique())
+            # Bersihkan nomor HP dari spasi atau karakter aneh agar perbandingan akurat
+            existing_numbers = set(df_crm['No Hp'].astype(str).str.strip().str.replace(' ', ''))
 
+        # Bersihkan nomor HP di WA Admin untuk pengecekan
+        df_wa['No Hp Clean'] = df_wa['No Hp'].astype(str).str.strip().str.replace(' ', '')
+        
         # Filter data WA Admin yang belum ada di CRM
-        new_leads = df_wa[~df_wa['No Hp'].astype(str).isin(existing_numbers)]
+        new_leads = df_wa[~df_wa['No Hp Clean'].isin(existing_numbers)]
         
         if new_leads.empty:
-            return True, "Semua data sudah sinkron."
+            return True, "Semua data sudah sinkron (Tidak ada prospek baru)."
 
-        # Kolom yang akan dipindahkan: Tanggal Masuk, Nama, No Hp, Asal
-        rows_to_add = new_leads[['Tanggal Masuk', 'Nama', 'No Hp', 'Asal']].values.tolist()
+        rows_to_add = []
         
-        # Konversi tanggal ke string agar tidak error saat kirim ke Sheets
-        for row in rows_to_add:
-            if isinstance(row[0], pd.Timestamp):
-                row[0] = row[0].strftime('%Y-%m-%d')
+        # Mapping kolom sesuai urutan CRM
+        for _, row in new_leads.iterrows():
+            # 1. Format Tanggal
+            tgl_masuk = row.get('Tanggal Masuk', "")
+            if isinstance(tgl_masuk, pd.Timestamp):
+                tgl_masuk = tgl_masuk.strftime('%Y-%m-%d')
+            elif str(tgl_masuk).lower() in ['nat', 'nan', 'none']:
+                tgl_masuk = ""
+                
+            # 2. Ambil nilai lain dengan aman (hindari teks "nan")
+            no_hp = str(row.get('No Hp', ""))
+            if no_hp.lower() == 'nan': no_hp = ""
+            
+            nama = str(row.get('Nama', ""))
+            if nama.lower() == 'nan': nama = ""
+            
+            domisili = str(row.get('Asal', ""))
+            if domisili.lower() == 'nan': domisili = ""
+            
+            mekari_tag = str(row.get('Mekari Tag', ""))
+            if mekari_tag.lower() == 'nan': mekari_tag = ""
+
+            # 3. Susun Array 17 Kolom Sesuai Google Sheets CRM
+            crm_row = [
+                "",              # 0: No (Dikosongkan, biarkan rumus/user yang isi)
+                no_hp,           # 1: No Hp
+                nama,            # 2: Nama
+                domisili,        # 3: Domisili
+                "",              # 4: Tanggal Lahir
+                "",              # 5: Usia
+                "",              # 6: Kategori
+                "",              # 7: Keterangan Setelah Isi Form
+                tgl_masuk,       # 8: Tanggal Masuk Database
+                mekari_tag,      # 9: Mekari Tag (Status Terakhir)
+                "",              # 10: Treatment 1
+                "",              # 11: Treatment 2
+                "",              # 12: Tanggal Treatment 1
+                "",              # 13: Tanggal Treatment 2
+                "",              # 14: Status
+                "",              # 15: Updated Status After Treatment
+                ""               # 16: Catatan
+            ]
+            rows_to_add.append(crm_row)
         
+        # Kirim data ke sheet CRM (Pastikan index sheet 4 ini benar untuk Database Nomor)
         if append_sheet_rows(4, rows_to_add):
-            return True, f"Berhasil sinkronisasi {len(rows_to_add)} data baru."
-        return False, "Gagal menulis ke Google Sheets."
+            return True, f"Berhasil sinkronisasi {len(rows_to_add)} data baru ke CRM."
+        return False, "Gagal menulis ke Google Sheets CRM."
             
     except Exception as e:
         return False, f"Error Sinkronisasi: {e}"
