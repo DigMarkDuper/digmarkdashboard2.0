@@ -5,6 +5,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import base64
 import datetime
 import time  
+import re
 
 # =====================================================================
 # 1. KONEKSI ENGINE (GOOGLE SHEETS API)
@@ -172,17 +173,34 @@ def sync_leads_to_crm():
         
         if df_wa.empty: return False, "Data WA Admin kosong."
         
-        # Ambil list nomor HP yang sudah ada di CRM agar tidak duplikat
+        # --- FUNGSI INTERNAL: PEMBERSIH & STANDARISASI NOMOR HP ---
+        def format_no_hp(nomor):
+            nomor = str(nomor).strip()
+            if nomor.lower() in ['nan', 'none', '']: return ""
+            
+            # 1. Hapus SEMUA karakter selain angka (menghilangkan +, -, spasi, dll)
+            nomor = re.sub(r'\D', '', nomor)
+            
+            if not nomor: return ""
+            
+            # 2. Standarisasi ke awalan 62
+            if nomor.startswith('0'):
+                return '62' + nomor[1:]
+            elif nomor.startswith('8'):
+                return '62' + nomor
+            
+            return nomor # Jika sudah berawalan 62, kembalikan apa adanya
+
+        # Ambil list nomor HP di CRM dan bersihkan juga agar perbandingannya akurat (Apple to Apple)
         existing_numbers = set()
         if not df_crm.empty and 'No Hp' in df_crm.columns:
-            # Bersihkan nomor HP dari spasi atau karakter aneh agar perbandingan akurat
-            existing_numbers = set(df_crm['No Hp'].astype(str).str.strip().str.replace(' ', ''))
+            existing_numbers = set(df_crm['No Hp'].apply(format_no_hp))
 
-        # Bersihkan nomor HP di WA Admin untuk pengecekan
-        df_wa['No Hp Clean'] = df_wa['No Hp'].astype(str).str.strip().str.replace(' ', '')
+        # Terapkan standarisasi nomor HP ke seluruh data WA Admin
+        df_wa['No Hp Clean'] = df_wa['No Hp'].apply(format_no_hp)
         
-        # Filter data WA Admin yang belum ada di CRM
-        new_leads = df_wa[~df_wa['No Hp Clean'].isin(existing_numbers)]
+        # Filter: Hanya ambil data yang belum ada di CRM DAN nomor HP-nya tidak kosong
+        new_leads = df_wa[(~df_wa['No Hp Clean'].isin(existing_numbers)) & (df_wa['No Hp Clean'] != "")]
         
         if new_leads.empty:
             return True, "Semua data sudah sinkron (Tidak ada prospek baru)."
@@ -198,9 +216,8 @@ def sync_leads_to_crm():
             elif str(tgl_masuk).lower() in ['nat', 'nan', 'none']:
                 tgl_masuk = ""
                 
-            # 2. Ambil nilai lain dengan aman (hindari teks "nan")
-            no_hp = str(row.get('No Hp', ""))
-            if no_hp.lower() == 'nan': no_hp = ""
+            # 2. Ambil nilai yang sudah di-cleaning
+            no_hp = row.get('No Hp Clean', "")
             
             nama = str(row.get('Nama', ""))
             if nama.lower() == 'nan': nama = ""
@@ -213,8 +230,8 @@ def sync_leads_to_crm():
 
             # 3. Susun Array 17 Kolom Sesuai Google Sheets CRM
             crm_row = [
-                "",              # 0: No (Dikosongkan, biarkan rumus/user yang isi)
-                no_hp,           # 1: No Hp
+                "",              # 0: No (Dikosongkan)
+                no_hp,           # 1: No Hp (SUDAH FORMAT 62 TANPA KARAKTER ANEH)
                 nama,            # 2: Nama
                 domisili,        # 3: Domisili
                 "",              # 4: Tanggal Lahir
@@ -233,7 +250,7 @@ def sync_leads_to_crm():
             ]
             rows_to_add.append(crm_row)
         
-        # Kirim data ke sheet CRM (Pastikan index sheet 4 ini benar untuk Database Nomor)
+        # Kirim data ke sheet CRM
         if append_sheet_rows(4, rows_to_add):
             return True, f"Berhasil sinkronisasi {len(rows_to_add)} data baru ke CRM."
         return False, "Gagal menulis ke Google Sheets CRM."
