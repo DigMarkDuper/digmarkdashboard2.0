@@ -4,8 +4,29 @@ import io
 import datetime
 from components.utils import sync_leads_to_crm, load_database_nomor, append_sheet_rows
 
-def show_crm_page():
-    st.title("🗂️ CRM & DETAILED LEAD DATABASE")
+def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
+    # --- FUNGSI METRIC CARD (STYLE MATCHING) ---
+    def render_metric_card(title, value, accent_color, icon_url):
+        return f"""
+        <div style="background: #ffffff; border: 1px solid #e5e7eb; border-left: 5px solid {accent_color}; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 15px;">
+            <img src="{icon_url}" width="30">
+            <div>
+                <p style="margin: 0; color: #6b7280; font-size: 10px; font-weight: 800; text-transform: uppercase;">{title}</p>
+                <h3 style="margin: 0; color: #111827; font-size: 18px; font-weight: 900;">{value}</h3>
+            </div>
+        </div>
+        """
+
+    # --- HEADER UTAMA ---
+    st.markdown(f"""
+        <div style="display: flex; align-items: center; gap: 18px; background: {BRAND_BLUE}; padding: 20px 25px; border-radius: 12px; margin-bottom: 30px; border-left: 8px solid {BRAND_YELLOW}; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <img src="https://cdn-icons-png.flaticon.com/512/3063/3063822.png" width="45">
+            <div>
+                <h2 style="margin: 0; color: white; font-weight: 800; letter-spacing: 1px; font-size: 22px; text-transform: uppercase;">CRM & LEAD DATABASE</h2>
+                <p style="margin: 4px 0 0 0; color: rgba(255, 255, 255, 0.8); font-size: 13px;">Kelola data prospek, sinkronisasi WA Admin, dan ekspor data ke CRM.</p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
     
     # =========================================================
     # 1. AREA UTILITY (SYNC & UPLOAD)
