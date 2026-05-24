@@ -94,27 +94,32 @@ def show_crm_page():
         # --- PROSES FILTERING ---
         mask = pd.Series([True] * len(df_crm))
         
-        # 1. Filter Search
+        # 1. Filter Search (Tetap)
         if search_crm:
             mask &= (df_crm['Nama'].str.contains(search_crm, case=False) | 
                      df_crm['No Hp'].str.contains(search_crm))
         
-        # 2. Filter Multiselect
+        # 2. Filter Multiselect (Tetap)
         if sel_mekari:
             mask &= df_crm[m_tag_col].isin(sel_mekari)
         if sel_daerah:
             mask &= df_crm['Domisili'].isin(sel_daerah)
 
-        # 3. Filter Treatment (Sesuai nama kolom: Treatment 1 & Treatment 2)
+        # 3. Filter Treatment (DIPERBAIKI)
         col_t1 = 'Treatment 1'
         col_t2 = 'Treatment 2'
         
         if col_t1 in df_crm.columns and col_t2 in df_crm.columns:
             if sel_treatment == "Sudah Treatment 1":
+                # Hanya menampilkan yang sudah diisi T1
                 mask &= (df_crm[col_t1] != "")
+            
             elif sel_treatment == "Sudah Treatment 2":
+                # Hanya menampilkan yang sudah diisi T2
                 mask &= (df_crm[col_t2] != "")
+            
             elif sel_treatment == "Belum Treatment":
+                # Menampilkan yang KEDUA kolomnya masih kosong
                 mask &= (df_crm[col_t1] == "") & (df_crm[col_t2] == "")
 
         # Terapkan Mask
