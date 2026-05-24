@@ -93,6 +93,99 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                 tag_dibuang = ['Double Chat', 'Closed - Not Interested', 'Partnership']
                 pola_hapus = '|'.join(tag_dibuang)
                 df_wa = df_wa[~df_wa['Mekari Tag'].astype(str).str.contains(pola_hapus, case=False, na=False)]
+
+            if 'Mekari Tag' in df_wa.columns:
+                            # Filter membuang data sampah dari metrik utama
+                            tag_dibuang = ['Double Chat', 'Closed - Not Interested', 'Partnership']
+                            pola_hapus = '|'.join(tag_dibuang)
+                            df_wa = df_wa[~df_wa['Mekari Tag'].astype(str).str.contains(pola_hapus, case=False, na=False)]
+
+            # ==========================================================
+            # 1.5 GRAFIK TREN CHAT MASUK PER BULAN (GLOBAL OVERVIEW)
+            # ==========================================================
+            if 'Tanggal Masuk' in df_wa.columns:
+                TREND_ICON = "https://cdn-icons-png.flaticon.com/512/3050/3050431.png" # Ikon Grafik Naik/Trend
+                
+                st.markdown(f"""
+                    <div style="
+                        display: flex; 
+                        align-items: center; 
+                        gap: 12px; 
+                        background: #FFFFFF; 
+                        padding: 10px 15px; 
+                        border-radius: 10px; 
+                        margin-bottom: 15px; 
+                        border-left: 6px solid {BRAND_BLUE}; 
+                        border: 1px solid #E2E8F0;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                    ">
+                        <div style="
+                            background: #F8FAFC; 
+                            padding: 6px; 
+                            border-radius: 6px; 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center;
+                            border: 1px solid #F1F5F9;
+                        ">
+                            <img src="{TREND_ICON}" width="18">
+                        </div>
+                        <div>
+                            <div style="
+                                margin: 0; 
+                                color: #1E293B; 
+                                font-size: 13px; 
+                                font-weight: 800; 
+                                letter-spacing: 0.5px; 
+                                text-transform: uppercase;
+                            ">
+                                📈 Tren <span style="color: {BRAND_BLUE};">Chat Masuk</span> Per Bulan
+                            </div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+
+                # Persiapkan data agregasi per bulan-tahun agar urutannya kronologis
+                trend_df = df_wa.dropna(subset=['Tanggal Masuk']).copy()
+                trend_df['Periode Sort'] = trend_df['Tanggal Masuk'].dt.strftime('%Y-%m') # Format YYYY-MM untuk sorting 
+                trend_df['Label Bulan'] = trend_df['Tanggal Masuk'].dt.strftime('%b %Y')  # Format Jan 2026 untuk label
+
+                trend_counts = trend_df.groupby(['Periode Sort', 'Label Bulan']).size().reset_index(name='Total Leads')
+                trend_counts = trend_counts.sort_values('Periode Sort') # Urutkan dari bulan terlama ke terbaru
+
+                if not trend_counts.empty:
+                    fig_trend = px.area(
+                        trend_counts, 
+                        x='Label Bulan', 
+                        y='Total Leads', 
+                        markers=True, 
+                        color_discrete_sequence=[BRAND_BLUE],
+                        text='Total Leads'
+                    )
+                    
+                    fig_trend.update_traces(
+                        fillcolor='rgba(30, 64, 175, 0.15)', # Efek transparan di bawah garis
+                        line=dict(width=3),
+                        textposition='top center',
+                        textfont=dict(size=12, color='#1E293B', weight='bold')
+                    )
+                    
+                    fig_trend.update_layout(
+                        height=280, 
+                        margin=dict(t=30, b=10, l=10, r=10), 
+                        paper_bgcolor='white', 
+                        plot_bgcolor='white', 
+                        xaxis_title="", 
+                        yaxis_title="Jumlah Leads",
+                        hovermode="x unified",
+                        yaxis=dict(showgrid=True, gridcolor='#F1F5F9')
+                    )
+                    
+                    st.plotly_chart(fig_trend, use_container_width=True)
+                else:
+                    st.info("Belum ada data dengan format tanggal yang valid untuk memuat grafik.")
+                
+                st.markdown("---")
         
             # 2. FILTER DATA DI HALAMAN UTAMA
               # --- SUB-HEADER: FILTER DATA (CLEAN WHITE EDITION) ---
