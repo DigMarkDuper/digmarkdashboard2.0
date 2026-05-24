@@ -165,41 +165,75 @@ def update_sheet_cell(sheet_index, row_index, column_name, new_value):
 # 5. LOGIKA OTOMATISASI CRM
 # =====================================================================
 
+import re
+import pandas as pd
+
 def sync_leads_to_crm():
-    """Fungsi yang dicari oleh crm.py untuk memindahkan data WA Admin ke CRM"""
+    """Fungsi untuk memindahkan data WA Admin ke CRM dengan pembersihan nomor & filter kategori junk"""
     try:
         df_wa = load_wa_admin()
         df_crm = load_database_nomor()
         
-        if df_wa.empty: return False, "Data WA Admin kosong."
+        if df_wa.empty: 
+            return False, "Data WA Admin kosong."
         
-        # --- FUNGSI INTERNAL: PEMBERSIH & STANDARISASI NOMOR HP ---
+        # --- FUNGSI INTERNAL: PEMBERSIH & STANDARISASI NOMOR HP (ANTI-FLOAT PROFILED) ---
         def format_no_hp(nomor):
             nomor = str(nomor).strip()
-            if nomor.lower() in ['nan', 'none', '']: return ""
+            if nomor.lower() in ['nan', 'none', 'nat', '']: 
+                return ""
             
-            # 1. Hapus SEMUA karakter selain angka (menghilangkan +, -, spasi, dll)
+            # Proteksi jika nomor terbaca sebagai float oleh pandas (misal: 628123.0)
+            if nomor.endswith('.0'):
+                nomor = nomor[:-2]
+                
+            # Hapus SEMUA karakter selain angka (menghilangkan +, -, spasi, dll)
             nomor = re.sub(r'\D', '', nomor)
             
-            if not nomor: return ""
+            if not nomor: 
+                return ""
             
-            # 2. Standarisasi ke awalan 62
+            # Standarisasi ke awalan 62
             if nomor.startswith('0'):
                 return '62' + nomor[1:]
             elif nomor.startswith('8'):
                 return '62' + nomor
             
-            return nomor # Jika sudah berawalan 62, kembalikan apa adanya
+            return nomor
 
-        # Ambil list nomor HP di CRM dan bersihkan juga agar perbandingannya akurat (Apple to Apple)
+        # ==========================================================
+        # ELEMINASI KATEGORI / TAG JUNK (DIBUANG SEBELUM SINKRONISASI)
+        # ==========================================================
+        list_dibuang = [
+            'not eligible', 
+            'partnership', 
+            'alumni', 
+            'closed - not interested', 
+            'closed - registered',
+            'double chat' # Tambahan bawaan opsional jika diperlukan
+        ]
+        pola_hapus = '|'.join(list_dibuang)
+
+        # Filter eliminasi berdasarkan kolom Mekari Tag
+        if 'Mekari Tag' in df_wa.columns:
+            df_wa = df_wa[~df_wa['Mekari Tag'].astype(str).str.lower().str.contains(pola_hapus, na=False)]
+            
+        # Filter eliminasi berdasarkan kolom Kategori (jika ada di WA Admin)
+        if 'Kategori' in df_wa.columns:
+            df_wa = df_wa[~df_wa['Kategori'].astype(str).str.lower().str.contains(pola_hapus, na=False)]
+
+        if df_wa.empty:
+            return True, "Semua data WA Admin berisi kategori yang dikecualikan (Tidak ada data valid untuk disinkronkan)."
+
+        # Ambil list nomor HP di CRM dan bersihkan secara presisi untuk perbandingan apple-to-apple
         existing_numbers = set()
         if not df_crm.empty and 'No Hp' in df_crm.columns:
-            existing_numbers = set(df_crm['No Hp'].apply(format_no_hp))
+            existing_numbers = set(df_crm['No Hp'].dropna().apply(format_no_hp))
 
-        # Terapkan standarisasi nomor HP ke seluruh data WA Admin
+        # Terapkan standarisasi nomor HP ke seluruh data WA Admin tersisa
         df_wa['No Hp Clean'] = df_wa['No Hp'].apply(format_no_hp)
         
-        # Filter: Hanya ambil data yang belum ada di CRM DAN nomor HP-nya tidak kosong
+        # Filter final: Ambil data yang benar-benar belum terdaftar di CRM & nomornya valid
         new_leads = df_wa[(~df_wa['No Hp Clean'].isin(existing_numbers)) & (df_wa['No Hp Clean'] != "")]
         
         if new_leads.empty:
@@ -207,16 +241,16 @@ def sync_leads_to_crm():
 
         rows_to_add = []
         
-        # Mapping kolom sesuai urutan CRM
+        # Mapping data ke dalam susunan 17 kolom tabel CRM
         for _, row in new_leads.iterrows():
-            # 1. Format Tanggal
+            # 1. Format Tanggal Masuk Database
             tgl_masuk = row.get('Tanggal Masuk', "")
             if isinstance(tgl_masuk, pd.Timestamp):
                 tgl_masuk = tgl_masuk.strftime('%Y-%m-%d')
             elif str(tgl_masuk).lower() in ['nat', 'nan', 'none']:
                 tgl_masuk = ""
                 
-            # 2. Ambil nilai yang sudah di-cleaning
+            # 2. Ambil nilai strings & proteksi dari teks "nan" bawaan Pandas
             no_hp = row.get('No Hp Clean', "")
             
             nama = str(row.get('Nama', ""))
@@ -225,18 +259,21 @@ def sync_leads_to_crm():
             domisili = str(row.get('Asal', ""))
             if domisili.lower() == 'nan': domisili = ""
             
+            kategori_asal = str(row.get('Kategori', ""))
+            if kategori_asal.lower() == 'nan': kategori_asal = ""
+            
             mekari_tag = str(row.get('Mekari Tag', ""))
             if mekari_tag.lower() == 'nan': mekari_tag = ""
 
-            # 3. Susun Array 17 Kolom Sesuai Google Sheets CRM
+            # 3. Susun Array Sesuai Struktur Kolom Kaku CRM (17 Kolom)
             crm_row = [
-                "",              # 0: No (Dikosongkan)
-                no_hp,           # 1: No Hp (SUDAH FORMAT 62 TANPA KARAKTER ANEH)
+                "",              # 0: No
+                no_hp,           # 1: No Hp (Format Bersih 62)
                 nama,            # 2: Nama
                 domisili,        # 3: Domisili
                 "",              # 4: Tanggal Lahir
                 "",              # 5: Usia
-                "",              # 6: Kategori
+                kategori_asal,   # 6: Kategori
                 "",              # 7: Keterangan Setelah Isi Form
                 tgl_masuk,       # 8: Tanggal Masuk Database
                 mekari_tag,      # 9: Mekari Tag (Status Terakhir)
@@ -250,9 +287,9 @@ def sync_leads_to_crm():
             ]
             rows_to_add.append(crm_row)
         
-        # Kirim data ke sheet CRM
+        # Eksekusi penulisan massal ke Google Sheets CRM (Index Sheet: 4)
         if append_sheet_rows(4, rows_to_add):
-            return True, f"Berhasil sinkronisasi {len(rows_to_add)} data baru ke CRM."
+            return True, f"Berhasil menyinkronkan {len(rows_to_add)} data baru ke CRM."
         return False, "Gagal menulis ke Google Sheets CRM."
             
     except Exception as e:
