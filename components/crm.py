@@ -163,7 +163,12 @@ def show_crm_page():
             
         with col_ref:
             if st.button("🔄 Refresh Data Database", use_container_width=True, key="ref_crm_db"):
+                # 1. Bersihkan semua cache data yang ditarik dari Google Sheets
                 st.cache_data.clear()
+                
+                # 2. Hapus memori filter pencarian agar UI kembali bersih
+                if 'search_crm' in st.session_state:
+                    del st.session_state['search_crm']
                 st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
