@@ -120,7 +120,7 @@ def show_crm_page():
         # Terapkan Mask
         filtered_df = df_crm[mask].copy()
 
-        # =========================================================
+       # =========================================================
         # 3. DISPLAY METRICS & TABLE
         # =========================================================
         st.subheader("📑 Hasil Analisis Database")
@@ -135,6 +135,40 @@ def show_crm_page():
             m3.metric("Total Sudah T1", f"{count_t1}")
             m4.metric("Total Sudah T2", f"{count_t2}")
 
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # --- TOMBOL AKSI: DOWNLOAD MEKARI & REFRESH ---
+        col_dl, col_ref = st.columns(2)
+        
+        with col_dl:
+            # Menyiapkan DataFrame khusus format Mekari Qontak
+            df_mekari = pd.DataFrame({
+                "phone_number": filtered_df['No Hp'] if 'No Hp' in filtered_df.columns else "",
+                "full_name": filtered_df['Nama'] if 'Nama' in filtered_df.columns else "",
+                "company": filtered_df['Domisili'] if 'Domisili' in filtered_df.columns else ""
+            })
+            
+            buffer_mekari = io.BytesIO()
+            with pd.ExcelWriter(buffer_mekari, engine='xlsxwriter') as writer:
+                df_mekari.to_excel(writer, index=False, sheet_name='Mekari_Contacts')
+            
+            tgl_hari_ini = datetime.date.today().strftime("%Y-%m-%d")
+            st.download_button(
+                label="📥 Download Data (Format Excel Mekari)", 
+                data=buffer_mekari.getvalue(), 
+                file_name=f"Database_Mekari_{tgl_hari_ini}.xlsx", 
+                use_container_width=True,
+                key="dl_mekari_crm"
+            )
+            
+        with col_ref:
+            if st.button("🔄 Refresh Data Database", use_container_width=True, key="ref_crm_db"):
+                st.cache_data.clear()
+                st.rerun()
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Tampilkan tabel data
         st.dataframe(filtered_df, use_container_width=True, hide_index=True)
 
     except Exception as e:
