@@ -104,6 +104,7 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
             # 1.5 GRAFIK TREN CHAT MASUK PER BULAN (GLOBAL OVERVIEW)
             # ==========================================================
             if 'Tanggal Masuk' in df_wa.columns:
+                import plotly.graph_objects as go
                 TREND_ICON = "https://cdn-icons-png.flaticon.com/512/3050/3050431.png" # Ikon Grafik Naik/Trend
                 
                 st.markdown(f"""
@@ -139,51 +140,65 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                                 letter-spacing: 0.5px; 
                                 text-transform: uppercase;
                             ">
-                                📈 Tren <span style="color: {BRAND_BLUE};">Chat Masuk</span> Per Bulan
+                                📈 Tren <span style="color: {BRAND_BLUE};">Chat Masuk</span> Sejak Januari
                             </div>
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
 
-                # Persiapkan data agregasi per bulan-tahun agar urutannya kronologis
+                # Persiapkan data agregasi
                 trend_df = df_wa.dropna(subset=['Tanggal Masuk']).copy()
-                trend_df['Periode Sort'] = trend_df['Tanggal Masuk'].dt.strftime('%Y-%m') # Format YYYY-MM untuk sorting 
-                trend_df['Label Bulan'] = trend_df['Tanggal Masuk'].dt.strftime('%b %Y')  # Format Jan 2026 untuk label
+                
+                if not trend_df.empty:
+                    # FILTER: Hanya ambil data dari tahun berjalan / tahun terbaru (Mulai dari Januari)
+                    tahun_terbaru = trend_df['Tanggal Masuk'].dt.year.max()
+                    trend_df = trend_df[trend_df['Tanggal Masuk'].dt.year == tahun_terbaru]
+
+                trend_df['Periode Sort'] = trend_df['Tanggal Masuk'].dt.strftime('%Y-%m') 
+                trend_df['Label Bulan'] = trend_df['Tanggal Masuk'].dt.strftime('%b %Y')  
 
                 trend_counts = trend_df.groupby(['Periode Sort', 'Label Bulan']).size().reset_index(name='Total Leads')
-                trend_counts = trend_counts.sort_values('Periode Sort') # Urutkan dari bulan terlama ke terbaru
+                trend_counts = trend_counts.sort_values('Periode Sort') 
 
                 if not trend_counts.empty:
-                    fig_trend = px.area(
-                        trend_counts, 
-                        x='Label Bulan', 
-                        y='Total Leads', 
-                        markers=True, 
-                        color_discrete_sequence=[BRAND_BLUE],
-                        text='Total Leads'
-                    )
+                    fig_trend = go.Figure()
                     
-                    fig_trend.update_traces(
-                        fillcolor='rgba(30, 64, 175, 0.15)', # Efek transparan di bawah garis
-                        line=dict(width=3),
-                        textposition='top center',
-                        textfont=dict(size=12, color='#1E293B', weight='bold')
-                    )
+                    # 1. Tambahkan Grafik Batang (Bar)
+                    fig_trend.add_trace(go.Bar(
+                        x=trend_counts['Label Bulan'],
+                        y=trend_counts['Total Leads'],
+                        name='Jumlah (Bar)',
+                        marker_color='rgba(30, 64, 175, 0.7)', # Biru transparan agar tidak terlalu gelap
+                        text=trend_counts['Total Leads'],
+                        textposition='inside',
+                        textfont=dict(size=13, color='white', weight='bold')
+                    ))
+                    
+                    # 2. Tambahkan Grafik Garis (Line) untuk melihat tren
+                    fig_trend.add_trace(go.Scatter(
+                        x=trend_counts['Label Bulan'],
+                        y=trend_counts['Total Leads'],
+                        name='Tren (Line)',
+                        mode='lines+markers',
+                        line=dict(color=BRAND_YELLOW, width=4), # Garis kuning tebal
+                        marker=dict(size=10, color=BRAND_YELLOW, line=dict(width=2, color='white'))
+                    ))
                     
                     fig_trend.update_layout(
-                        height=280, 
+                        height=320, 
                         margin=dict(t=30, b=10, l=10, r=10), 
                         paper_bgcolor='white', 
                         plot_bgcolor='white', 
                         xaxis_title="", 
                         yaxis_title="Jumlah Leads",
                         hovermode="x unified",
+                        showlegend=False,
                         yaxis=dict(showgrid=True, gridcolor='#F1F5F9')
                     )
                     
                     st.plotly_chart(fig_trend, use_container_width=True)
                 else:
-                    st.info("Belum ada data dengan format tanggal yang valid untuk memuat grafik.")
+                    st.info("Belum ada data untuk ditampilkan pada rentang tahun ini.")
                 
                 st.markdown("---")
         
