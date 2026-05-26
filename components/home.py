@@ -530,8 +530,8 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
         web_targets = {
             "Artikel (Target: 72)": {"target": 72, "aktual": count_kpi_web('Article')},
             "Berita (Target: 36)": {"target": 36, "aktual": count_kpi_web('News|Berita')},
-            "Album Galeri (Target: 12)": {"target": 12, "aktual": count_kpi_web('Galery|Gallery|Album')},
-            "Linkedin (Target: 4)": {"target": 72, "aktual": count_kpi_web('Linkedin')}
+            "Album Galeri (Target: 60)": {"target": 60, "aktual": count_kpi_web('Galery|Gallery|Album')},
+            "Linkedin (Target: 72)": {"target": 72, "aktual": count_kpi_web('Linkedin')}
         }
 
         cols_gauge_web = st.columns(4) 
