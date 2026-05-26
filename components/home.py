@@ -486,6 +486,67 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
                     st.markdown(f"""<div style="text-align:center; margin-top:-5px;"><div style="font-size:9px; color:gray; font-weight:800; text-transform:uppercase;">{label}</div><div style="font-size:11px; font-weight:bold; color:#111827;">{current_val:,.0f}</div></div>""", unsafe_allow_html=True)
     except Exception as e:
         st.error(f"⚠️ Gagal sinkronisasi data Insight: {e}")
+          # ==========================================
+        # TAMBAHAN: KPI WEBSITE ANNUAL TRACKING
+        # ==========================================
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown(f"""
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                <span style="font-size: 16px;">🌐</span>
+                <h4 style="margin: 0; color: #1E293B; font-size: 14px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">
+                    Website Content <span style="color: {BRAND_BLUE};">Fulfillment</span>
+                </h4>
+            </div>
+        """, unsafe_allow_html=True)
+
+        # 1. Load Data Website & Filter yang sudah Selesai (DONE)
+        try:
+            df_web_kpi = utils.load_website()
+            done_kw = ['DONE', 'TRUE', 'V', '1', 'POSTED', 'SELESAI', 'UPLOAD', 'UPLOADED', 'SUDAH UPLOAD']
+            
+            if not df_web_kpi.empty and 'Status Post' in df_web_kpi.columns:
+                df_web_kpi['Is_Done'] = df_web_kpi['Status Post'].astype(str).str.upper().str.strip().isin(done_kw)
+                df_web_done = df_web_kpi[df_web_kpi['Is_Done']]
+            else:
+                df_web_done = pd.DataFrame()
+        except:
+            df_web_done = pd.DataFrame()
+
+        # 2. Fungsi hitung pilar
+        def count_kpi_web(regex):
+            if not df_web_done.empty and 'Content Pillar' in df_web_done.columns:
+                return len(df_web_done[df_web_done['Content Pillar'].astype(str).str.contains(regex, case=False, na=False)])
+            return 0
+
+        # 3. Definisi Target & Aktual Website
+        web_targets = {
+            "Artikel (Target: 72)": {"target": 72, "aktual": count_kpi_web('Artikel')},
+            "Berita (Target: 36)": {"target": 36, "aktual": count_kpi_web('News|Berita')},
+            "Album Galeri (Target: 12)": {"target": 12, "aktual": count_kpi_web('Galery|Gallery|Album')},
+            "Banner Rotasi (Target: 4)": {"target": 4, "aktual": count_kpi_web('Banner|Slider|Homepage')}
+        }
+
+        # 4. Render Gauge Chart Website (Warna Kuning/Orange agar beda dengan Ads)
+        cols_gauge_web = st.columns(4) 
+        for i, (label, data) in enumerate(web_targets.items()):
+            current_val = data["aktual"]
+            target_val = data["target"]
+            percentage = (current_val / target_val * 100) if target_val > 0 else 0
+            display_percent = min(percentage, 100)
+            
+            with cols_gauge_web[i]:
+                fig_web = go.Figure(go.Pie(
+                    values=[display_percent, 100 - display_percent],
+                    hole=0.85,
+                    marker=dict(colors=[BRAND_YELLOW, "#F0F2F6"]), # Menggunakan Kuning sebagai pembeda visual
+                    textinfo='none', hoverinfo='none', sort=False
+                ))
+                fig_web.add_annotation(text=f"<b style='font-size:15px;'>{percentage:.1f}%</b>", x=0.5, y=0.5, showarrow=False, font=dict(color="#111827"))
+                fig_web.update_layout(showlegend=False, height=130, margin=dict(l=10, r=10, t=5, b=5), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+
+                with st.container(border=True):
+                    st.plotly_chart(fig_web, use_container_width=True, config={'displayModeBar': False}, key=f"target_web_{i}")
+                    st.markdown(f"""<div style="text-align:center; margin-top:-5px;"><div style="font-size:9px; color:gray; font-weight:800; text-transform:uppercase;">{label}</div><div style="font-size:11px; font-weight:bold; color:#111827;">{current_val} Selesai</div></div>""", unsafe_allow_html=True)  
 
     # ==========================================================
     # 6. PETA PERSEBARAN & GRAFIK (CLEAN & FIXED)
