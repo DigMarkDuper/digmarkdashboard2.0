@@ -1,3 +1,8 @@
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+import components.utils as utils
+
 def show_website_page(BRAND_BLUE, BRAND_YELLOW):
     # --- FUNGSI METRIC CARD ---
     def render_metric_card(title, value, accent_color, icon_url):
