@@ -528,7 +528,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
 
         # Definisi Target Website
         web_targets = {
-            "Artikel (Target: 72)": {"target": 72, "aktual": count_kpi_web('Artikel')},
+            "Artikel (Target: 72)": {"target": 72, "aktual": count_kpi_web('Article')},
             "Berita (Target: 36)": {"target": 36, "aktual": count_kpi_web('News|Berita')},
             "Album Galeri (Target: 12)": {"target": 12, "aktual": count_kpi_web('Galery|Gallery|Album')},
             "Banner Rotasi (Target: 4)": {"target": 4, "aktual": count_kpi_web('Banner|Slider|Homepage')}
