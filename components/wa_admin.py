@@ -739,8 +739,8 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                     else:
                         st.info("Data Asal belum diisi oleh Admin.")
                 
-                # 9. DATA DETAIL SUKSES CLOSING & SALES PROGRESS
-                col_closing, col_sales = st.columns(2)
+               # 9. DATA DETAIL SUKSES CLOSING, SALES PROGRESS, & DAFTAR
+                col_closing, col_sales, col_daftar = st.columns(3)
                 
                 with col_closing:
                     # --- SUB-HEADER KIRI: DETAIL SUKSES CLOSING (GREEN SUCCESS EDITION) ---
@@ -797,7 +797,7 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                         st.info("Belum ada data siswa yang berstatus Closing.")
                         
                 with col_sales:
-                   # --- SUB-HEADER KANAN: DETAIL SALES PROGRESS ---
+                   # --- SUB-HEADER TENGAH: DETAIL SALES PROGRESS (BRAND BLUE EDITION) ---
                     PROGRESS_ICON = "https://cdn-icons-png.flaticon.com/512/3142/3142730.png" # Ikon Jam Pasir/Progress
                 
                     st.markdown(f"""
@@ -849,6 +849,65 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                         st.dataframe(df_sales_display, use_container_width=True)
                     else:
                         st.info("Belum ada prospek yang sedang dalam Sales Progress.")
+
+                with col_daftar:
+                   # --- SUB-HEADER KANAN: DETAIL STATUS DAFTAR (ORANGE EDITION) ---
+                    DAFTAR_ICON = "https://cdn-icons-png.flaticon.com/512/1041/1041938.png" # Ikon Form/Daftar
+                
+                    st.markdown(f"""
+                        <div style="
+                            display: flex; 
+                            align-items: center; 
+                            gap: 12px; 
+                            background: linear-gradient(90deg, #7c2d12 0%, #ea580c 100%); 
+                            padding: 10px 15px; 
+                            border-radius: 10px; 
+                            margin-bottom: 15px; 
+                            border-left: 6px solid {BRAND_YELLOW}; 
+                            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                        ">
+                            <div style="
+                                background: rgba(255, 255, 255, 0.2); 
+                                padding: 6px; 
+                                border-radius: 6px; 
+                                display: flex; 
+                                align-items: center; 
+                                justify-content: center;
+                            ">
+                                <img src="{DAFTAR_ICON}" width="18">
+                            </div>
+                            <div>
+                                <div style="
+                                    margin: 0; 
+                                    color: white; 
+                                    font-size: 13px; 
+                                    font-weight: 800; 
+                                    letter-spacing: 0.5px; 
+                                    text-transform: uppercase;
+                                ">
+                                    📝 Detail <span style="color: {BRAND_YELLOW};">Status Daftar</span>
+                                </div>
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    df_daftar = df_wa[df_wa['Status'].str.contains('Daftar', case=False, na=False)].copy()
+                    
+                    # Tambahan keamanan jika 'Daftar' masuk di kolom 'Mekari Tag' alih-alih 'Status'
+                    if df_daftar.empty and 'Mekari Tag' in df_wa.columns:
+                        df_daftar = df_wa[df_wa['Mekari Tag'].str.contains('Daftar', case=False, na=False)].copy()
+                        
+                    if not df_daftar.empty:
+                        kolom_target = {
+                            'Tanggal Masuk': 'Tanggal', 'Nama': 'Nama', 'No Hp': 'Nomor Telfon',
+                            'Asal': 'Asal Wilayah', 'Sumber (Ads/Organik/Sales)': 'Sumber'
+                        }
+                        kolom_tersedia = [col for col in kolom_target.keys() if col in df_daftar.columns]
+                        df_daftar_display = df_daftar[kolom_tersedia].rename(columns=kolom_target)
+                        df_daftar_display.reset_index(drop=True, inplace=True)
+                        df_daftar_display.index = df_daftar_display.index + 1
+                        st.dataframe(df_daftar_display, use_container_width=True)
+                    else:
+                        st.info("Belum ada prospek yang berstatus Daftar.")
 
                 # 10. MASTER DATABASE
                 # --- SUB-HEADER: MASTER DATABASE ---
