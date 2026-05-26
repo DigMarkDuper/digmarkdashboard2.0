@@ -204,7 +204,7 @@ try:
         show_sosmed_page(BRAND_BLUE, BRAND_YELLOW)
 
     elif page == "🌐 WEBSITE AUDIT":
-        show_website_page(BRAND_BLUE)
+        show_website_page(BRAND_BLUE, BRAND_YELLOW)
 
     elif page == "📈 INSIGHTS & ANALYTICS":
         show_insight_page(BRAND_BLUE, BRAND_YELLOW)
