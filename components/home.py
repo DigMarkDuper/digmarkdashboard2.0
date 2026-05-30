@@ -341,10 +341,32 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
             if status_col_global:
                 closing_total = len(df_wa[df_wa[status_col_global].astype(str).str.contains('Closing', case=False, na=False)])
 
+        # 1. Coba ambil dari memori (jika sebelumnya sudah buka halaman Ads)
         sp_tk = st.session_state.get('spend_tiktok', 0)
         sp_mt = st.session_state.get('spend_meta', 0)
         sp_mk = st.session_state.get('spend_mekari', 0)
         
+        # 2. AUTO-FETCH LOGIC: Jika masih 0, hitung otomatis secara langsung di background
+        if sp_tk == 0 and sp_mt == 0:
+            try:
+                # Memanggil fungsi load dari utils (Pastikan nama fungsinya sesuai dengan yang ada di utils Mas)
+                df_tiktok = utils.load_tiktok() if hasattr(utils, 'load_tiktok') else pd.DataFrame()
+                df_meta = utils.load_meta() if hasattr(utils, 'load_meta') else pd.DataFrame()
+                
+                # Hitung TikTok Spend (Asumsi nama kolom: 'Cost')
+                if not df_tiktok.empty and 'Cost' in df_tiktok.columns:
+                    sp_tk = pd.to_numeric(df_tiktok['Cost'], errors='coerce').fillna(0).sum()
+                    st.session_state['spend_tiktok'] = sp_tk # Simpan ke memori
+                    
+                # Hitung Meta Spend (Asumsi nama kolom: 'Amount spent (IDR)')
+                if not df_meta.empty and 'Amount spent (IDR)' in df_meta.columns:
+                    sp_mt = pd.to_numeric(df_meta['Amount spent (IDR)'], errors='coerce').fillna(0).sum()
+                    st.session_state['spend_meta'] = sp_mt # Simpan ke memori
+                    
+            except Exception as e:
+                st.warning(f"Gagal memuat data Ads otomatis di background: {e}")
+
+        # Menghitung final metrics
         final_spend = sp_tk + sp_mt + sp_mk
         final_omzet = closing_total * 15000000 
         final_cac = final_spend / closing_total if closing_total > 0 else 0
