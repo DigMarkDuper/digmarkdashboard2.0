@@ -739,175 +739,126 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                     else:
                         st.info("Data Asal belum diisi oleh Admin.")
                 
-               # 9. DATA DETAIL SUKSES CLOSING, SALES PROGRESS, & DAFTAR
-                col_closing, col_sales, col_daftar = st.columns(3)
+               # ==========================================================
+                # 9. DATA DETAIL PROSPEK (GRID 2x2)
+                # ==========================================================
                 
-                with col_closing:
-                    # --- SUB-HEADER KIRI: DETAIL SUKSES CLOSING (GREEN SUCCESS EDITION) ---
-                    CLOSING_ICON = "https://cdn-icons-png.flaticon.com/512/190/190411.png" # Ikon Trophy/Sukses
+                # --- BARIS PERTAMA (ATAS): CLOSING & SALES PROGRESS ---
+                row1_col1, row1_col2 = st.columns(2)
                 
+                with row1_col1:
+                    # --- DETAIL SUKSES CLOSING (GREEN EDITION) ---
+                    CLOSING_ICON = "https://cdn-icons-png.flaticon.com/512/190/190411.png" 
                     st.markdown(f"""
-                        <div style="
-                            display: flex; 
-                            align-items: center; 
-                            gap: 12px; 
-                            background: linear-gradient(90deg, #064e3b 0%, #059669 100%); 
-                            padding: 10px 15px; 
-                            border-radius: 10px; 
-                            margin-bottom: 15px; 
-                            border-left: 6px solid {BRAND_YELLOW}; 
-                            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-                        ">
-                            <div style="
-                                background: rgba(255, 255, 255, 0.2); 
-                                padding: 6px; 
-                                border-radius: 6px; 
-                                display: flex; 
-                                align-items: center; 
-                                justify-content: center;
-                            ">
+                        <div style="display: flex; align-items: center; gap: 12px; background: linear-gradient(90deg, #064e3b 0%, #059669 100%); padding: 10px 15px; border-radius: 10px; margin-bottom: 15px; border-left: 6px solid {BRAND_YELLOW}; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                            <div style="background: rgba(255, 255, 255, 0.2); padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
                                 <img src="{CLOSING_ICON}" width="18">
                             </div>
                             <div>
-                                <div style="
-                                    margin: 0; 
-                                    color: white; 
-                                    font-size: 13px; 
-                                    font-weight: 800; 
-                                    letter-spacing: 0.5px; 
-                                    text-transform: uppercase;
-                                ">
+                                <div style="margin: 0; color: white; font-size: 13px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">
                                     🎉 Detail <span style="color: {BRAND_YELLOW};">Sukses Closing</span>
                                 </div>
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
-                    df_closing = df_wa[df_wa['Status'].str.contains('Closing', case=False, na=False)].copy()
+                    df_closing = df_wa[df_wa['Status'].astype(str).str.contains('Closing', case=False, na=False)].copy()
                     if not df_closing.empty:
-                        kolom_target = {
-                            'Tanggal Masuk': 'Tanggal', 'Nama': 'Nama', 'No Hp': 'Nomor Telfon',
-                            'Asal': 'Asal Wilayah', 'Sumber (Ads/Organik/Sales)': 'Sumber'
-                        }
+                        kolom_target = {'Tanggal Masuk': 'Tanggal', 'Nama': 'Nama', 'No Hp': 'Nomor Telfon', 'Asal': 'Asal Wilayah', 'Sumber (Ads/Organik/Sales)': 'Sumber'}
                         kolom_tersedia = [col for col in kolom_target.keys() if col in df_closing.columns]
-                        df_closing_display = df_closing[kolom_tersedia].rename(columns=kolom_target)
-                        df_closing_display.reset_index(drop=True, inplace=True)
-                        df_closing_display.index = df_closing_display.index + 1
+                        df_closing_display = df_closing[kolom_tersedia].rename(columns=kolom_target).reset_index(drop=True)
+                        df_closing_display.index += 1
                         st.dataframe(df_closing_display, use_container_width=True)
                     else:
                         st.info("Belum ada data siswa yang berstatus Closing.")
                         
-                with col_sales:
-                   # --- SUB-HEADER TENGAH: DETAIL SALES PROGRESS (BRAND BLUE EDITION) ---
-                    PROGRESS_ICON = "https://cdn-icons-png.flaticon.com/512/3142/3142730.png" # Ikon Jam Pasir/Progress
-                
+                with row1_col2:
+                    # --- DETAIL SALES PROGRESS (BLUE EDITION) ---
+                    PROGRESS_ICON = "https://cdn-icons-png.flaticon.com/512/3142/3142730.png" 
                     st.markdown(f"""
-                        <div style="
-                            display: flex; 
-                            align-items: center; 
-                            gap: 12px; 
-                            background: {BRAND_BLUE}; 
-                            padding: 10px 15px; 
-                            border-radius: 10px; 
-                            margin-bottom: 15px; 
-                            border-left: 6px solid {BRAND_YELLOW}; 
-                            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-                        ">
-                            <div style="
-                                background: rgba(255, 255, 255, 0.2); 
-                                padding: 6px; 
-                                border-radius: 6px; 
-                                display: flex; 
-                                align-items: center; 
-                                justify-content: center;
-                            ">
+                        <div style="display: flex; align-items: center; gap: 12px; background: {BRAND_BLUE}; padding: 10px 15px; border-radius: 10px; margin-bottom: 15px; border-left: 6px solid {BRAND_YELLOW}; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                            <div style="background: rgba(255, 255, 255, 0.2); padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
                                 <img src="{PROGRESS_ICON}" width="18">
                             </div>
                             <div>
-                                <div style="
-                                    margin: 0; 
-                                    color: white; 
-                                    font-size: 13px; 
-                                    font-weight: 800; 
-                                    letter-spacing: 0.5px; 
-                                    text-transform: uppercase;
-                                ">
+                                <div style="margin: 0; color: white; font-size: 13px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">
                                     ⏳ Detail <span style="color: {BRAND_YELLOW};">Sales Progress</span>
                                 </div>
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
-                    df_sales = df_wa[df_wa['Status'].str.contains('Sales Progress', case=False, na=False)].copy()
+                    df_sales = df_wa[df_wa['Status'].astype(str).str.contains('Sales Progress', case=False, na=False)].copy()
                     if not df_sales.empty:
-                        kolom_target = {
-                            'Tanggal Masuk': 'Tanggal', 'Nama': 'Nama', 'No Hp': 'Nomor Telfon',
-                            'Asal': 'Asal Wilayah', 'Sumber (Ads/Organik/Sales)': 'Sumber'
-                        }
+                        kolom_target = {'Tanggal Masuk': 'Tanggal', 'Nama': 'Nama', 'No Hp': 'Nomor Telfon', 'Asal': 'Asal Wilayah', 'Sumber (Ads/Organik/Sales)': 'Sumber'}
                         kolom_tersedia = [col for col in kolom_target.keys() if col in df_sales.columns]
-                        df_sales_display = df_sales[kolom_tersedia].rename(columns=kolom_target)
-                        df_sales_display.reset_index(drop=True, inplace=True)
-                        df_sales_display.index = df_sales_display.index + 1
+                        df_sales_display = df_sales[kolom_tersedia].rename(columns=kolom_target).reset_index(drop=True)
+                        df_sales_display.index += 1
                         st.dataframe(df_sales_display, use_container_width=True)
                     else:
                         st.info("Belum ada prospek yang sedang dalam Sales Progress.")
 
-                with col_daftar:
-                   # --- SUB-HEADER KANAN: DETAIL STATUS DAFTAR (ORANGE EDITION) ---
-                    DAFTAR_ICON = "https://cdn-icons-png.flaticon.com/512/1041/1041938.png" # Ikon Form/Daftar
-                
+                st.markdown("<br>", unsafe_allow_html=True) # Jarak antar baris
+
+                # --- BARIS KEDUA (BAWAH): DAFTAR & PENDING REGISTRATION ---
+                row2_col1, row2_col2 = st.columns(2)
+
+                with row2_col1:
+                    # --- DETAIL STATUS DAFTAR (ORANGE EDITION) ---
+                    DAFTAR_ICON = "https://cdn-icons-png.flaticon.com/512/1041/1041938.png" 
                     st.markdown(f"""
-                        <div style="
-                            display: flex; 
-                            align-items: center; 
-                            gap: 12px; 
-                            background: linear-gradient(90deg, #7c2d12 0%, #ea580c 100%); 
-                            padding: 10px 15px; 
-                            border-radius: 10px; 
-                            margin-bottom: 15px; 
-                            border-left: 6px solid {BRAND_YELLOW}; 
-                            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-                        ">
-                            <div style="
-                                background: rgba(255, 255, 255, 0.2); 
-                                padding: 6px; 
-                                border-radius: 6px; 
-                                display: flex; 
-                                align-items: center; 
-                                justify-content: center;
-                            ">
+                        <div style="display: flex; align-items: center; gap: 12px; background: linear-gradient(90deg, #7c2d12 0%, #ea580c 100%); padding: 10px 15px; border-radius: 10px; margin-bottom: 15px; border-left: 6px solid {BRAND_YELLOW}; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                            <div style="background: rgba(255, 255, 255, 0.2); padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
                                 <img src="{DAFTAR_ICON}" width="18">
                             </div>
                             <div>
-                                <div style="
-                                    margin: 0; 
-                                    color: white; 
-                                    font-size: 13px; 
-                                    font-weight: 800; 
-                                    letter-spacing: 0.5px; 
-                                    text-transform: uppercase;
-                                ">
+                                <div style="margin: 0; color: white; font-size: 13px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">
                                     📝 Detail <span style="color: {BRAND_YELLOW};">Status Daftar</span>
                                 </div>
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
-                    df_daftar = df_wa[df_wa['Status'].str.contains('Daftar', case=False, na=False)].copy()
+                    df_daftar = df_wa[df_wa['Status'].astype(str).str.contains('Daftar', case=False, na=False)].copy()
                     
-                    # Tambahan keamanan jika 'Daftar' masuk di kolom 'Mekari Tag' alih-alih 'Status'
                     if df_daftar.empty and 'Mekari Tag' in df_wa.columns:
-                        df_daftar = df_wa[df_wa['Mekari Tag'].str.contains('Daftar', case=False, na=False)].copy()
+                        df_daftar = df_wa[df_wa['Mekari Tag'].astype(str).str.contains('Daftar', case=False, na=False)].copy()
                         
                     if not df_daftar.empty:
-                        kolom_target = {
-                            'Tanggal Masuk': 'Tanggal', 'Nama': 'Nama', 'No Hp': 'Nomor Telfon',
-                            'Asal': 'Asal Wilayah', 'Sumber (Ads/Organik/Sales)': 'Sumber'
-                        }
+                        kolom_target = {'Tanggal Masuk': 'Tanggal', 'Nama': 'Nama', 'No Hp': 'Nomor Telfon', 'Asal': 'Asal Wilayah', 'Sumber (Ads/Organik/Sales)': 'Sumber'}
                         kolom_tersedia = [col for col in kolom_target.keys() if col in df_daftar.columns]
-                        df_daftar_display = df_daftar[kolom_tersedia].rename(columns=kolom_target)
-                        df_daftar_display.reset_index(drop=True, inplace=True)
-                        df_daftar_display.index = df_daftar_display.index + 1
+                        df_daftar_display = df_daftar[kolom_tersedia].rename(columns=kolom_target).reset_index(drop=True)
+                        df_daftar_display.index += 1
                         st.dataframe(df_daftar_display, use_container_width=True)
                     else:
                         st.info("Belum ada prospek yang berstatus Daftar.")
+
+                with row2_col2:
+                    # --- DETAIL PENDING REGISTRATION (PURPLE INDIGO EDITION) ---
+                    PENDING_ICON = "https://cdn-icons-png.flaticon.com/512/2874/2874808.png" # Ikon Dokumen Tertunda
+                    st.markdown(f"""
+                        <div style="display: flex; align-items: center; gap: 12px; background: linear-gradient(90deg, #312e81 0%, #4f46e5 100%); padding: 10px 15px; border-radius: 10px; margin-bottom: 15px; border-left: 6px solid {BRAND_YELLOW}; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                            <div style="background: rgba(255, 255, 255, 0.2); padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                <img src="{PENDING_ICON}" width="18">
+                            </div>
+                            <div>
+                                <div style="margin: 0; color: white; font-size: 13px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">
+                                    ⏱️ Detail <span style="color: {BRAND_YELLOW};">Pending Registration</span>
+                                </div>
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Mencari di kolom Status maupun Mekari Tag
+                    df_pending = df_wa[df_wa['Status'].astype(str).str.contains('Pending Registration', case=False, na=False)].copy()
+                    if df_pending.empty and 'Mekari Tag' in df_wa.columns:
+                        df_pending = df_wa[df_wa['Mekari Tag'].astype(str).str.contains('Pending Registration', case=False, na=False)].copy()
+                        
+                    if not df_pending.empty:
+                        kolom_target = {'Tanggal Masuk': 'Tanggal', 'Nama': 'Nama', 'No Hp': 'Nomor Telfon', 'Asal': 'Asal Wilayah', 'Sumber (Ads/Organik/Sales)': 'Sumber'}
+                        kolom_tersedia = [col for col in kolom_target.keys() if col in df_pending.columns]
+                        df_pending_display = df_pending[kolom_tersedia].rename(columns=kolom_target).reset_index(drop=True)
+                        df_pending_display.index += 1
+                        st.dataframe(df_pending_display, use_container_width=True)
+                    else:
+                        st.info("Belum ada prospek yang berstatus Pending Registration.")
 
                 # 10. MASTER DATABASE
                 # --- SUB-HEADER: MASTER DATABASE ---
