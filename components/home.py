@@ -332,58 +332,62 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
 
    # --- 6. ROI DASHBOARD (GLOBAL) ---
     try:
-        leads_total = 0
-        closing_total = 0
-        
-        if not df_wa.empty:
-            leads_total = len(df_wa)
-            status_col_global = next((c for c in df_wa.columns if 'Status' in str(c)), None)
-            if status_col_global:
-                closing_total = len(df_wa[df_wa[status_col_global].astype(str).str.contains('Closing', case=False, na=False)])
+        # 1. INISIALISASI VARIABEL AWAL
+        global_leads = 0
+        global_closing = 0
+        total_spend_tiktok = 0
+        total_spend_meta = 0
+        total_spend_mekari = 0
+        BIAYA_PELATIHAN = 12995000 # Disamakan dengan ads_analytic.py
 
-        # 1. Coba ambil dari memori sementara
-        sp_tk = st.session_state.get('spend_tiktok', 0)
-        sp_mt = st.session_state.get('spend_meta', 0)
-        sp_mk = st.session_state.get('spend_mekari', 0)
-        
-        # 2. AUTO-FETCH LOGIC (DISEMPURNAKAN UNTUK 3 PLATFORM)
-        # Jika memori masih kosong (user belum buka menu Ads), kita tarik paksa di background
-        if sp_tk == 0 and sp_mt == 0:
-            try:
-                # Ambil master data Iklan/Ads (berada di Index 6 pada fungsi utils Mas)
-                df_ads = utils.get_from_bundle(6)
-                
-                if not df_ads.empty:
-                    # A. Tarik TikTok Ads
-                    # Silakan ganti 'Cost' jika nama kolom di sheet TikTok Mas berbeda
-                    if 'Cost' in df_ads.columns:
-                        sp_tk = pd.to_numeric(df_ads['Cost'], errors='coerce').fillna(0).sum()
-                        st.session_state['spend_tiktok'] = sp_tk
-                        
-                    # B. Tarik Meta/IG Ads
-                    # Silakan ganti 'Amount spent (IDR)' jika nama kolom Meta Mas berbeda
-                    if 'Amount spent (IDR)' in df_ads.columns:
-                        sp_mt = pd.to_numeric(df_ads['Amount spent (IDR)'], errors='coerce').fillna(0).sum()
-                        st.session_state['spend_meta'] = sp_mt
-                    elif 'Spend' in df_ads.columns: # Opsional jika namanya cuma 'Spend'
-                        sp_mt = pd.to_numeric(df_ads['Spend'], errors='coerce').fillna(0).sum()
-                        st.session_state['spend_meta'] = sp_mt
-                        
-                    # C. Tarik Mekari
-                    # Silakan ganti 'Biaya Mekari' dengan nama kolom asli jika dicatat di sheet Ads
-                    if 'Biaya Mekari' in df_ads.columns:
-                        sp_mk = pd.to_numeric(df_ads['Biaya Mekari'], errors='coerce').fillna(0).sum()
-                        st.session_state['spend_mekari'] = sp_mk
-            except Exception as e:
-                pass # Abaikan jika gagal agar dashboard tidak crash
+        # 2. HITUNG LEADS & CLOSING (Dari df_wa)
+        if 'df_wa' in locals() and not df_wa.empty:
+            global_leads = len(df_wa)
+            status_col = next((col for col in df_wa.columns if 'status' in str(col).lower()), None)
+            if status_col:
+                global_closing = len(df_wa[df_wa[status_col].astype(str).str.contains('Closing', case=False, na=False)])
 
-        # 3. KALKULASI GLOBAL
-        final_spend = sp_tk + sp_mt + sp_mk
-        final_omzet = closing_total * 15000000 # Menggunakan asumsi biaya pendaftaran
+        # 3. AUTO-FETCH DATA BIAYA IKLAN LANGSUNG DARI BUNDLE SPREADSHEETS
         
-        final_cac = final_spend / closing_total if closing_total > 0 else 0
-        final_roas = (final_omzet / final_spend) if final_spend > 0 else 0
+        # A. Tarik TikTok (Tab Index 6)
+        df_tk = utils.get_from_bundle(6)
+        if not df_tk.empty:
+            df_calc_tk = df_tk.copy()
+            df_calc_tk.columns = [str(c).strip().lower() for c in df_calc_tk.columns]
+            col_cost_tk = next((c for c in df_calc_tk.columns if 'cost' in c), None)
+            if col_cost_tk:
+                total_spend_tiktok = pd.to_numeric(df_calc_tk[col_cost_tk].astype(str).str.replace(r'[^\d.]', '', regex=True), errors='coerce').fillna(0).sum()
 
+        # B. Tarik Meta/IG (Tab Index 7)
+        df_mt = utils.get_from_bundle(7)
+        if not df_mt.empty:
+            df_calc_mt = df_mt.copy()
+            df_calc_mt.columns = [str(c).strip().lower() for c in df_calc_mt.columns]
+            col_cost_mt = next((c for c in df_calc_mt.columns if 'spent' in c or 'spend' in c or 'cost' in c), None)
+            if col_cost_mt:
+                total_spend_meta = pd.to_numeric(df_calc_mt[col_cost_mt].astype(str).str.replace(r'[^\d.]', '', regex=True), errors='coerce').fillna(0).sum()
+
+        # C. Tarik Mekari (Tab Index 8)
+        df_mk = utils.get_from_bundle(8)
+        def force_clean_num(x):
+            if pd.isna(x) or x == '': return 0
+            s = str(x).replace('Rp', '').replace('.', '').replace(',', '').strip()
+            try: return float(s)
+            except: return 0
+            
+        if not df_mk.empty:
+            col_biaya = next((c for c in df_mk.columns if 'biaya' in str(c).lower() or 'cost' in str(c).lower()), None)
+            if col_biaya:
+                total_spend_mekari = df_mk[col_biaya].apply(force_clean_num).sum()
+
+        # 4. KALKULASI FINAL GLOBAL ROI
+        global_spend = total_spend_tiktok + total_spend_meta + total_spend_mekari
+        global_omzet = global_closing * BIAYA_PELATIHAN 
+        
+        global_cac = global_spend / global_closing if global_closing > 0 else 0
+        global_roas = (global_omzet / global_spend) if global_spend > 0 else 0
+
+        # 5. RENDER TAMPILAN DASHBOARD
         st.markdown(f"""
             <div style="
                 display: flex; 
@@ -438,11 +442,11 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
                 </div>
             """, unsafe_allow_html=True)
 
-        render_universal_card(r[0], "💸", "Total Spend Ads+Mekari", f"Rp {final_spend:,.0f}", "All Platforms", "#8B0000")
-        render_universal_card(r[1], "👥", "Leads Total", f"{leads_total}", "Database")
-        render_universal_card(r[2], "🎓", "Closing Total", f"{closing_total} Siswa", "Total Closing", "#006400")
-        render_universal_card(r[3], "🎯", "Biaya per Siswa (CAC)", f"Rp {final_cac:,.0f}", "Efisiensi")
-        render_universal_card(r[4], "🚀", "ROAS Total", f"{final_roas:,.1f}x", "Profitability", "#1E3A8A")
+        render_universal_card(r[0], "💸", "Total Spend Ads+Mekari", f"Rp {global_spend:,.0f}", "All Platforms", "#8B0000")
+        render_universal_card(r[1], "👥", "Leads Total", f"{global_leads}", "Database WA")
+        render_universal_card(r[2], "🎓", "Closing Total", f"{global_closing} Siswa", "Total Closing", "#006400")
+        render_universal_card(r[3], "🎯", "Biaya per Siswa (CAC)", f"Rp {global_cac:,.0f}", "Efisiensi")
+        render_universal_card(r[4], "🚀", "ROAS Total", f"{global_roas:,.1f}x", "Profitability", "#1E3A8A")
 
         st.markdown("---")
     except Exception as e:
