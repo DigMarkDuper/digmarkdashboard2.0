@@ -330,7 +330,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
     except Exception as e:
         st.error(f"Gagal memuat snapshot: {e}")
 
-    # --- 6. ROI DASHBOARD (GLOBAL) ---
+   # --- 6. ROI DASHBOARD (GLOBAL) ---
     try:
         leads_total = 0
         closing_total = 0
@@ -341,34 +341,46 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
             if status_col_global:
                 closing_total = len(df_wa[df_wa[status_col_global].astype(str).str.contains('Closing', case=False, na=False)])
 
-        # 1. Coba ambil dari memori (jika sebelumnya sudah buka halaman Ads)
+        # 1. Coba ambil dari memori sementara
         sp_tk = st.session_state.get('spend_tiktok', 0)
         sp_mt = st.session_state.get('spend_meta', 0)
         sp_mk = st.session_state.get('spend_mekari', 0)
         
-        # 2. AUTO-FETCH LOGIC: Jika masih 0, hitung otomatis secara langsung di background
+        # 2. AUTO-FETCH LOGIC (DISEMPURNAKAN UNTUK 3 PLATFORM)
+        # Jika memori masih kosong (user belum buka menu Ads), kita tarik paksa di background
         if sp_tk == 0 and sp_mt == 0:
             try:
-                # Memanggil fungsi load dari utils (Pastikan nama fungsinya sesuai dengan yang ada di utils Mas)
-                df_tiktok = utils.load_tiktok() if hasattr(utils, 'load_tiktok') else pd.DataFrame()
-                df_meta = utils.load_meta() if hasattr(utils, 'load_meta') else pd.DataFrame()
+                # Ambil master data Iklan/Ads (berada di Index 6 pada fungsi utils Mas)
+                df_ads = utils.get_from_bundle(6)
                 
-                # Hitung TikTok Spend (Asumsi nama kolom: 'Cost')
-                if not df_tiktok.empty and 'Cost' in df_tiktok.columns:
-                    sp_tk = pd.to_numeric(df_tiktok['Cost'], errors='coerce').fillna(0).sum()
-                    st.session_state['spend_tiktok'] = sp_tk # Simpan ke memori
-                    
-                # Hitung Meta Spend (Asumsi nama kolom: 'Amount spent (IDR)')
-                if not df_meta.empty and 'Amount spent (IDR)' in df_meta.columns:
-                    sp_mt = pd.to_numeric(df_meta['Amount spent (IDR)'], errors='coerce').fillna(0).sum()
-                    st.session_state['spend_meta'] = sp_mt # Simpan ke memori
-                    
+                if not df_ads.empty:
+                    # A. Tarik TikTok Ads
+                    # Silakan ganti 'Cost' jika nama kolom di sheet TikTok Mas berbeda
+                    if 'Cost' in df_ads.columns:
+                        sp_tk = pd.to_numeric(df_ads['Cost'], errors='coerce').fillna(0).sum()
+                        st.session_state['spend_tiktok'] = sp_tk
+                        
+                    # B. Tarik Meta/IG Ads
+                    # Silakan ganti 'Amount spent (IDR)' jika nama kolom Meta Mas berbeda
+                    if 'Amount spent (IDR)' in df_ads.columns:
+                        sp_mt = pd.to_numeric(df_ads['Amount spent (IDR)'], errors='coerce').fillna(0).sum()
+                        st.session_state['spend_meta'] = sp_mt
+                    elif 'Spend' in df_ads.columns: # Opsional jika namanya cuma 'Spend'
+                        sp_mt = pd.to_numeric(df_ads['Spend'], errors='coerce').fillna(0).sum()
+                        st.session_state['spend_meta'] = sp_mt
+                        
+                    # C. Tarik Mekari
+                    # Silakan ganti 'Biaya Mekari' dengan nama kolom asli jika dicatat di sheet Ads
+                    if 'Biaya Mekari' in df_ads.columns:
+                        sp_mk = pd.to_numeric(df_ads['Biaya Mekari'], errors='coerce').fillna(0).sum()
+                        st.session_state['spend_mekari'] = sp_mk
             except Exception as e:
-                st.warning(f"Gagal memuat data Ads otomatis di background: {e}")
+                pass # Abaikan jika gagal agar dashboard tidak crash
 
-        # Menghitung final metrics
+        # 3. KALKULASI GLOBAL
         final_spend = sp_tk + sp_mt + sp_mk
-        final_omzet = closing_total * 15000000 
+        final_omzet = closing_total * 15000000 # Menggunakan asumsi biaya pendaftaran
+        
         final_cac = final_spend / closing_total if closing_total > 0 else 0
         final_roas = (final_omzet / final_spend) if final_spend > 0 else 0
 
@@ -415,6 +427,16 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
             </div>
         """, unsafe_allow_html=True)
         r = st.columns(5)
+
+        def render_universal_card(col, icon, title, value, subtitle, accent="#1E3A8A"):
+            col.markdown(f"""
+                <div style="background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 5px solid {accent}; margin-bottom: 15px;">
+                    <div style="font-size: 24px; margin-bottom: 5px;">{icon}</div>
+                    <div style="font-size: 10px; color: #64748B; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">{title}</div>
+                    <div style="font-size: 18px; font-weight: 900; color: #0F172A; margin: 5px 0;">{value}</div>
+                    <div style="font-size: 10px; color: #94A3B8; font-weight: 600;">{subtitle}</div>
+                </div>
+            """, unsafe_allow_html=True)
 
         render_universal_card(r[0], "💸", "Total Spend Ads+Mekari", f"Rp {final_spend:,.0f}", "All Platforms", "#8B0000")
         render_universal_card(r[1], "👥", "Leads Total", f"{leads_total}", "Database")
