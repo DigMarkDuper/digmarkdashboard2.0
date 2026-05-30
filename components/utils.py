@@ -122,6 +122,15 @@ def load_dm_sosmed_fast():
     except: return pd.DataFrame()
     return pd.DataFrame()
 
+# Tambahan untuk Halaman ADS/Insight jika perlu dipanggil spesifik
+def load_tiktok():
+    df = get_from_bundle(6) # Asumsi tab ads index 6 mencakup tiktok
+    return df
+
+def load_meta():
+    df = get_from_bundle(6) # Asumsi tab ads index 6 mencakup meta
+    return df
+
 # =====================================================================
 # 4. OPERASI PENULISAN (APPEND & UPDATE)
 # =====================================================================
@@ -165,9 +174,6 @@ def update_sheet_cell(sheet_index, row_index, column_name, new_value):
 # 5. LOGIKA OTOMATISASI CRM
 # =====================================================================
 
-import re
-import pandas as pd
-
 def sync_leads_to_crm():
     """Fungsi untuk memindahkan data WA Admin ke CRM dengan pembersihan nomor & filter kategori junk"""
     try:
@@ -210,22 +216,20 @@ def sync_leads_to_crm():
             'alumni', 
             'closed - not interested', 
             'closed - registered',
-            'double chat' # Tambahan bawaan opsional jika diperlukan
+            'double chat' 
         ]
         pola_hapus = '|'.join(list_dibuang)
 
-        # Filter eliminasi berdasarkan kolom Mekari Tag
         if 'Mekari Tag' in df_wa.columns:
             df_wa = df_wa[~df_wa['Mekari Tag'].astype(str).str.lower().str.contains(pola_hapus, na=False)]
             
-        # Filter eliminasi berdasarkan kolom Kategori (jika ada di WA Admin)
         if 'Kategori' in df_wa.columns:
             df_wa = df_wa[~df_wa['Kategori'].astype(str).str.lower().str.contains(pola_hapus, na=False)]
 
         if df_wa.empty:
             return True, "Semua data WA Admin berisi kategori yang dikecualikan (Tidak ada data valid untuk disinkronkan)."
 
-        # Ambil list nomor HP di CRM dan bersihkan secara presisi untuk perbandingan apple-to-apple
+        # Ambil list nomor HP di CRM dan bersihkan secara presisi
         existing_numbers = set()
         if not df_crm.empty and 'No Hp' in df_crm.columns:
             existing_numbers = set(df_crm['No Hp'].dropna().apply(format_no_hp))
@@ -243,14 +247,12 @@ def sync_leads_to_crm():
         
         # Mapping data ke dalam susunan 17 kolom tabel CRM
         for _, row in new_leads.iterrows():
-            # 1. Format Tanggal Masuk Database
             tgl_masuk = row.get('Tanggal Masuk', "")
             if isinstance(tgl_masuk, pd.Timestamp):
                 tgl_masuk = tgl_masuk.strftime('%Y-%m-%d')
             elif str(tgl_masuk).lower() in ['nat', 'nan', 'none']:
                 tgl_masuk = ""
                 
-            # 2. Ambil nilai strings & proteksi dari teks "nan" bawaan Pandas
             no_hp = row.get('No Hp Clean', "")
             
             nama = str(row.get('Nama', ""))
@@ -265,7 +267,6 @@ def sync_leads_to_crm():
             mekari_tag = str(row.get('Mekari Tag', ""))
             if mekari_tag.lower() == 'nan': mekari_tag = ""
 
-            # 3. Susun Array Sesuai Struktur Kolom Kaku CRM (17 Kolom)
             crm_row = [
                 "",              # 0: No
                 no_hp,           # 1: No Hp (Format Bersih 62)
@@ -287,7 +288,6 @@ def sync_leads_to_crm():
             ]
             rows_to_add.append(crm_row)
         
-        # Eksekusi penulisan massal ke Google Sheets CRM (Index Sheet: 4)
         if append_sheet_rows(4, rows_to_add):
             return True, f"Berhasil menyinkronkan {len(rows_to_add)} data baru ke CRM."
         return False, "Gagal menulis ke Google Sheets CRM."
