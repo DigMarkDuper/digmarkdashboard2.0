@@ -862,7 +862,7 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
 
                 # 10. MASTER DATABASE
                 # --- SUB-HEADER: MASTER DATABASE ---
-                DB_ICON = "https://cdn-icons-png.flaticon.com/512/1198/1198293.png" # Ikon Clipboard/Master Data
+                DB_ICON = "https://cdn-icons-png.flaticon.com/512/1198/1198293.png" 
             
                 st.markdown(f"""
                     <div style="
@@ -914,16 +914,7 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                         
                 st.dataframe(df_wa, use_container_width=True, hide_index=True)
                 
-            else:
-                st.warning("⚠️ Data kosong. Pastikan rentang bulan atau pencarian yang Anda masukkan benar.")
-                
-        else:
-            st.warning("⚠️ Data WA Admin masih kosong. Pastikan Google Sheets Anda sudah terisi.")
-            
-    except Exception as e:
-        st.error(f"Kesalahan Teknis WA Report: {e}")
-
-        # ==========================================================
+                # ==========================================================
                 # 11. EXPORT TO PDF (EXECUTIVE SUMMARY)
                 # ==========================================================
                 st.markdown("---")
@@ -934,7 +925,6 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                     </div>
                 """, unsafe_allow_html=True)
 
-                # Fungsi Generator PDF
                 def generate_pdf_report(df, leads, closing, cvr):
                     from fpdf import FPDF
                     import datetime
@@ -942,7 +932,6 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                     pdf = FPDF()
                     pdf.add_page()
                     
-                    # Kop Laporan
                     pdf.set_font("Arial", 'B', 16)
                     pdf.cell(200, 10, txt="LAPORAN KINERJA WA ADMIN & CLOSING", ln=True, align='C')
                     pdf.set_font("Arial", 'B', 14)
@@ -952,7 +941,6 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                     pdf.line(10, 40, 200, 40)
                     pdf.ln(10)
 
-                    # 1. Metrik Utama
                     pdf.set_font("Arial", 'B', 12)
                     pdf.cell(200, 10, txt="1. RINGKASAN METRIK UTAMA", ln=True, align='L')
                     pdf.set_font("Arial", '', 11)
@@ -961,18 +949,16 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                     pdf.cell(200, 8, txt=f"- Conversion Rate: {cvr:.1f}%", ln=True, align='L')
                     pdf.ln(5)
 
-                    # 2. Breakdown Status Prospek
                     pdf.set_font("Arial", 'B', 12)
                     pdf.cell(200, 10, txt="2. DISTRIBUSI STATUS PROSPEK", ln=True, align='L')
                     pdf.set_font("Arial", '', 11)
                     if 'Status' in df.columns:
                         status_counts = df['Status'].value_counts()
                         for stat, count in status_counts.items():
-                            if stat != 'Belum Terupdate':  # Opsional: abaikan yang belum terupdate
+                            if stat != 'Belum Terupdate':
                                 pdf.cell(200, 8, txt=f"- {stat}: {count} Leads", ln=True, align='L')
                     pdf.ln(5)
 
-                    # 3. Breakdown Sumber
                     pdf.set_font("Arial", 'B', 12)
                     pdf.cell(200, 10, txt="3. SUMBER PROSPEK TERBANYAK", ln=True, align='L')
                     pdf.set_font("Arial", '', 11)
@@ -983,14 +969,13 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                             if str(sumber).strip() not in ['', '-', 'nan', 'None']:
                                 pdf.cell(200, 8, txt=f"- {sumber}: {count} Leads", ln=True, align='L')
 
-                    # Encode output menjadi bytes agar bisa di-download via Streamlit
                     return pdf.output(dest='S').encode('latin1')
 
-                # Buat Tombol Download
                 col_dl1, col_dl2, col_dl3 = st.columns([1, 2, 1])
                 with col_dl2:
                     try:
                         pdf_bytes = generate_pdf_report(df_wa, total_leads, total_closing, conversion_rate)
+                        import datetime
                         st.download_button(
                             label="📄 DOWNLOAD LAPORAN PDF SEKARANG",
                             data=pdf_bytes,
@@ -999,7 +984,7 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                             use_container_width=True
                         )
                     except Exception as pdf_error:
-                        st.error(f"Gagal memproses PDF: Coba jalankan 'pip install fpdf' di terminal.")
+                        st.error("Gagal memproses PDF: Harap tambahkan 'fpdf' ke requirements.txt")
 
             else:
                 st.warning("⚠️ Data kosong. Pastikan rentang bulan atau pencarian yang Anda masukkan benar.")
