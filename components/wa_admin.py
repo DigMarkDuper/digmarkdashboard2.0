@@ -995,24 +995,30 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
 
                         for judul, fig in kumpulan_grafik.items():
                             try:
-                                # PERBAIKAN: Paksa background grafik menjadi putih dan teks hitam
+                                # PERBAIKAN 1: Hapus pemaksaan font="black" agar Pie Chart tidak rusak
+                                # PERBAIKAN 2: Tambahkan margin kiri (l=80) dan bawah (b=80) agar teks tidak tumpang tindih
                                 fig.update_layout(
                                     paper_bgcolor="white", 
                                     plot_bgcolor="white", 
-                                    font=dict(color="black")
+                                    margin=dict(l=80, r=40, t=50, b=80)
                                 )
                                 
+                                # Beri jarak ekstra antara judul sumbu Y dengan angkanya khusus untuk chart batang/garis
+                                if judul not in ['Breakdown Mekari Tag', 'Sumber Prospek', 'Distribusi Status']:
+                                    fig.update_yaxes(title_standoff=20)
+                                
                                 with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmpfile:
-                                    # Simpan sebagai PNG
-                                    fig.write_image(tmpfile.name, width=800, height=400, format='png', engine="kaleido")
+                                    # PERBAIKAN 3: Perlebar canvas menjadi 1000px dan scale=1.5 agar resolusi tajam
+                                    fig.write_image(tmpfile.name, width=1000, height=500, scale=1.5, format='png', engine="kaleido")
                                     
-                                    if pdf.get_y() > 200:
+                                    if pdf.get_y() > 180: # Jika sisa ruang di bawah kurang, pindah halaman
                                         pdf.add_page()
                                         
                                     pdf.set_font("Arial", 'B', 11)
                                     pdf.cell(200, 8, txt=f"Grafik: {judul}", ln=True, align='C')
-                                    pdf.image(tmpfile.name, x=15, w=180)
-                                    pdf.ln(5)
+                                    # Gambar diperbesar memenuhi lebar PDF (w=190)
+                                    pdf.image(tmpfile.name, x=10, w=190)
+                                    pdf.ln(10) # Jarak antar grafik
                                     
                                 os.remove(tmpfile.name)
                             except Exception as e:
@@ -1072,29 +1078,3 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                                     pdf.set_font("Arial", '', 8)
 
                     return pdf.output(dest='S').encode('latin1')
-
-                # 3. Tombol Eksekusi PDF
-                col_dl1, col_dl2, col_dl3 = st.columns([1, 2, 1])
-                with col_dl2:
-                    with st.spinner('Menyiapkan dokumen, merender grafik, dan menyusun tabel... (Mungkin butuh 10-15 detik)'):
-                        try:
-                            pdf_bytes = generate_pdf_report(df_wa, total_leads, total_closing, conversion_rate, grafik_koleksi)
-                            import datetime
-                            st.download_button(
-                                label="📄 DOWNLOAD LAPORAN LENGKAP (PDF)",
-                                data=pdf_bytes,
-                                file_name=f"Laporan_Komprehensif_WA_{datetime.datetime.now().strftime('%Y%m%d')}.pdf",
-                                mime="application/pdf",
-                                use_container_width=True
-                            )
-                        except Exception as pdf_error:
-                            st.error(f"Gagal memproses PDF. Pastikan 'kaleido==0.2.1' terinstal. Error: {pdf_error}")
-
-            else:
-                st.warning("⚠️ Data kosong. Pastikan rentang bulan atau pencarian yang Anda masukkan benar.")
-                
-        else:
-            st.warning("⚠️ Data WA Admin masih kosong. Pastikan Google Sheets Anda sudah terisi.")
-            
-    except Exception as e:
-        st.error(f"Kesalahan Teknis WA Report: {e}")
