@@ -860,7 +860,7 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                     else:
                         st.info("Belum ada prospek yang berstatus Pending Registration.")
 
-                # 10. MASTER DATABASE
+               # 10. MASTER DATABASE
                 # --- SUB-HEADER: MASTER DATABASE ---
                 DB_ICON = "https://cdn-icons-png.flaticon.com/512/1198/1198293.png" 
             
@@ -904,34 +904,44 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                 with col_btn:
                     if st.button("🔄 Refresh Data", use_container_width=True, key="refresh_wa_admin_bottom"):
                         st.cache_data.clear()
-                        if 'bundle' in st.session_state:
-                            del st.session_state['bundle']
-                        if 'wa_bulan' in st.session_state:
-                            del st.session_state['wa_bulan']
-                        if 'wa_search' in st.session_state:
-                            del st.session_state['wa_search']
+                        if 'bundle' in st.session_state: del st.session_state['bundle']
+                        if 'wa_bulan' in st.session_state: del st.session_state['wa_bulan']
+                        if 'wa_search' in st.session_state: del st.session_state['wa_search']
                         st.rerun()
                         
                 st.dataframe(df_wa, use_container_width=True, hide_index=True)
                 
                 # ==========================================================
-                # 11. EXPORT TO PDF (EXECUTIVE SUMMARY)
+                # 11. EXPORT TO PDF (DENGAN GRAFIK VISUAL)
                 # ==========================================================
                 st.markdown("---")
                 st.markdown(f"""
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
                         <img src="https://cdn-icons-png.flaticon.com/512/337/337946.png" width="24">
-                        <h3 style="margin: 0; color: {BRAND_BLUE};">Unduh Laporan Eksekutif (PDF)</h3>
+                        <h3 style="margin: 0; color: {BRAND_BLUE};">Unduh Laporan Komprehensif (Teks & Grafik)</h3>
                     </div>
                 """, unsafe_allow_html=True)
 
-                def generate_pdf_report(df, leads, closing, cvr):
+                # 1. Menangkap semua variabel grafik yang berhasil di-render di atas
+                grafik_koleksi = {}
+                if 'fig_trend' in locals(): grafik_koleksi['Tren Chat Masuk'] = fig_trend
+                if 'fig_mekari' in locals(): grafik_koleksi['Breakdown Mekari Tag'] = fig_mekari
+                if 'fig_funnel' in locals(): grafik_koleksi['Funnel Konversi'] = fig_funnel
+                if 'fig_sumber' in locals(): grafik_koleksi['Sumber Prospek'] = fig_sumber
+                if 'fig_status' in locals(): grafik_koleksi['Distribusi Status'] = fig_status
+
+                # 2. Fungsi Generator PDF + Render Gambar
+                def generate_pdf_report(df, leads, closing, cvr, kumpulan_grafik):
                     from fpdf import FPDF
                     import datetime
+                    import tempfile
+                    import os
 
                     pdf = FPDF()
+                    pdf.set_auto_page_break(auto=True, margin=15)
                     pdf.add_page()
                     
+                    # --- HALAMAN 1: METRIK TEKS UTAMA ---
                     pdf.set_font("Arial", 'B', 16)
                     pdf.cell(200, 10, txt="LAPORAN KINERJA WA ADMIN & CLOSING", ln=True, align='C')
                     pdf.set_font("Arial", 'B', 14)
@@ -957,34 +967,58 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                         for stat, count in status_counts.items():
                             if stat != 'Belum Terupdate':
                                 pdf.cell(200, 8, txt=f"- {stat}: {count} Leads", ln=True, align='L')
-                    pdf.ln(5)
+                    pdf.ln(10)
 
-                    pdf.set_font("Arial", 'B', 12)
-                    pdf.cell(200, 10, txt="3. SUMBER PROSPEK TERBANYAK", ln=True, align='L')
-                    pdf.set_font("Arial", '', 11)
-                    sumber_col = next((col for col in df.columns if 'Sumber' in str(col)), None)
-                    if sumber_col:
-                        sumber_counts = df[sumber_col].value_counts()
-                        for sumber, count in sumber_counts.items():
-                            if str(sumber).strip() not in ['', '-', 'nan', 'None']:
-                                pdf.cell(200, 8, txt=f"- {sumber}: {count} Leads", ln=True, align='L')
+                    # --- HALAMAN 2: LAMPIRAN GRAFIK ---
+                    if kumpulan_grafik:
+                        pdf.add_page()
+                        pdf.set_font("Arial", 'B', 14)
+                        pdf.cell(200, 10, txt="LAMPIRAN VISUALISASI DATA", ln=True, align='C')
+                        pdf.line(10, 25, 200, 25)
+                        pdf.ln(10)
+
+                        for judul, fig in kumpulan_grafik.items():
+                            try:
+                                # Buat file gambar sementara
+                                with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmpfile:
+                                    # Merubah grafik Plotly menjadi gambar PNG statis
+                                    fig.write_image(tmpfile.name, width=800, height=400)
+                                    
+                                    # Pindah halaman jika ruang tersisa di bawah tidak cukup
+                                    if pdf.get_y() > 200:
+                                        pdf.add_page()
+                                        
+                                    # Masukkan ke PDF
+                                    pdf.set_font("Arial", 'B', 11)
+                                    pdf.cell(200, 8, txt=f"Grafik: {judul}", ln=True, align='C')
+                                    pdf.image(tmpfile.name, x=15, w=180)
+                                    pdf.ln(10) # Jarak antar grafik
+                                    
+                                # Hapus file sementara setelah dipasang ke PDF
+                                os.remove(tmpfile.name)
+                            except Exception as e:
+                                pdf.set_font("Arial", 'I', 10)
+                                pdf.cell(200, 8, txt=f"[Grafik '{judul}' tidak dapat di-render: {e}]", ln=True, align='C')
 
                     return pdf.output(dest='S').encode('latin1')
 
+                # 3. Tombol Eksekusi PDF
                 col_dl1, col_dl2, col_dl3 = st.columns([1, 2, 1])
                 with col_dl2:
-                    try:
-                        pdf_bytes = generate_pdf_report(df_wa, total_leads, total_closing, conversion_rate)
-                        import datetime
-                        st.download_button(
-                            label="📄 DOWNLOAD LAPORAN PDF SEKARANG",
-                            data=pdf_bytes,
-                            file_name=f"Laporan_Eksekutif_WA_{datetime.datetime.now().strftime('%Y%m%d')}.pdf",
-                            mime="application/pdf",
-                            use_container_width=True
-                        )
-                    except Exception as pdf_error:
-                        st.error("Gagal memproses PDF: Harap tambahkan 'fpdf' ke requirements.txt")
+                    # Menggunakan spinner agar pengguna tahu sistem sedang memproses gambar
+                    with st.spinner('Menyiapkan dokumen dan merender grafik...'):
+                        try:
+                            pdf_bytes = generate_pdf_report(df_wa, total_leads, total_closing, conversion_rate, grafik_koleksi)
+                            import datetime
+                            st.download_button(
+                                label="📄 DOWNLOAD LAPORAN LENGKAP (PDF)",
+                                data=pdf_bytes,
+                                file_name=f"Laporan_Komprehensif_WA_{datetime.datetime.now().strftime('%Y%m%d')}.pdf",
+                                mime="application/pdf",
+                                use_container_width=True
+                            )
+                        except Exception as pdf_error:
+                            st.error(f"Gagal memproses PDF. Pastikan 'kaleido==0.2.1' sudah terinstal. Error: {pdf_error}")
 
             else:
                 st.warning("⚠️ Data kosong. Pastikan rentang bulan atau pencarian yang Anda masukkan benar.")
