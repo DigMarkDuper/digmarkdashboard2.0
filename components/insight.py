@@ -188,7 +188,8 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
                 df_trend['Date'].dt.to_period('M')
             ]).sum(numeric_only=True).reset_index()
             
-            df_monthly['Date'] = df_monthly['Date'].dt.to_timestamp()
+            # PERBAIKAN: Format ke Teks (Bulan Tahun) agar grafik tidak terpotong di ujung
+            df_monthly['Date'] = df_monthly['Date'].dt.to_timestamp().dt.strftime('%b %Y')
 
             # =========================================================
             # --- SECTION 🎵 TIKTOK ---
