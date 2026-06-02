@@ -6,3 +6,4 @@ plotly
 openpyxl
 xlsxwriter
 fpdf
+kaleido==0.2.1
