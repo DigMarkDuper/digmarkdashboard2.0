@@ -106,7 +106,20 @@ def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
     except Exception as e:
         pass
 
-    # --- B. LOAD DATA BUDGET IKLAN DARI SPREADSHEET ---
+   # --- B. LOAD DATA BUDGET IKLAN DARI SPREADSHEET ---
+    # Fungsi khusus membersihkan angka dari format Rupiah/Titik/Koma
+    def clean_idr_cost(x):
+        if pd.isna(x) or str(x).strip() == '': return 0
+        # 1. Buang teks Rp, IDR, dan Spasi
+        x = str(x).upper().replace('RP', '').replace('IDR', '').strip()
+        # 2. Buang desimal sen di belakang (contoh: 5000000.00 atau 5000000,00)
+        if x.endswith(',00'): x = x[:-3]
+        if x.endswith('.00'): x = x[:-3]
+        # 3. Buang sisa titik dan koma (pemisah ribuan)
+        x = x.replace('.', '').replace(',', '')
+        try: return float(x)
+        except: return 0
+
     try:
         df_ads_tiktok_db = utils.get_from_bundle(6)
         if not df_ads_tiktok_db.empty:
@@ -114,7 +127,8 @@ def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
             df_calc_tk.columns = [str(c).strip().lower() for c in df_calc_tk.columns]
             col_cost_tk = next((c for c in df_calc_tk.columns if 'cost' in c), None)
             if col_cost_tk:
-                df_calc_tk[col_cost_tk] = pd.to_numeric(df_calc_tk[col_cost_tk].astype(str).str.replace(r'[^\d.]', '', regex=True), errors='coerce').fillna(0)
+                # Terapkan fungsi pembersih
+                df_calc_tk[col_cost_tk] = df_calc_tk[col_cost_tk].apply(clean_idr_cost)
                 total_spend_tiktok = df_calc_tk[col_cost_tk].sum()
 
         df_ads_meta_db = utils.get_from_bundle(7)
@@ -123,9 +137,11 @@ def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
             df_calc_mt.columns = [str(c).strip().lower() for c in df_calc_mt.columns]
             col_cost_mt = next((c for c in df_calc_mt.columns if 'spent' in c or 'spend' in c or 'cost' in c), None)
             if col_cost_mt:
-                df_calc_mt[col_cost_mt] = pd.to_numeric(df_calc_mt[col_cost_mt].astype(str).str.replace(r'[^\d.]', '', regex=True), errors='coerce').fillna(0)
+                # Terapkan fungsi pembersih
+                df_calc_mt[col_cost_mt] = df_calc_mt[col_cost_mt].apply(clean_idr_cost)
                 total_spend_meta = df_calc_mt[col_cost_mt].sum()
-    except: pass
+    except Exception as e: 
+        pass
 
     # --- C. HITUNG MEKARI ---
     df_db_mekari = utils.get_from_bundle(8)
