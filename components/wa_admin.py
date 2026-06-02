@@ -912,17 +912,17 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                 st.dataframe(df_wa, use_container_width=True, hide_index=True)
                 
                 # ==========================================================
-                # 11. EXPORT TO PDF (DENGAN GRAFIK VISUAL)
+                # 11. EXPORT TO PDF (TEKS, GRAFIK & TABEL DATA)
                 # ==========================================================
                 st.markdown("---")
                 st.markdown(f"""
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
                         <img src="https://cdn-icons-png.flaticon.com/512/337/337946.png" width="24">
-                        <h3 style="margin: 0; color: {BRAND_BLUE};">Unduh Laporan Komprehensif (Teks & Grafik)</h3>
+                        <h3 style="margin: 0; color: {BRAND_BLUE};">Unduh Laporan Komprehensif (Grafik & Tabel)</h3>
                     </div>
                 """, unsafe_allow_html=True)
 
-                # 1. Menangkap semua variabel grafik yang berhasil di-render di atas
+                # 1. Menangkap semua variabel grafik
                 grafik_koleksi = {}
                 if 'fig_trend' in locals(): grafik_koleksi['Tren Chat Masuk'] = fig_trend
                 if 'fig_mekari' in locals(): grafik_koleksi['Breakdown Mekari Tag'] = fig_mekari
@@ -930,7 +930,12 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                 if 'fig_sumber' in locals(): grafik_koleksi['Sumber Prospek'] = fig_sumber
                 if 'fig_status' in locals(): grafik_koleksi['Distribusi Status'] = fig_status
 
-                # 2. Fungsi Generator PDF + Render Gambar
+                # Fungsi pembersih teks agar PDF tidak error kena emoji/karakter aneh
+                def clean_text(text):
+                    if pd.isna(text) or text is None: return "-"
+                    return str(text).encode('latin-1', 'replace').decode('latin-1')
+
+                # 2. Fungsi Generator PDF Lengkap
                 def generate_pdf_report(df, leads, closing, cvr, kumpulan_grafik):
                     from fpdf import FPDF
                     import datetime
@@ -966,7 +971,18 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                         status_counts = df['Status'].value_counts()
                         for stat, count in status_counts.items():
                             if stat != 'Belum Terupdate':
-                                pdf.cell(200, 8, txt=f"- {stat}: {count} Leads", ln=True, align='L')
+                                pdf.cell(200, 8, txt=f"- {clean_text(stat)}: {count} Leads", ln=True, align='L')
+                    pdf.ln(5)
+
+                    pdf.set_font("Arial", 'B', 12)
+                    pdf.cell(200, 10, txt="3. SUMBER PROSPEK TERBANYAK", ln=True, align='L')
+                    pdf.set_font("Arial", '', 11)
+                    sumber_col = next((col for col in df.columns if 'Sumber' in str(col)), None)
+                    if sumber_col:
+                        sumber_counts = df[sumber_col].value_counts()
+                        for sumber, count in sumber_counts.items():
+                            if str(sumber).strip() not in ['', '-', 'nan', 'None']:
+                                pdf.cell(200, 8, txt=f"- {clean_text(sumber)}: {count} Leads", ln=True, align='L')
                     pdf.ln(10)
 
                     # --- HALAMAN 2: LAMPIRAN GRAFIK ---
@@ -979,34 +995,88 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
 
                         for judul, fig in kumpulan_grafik.items():
                             try:
-                                # Buat file gambar sementara
+                                # PERBAIKAN: Paksa background grafik menjadi putih dan teks hitam
+                                fig.update_layout(
+                                    paper_bgcolor="white", 
+                                    plot_bgcolor="white", 
+                                    font=dict(color="black")
+                                )
+                                
                                 with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmpfile:
-                                    # Merubah grafik Plotly menjadi gambar PNG statis
-                                    fig.write_image(tmpfile.name, width=800, height=400)
+                                    # Simpan sebagai PNG
+                                    fig.write_image(tmpfile.name, width=800, height=400, format='png', engine="kaleido")
                                     
-                                    # Pindah halaman jika ruang tersisa di bawah tidak cukup
                                     if pdf.get_y() > 200:
                                         pdf.add_page()
                                         
-                                    # Masukkan ke PDF
                                     pdf.set_font("Arial", 'B', 11)
                                     pdf.cell(200, 8, txt=f"Grafik: {judul}", ln=True, align='C')
                                     pdf.image(tmpfile.name, x=15, w=180)
-                                    pdf.ln(10) # Jarak antar grafik
+                                    pdf.ln(5)
                                     
-                                # Hapus file sementara setelah dipasang ke PDF
                                 os.remove(tmpfile.name)
                             except Exception as e:
                                 pdf.set_font("Arial", 'I', 10)
-                                pdf.cell(200, 8, txt=f"[Grafik '{judul}' tidak dapat di-render: {e}]", ln=True, align='C')
+                                pdf.cell(200, 8, txt=f"[Grafik '{judul}' tidak dapat di-render]", ln=True, align='C')
+
+                    # --- HALAMAN 3+: LAMPIRAN TABEL PROSPEK ---
+                    kategori_tabel = ['Closing', 'Sales Progress', 'Daftar', 'Pending Registration']
+                    
+                    for kategori in kategori_tabel:
+                        # Filter dataframe berdasarkan status
+                        df_filter = df[df['Status'].astype(str).str.contains(kategori, case=False, na=False)]
+                        if df_filter.empty and 'Mekari Tag' in df.columns:
+                            df_filter = df[df['Mekari Tag'].astype(str).str.contains(kategori, case=False, na=False)]
+                            
+                        if not df_filter.empty:
+                            pdf.add_page()
+                            pdf.set_font("Arial", 'B', 12)
+                            pdf.cell(200, 10, txt=f"DAFTAR NAMA PROSPEK: {kategori.upper()}", ln=True, align='L')
+                            pdf.ln(2)
+                            
+                            # Buat Header Tabel
+                            pdf.set_font("Arial", 'B', 9)
+                            pdf.set_fill_color(230, 230, 230)
+                            # Lebar kolom (Total = 190)
+                            col_widths = [10, 50, 40, 45, 45]
+                            headers = ['No', 'Nama Lengkap', 'Nomor HP', 'Asal Wilayah', 'Sumber']
+                            for i in range(5):
+                                pdf.cell(col_widths[i], 8, txt=headers[i], border=1, align='C', fill=True)
+                            pdf.ln(8)
+                            
+                            # Isi Tabel
+                            pdf.set_font("Arial", '', 8)
+                            nomor = 1
+                            for _, row in df_filter.iterrows():
+                                nama = clean_text(row.get('Nama', '-'))[:35]
+                                hp = clean_text(row.get('No Hp', '-'))[:20]
+                                asal = clean_text(row.get('Asal', '-'))[:30]
+                                sumber_val = row.get('Sumber (Ads/Organik/Sales)', row.get('Sumber', '-'))
+                                sumber = clean_text(sumber_val)[:30]
+                                
+                                pdf.cell(col_widths[0], 8, txt=str(nomor), border=1, align='C')
+                                pdf.cell(col_widths[1], 8, txt=nama, border=1, align='L')
+                                pdf.cell(col_widths[2], 8, txt=hp, border=1, align='C')
+                                pdf.cell(col_widths[3], 8, txt=asal, border=1, align='L')
+                                pdf.cell(col_widths[4], 8, txt=sumber, border=1, align='L')
+                                pdf.ln(8)
+                                nomor += 1
+                                
+                                # Jika tabel sudah sampai bawah kertas, buat lembar baru
+                                if pdf.get_y() > 270:
+                                    pdf.add_page()
+                                    pdf.set_font("Arial", 'B', 9)
+                                    for i in range(5):
+                                        pdf.cell(col_widths[i], 8, txt=headers[i], border=1, align='C', fill=True)
+                                    pdf.ln(8)
+                                    pdf.set_font("Arial", '', 8)
 
                     return pdf.output(dest='S').encode('latin1')
 
                 # 3. Tombol Eksekusi PDF
                 col_dl1, col_dl2, col_dl3 = st.columns([1, 2, 1])
                 with col_dl2:
-                    # Menggunakan spinner agar pengguna tahu sistem sedang memproses gambar
-                    with st.spinner('Menyiapkan dokumen dan merender grafik...'):
+                    with st.spinner('Menyiapkan dokumen, merender grafik, dan menyusun tabel... (Mungkin butuh 10-15 detik)'):
                         try:
                             pdf_bytes = generate_pdf_report(df_wa, total_leads, total_closing, conversion_rate, grafik_koleksi)
                             import datetime
@@ -1018,7 +1088,7 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                                 use_container_width=True
                             )
                         except Exception as pdf_error:
-                            st.error(f"Gagal memproses PDF. Pastikan 'kaleido==0.2.1' sudah terinstal. Error: {pdf_error}")
+                            st.error(f"Gagal memproses PDF. Pastikan 'kaleido==0.2.1' terinstal. Error: {pdf_error}")
 
             else:
                 st.warning("⚠️ Data kosong. Pastikan rentang bulan atau pencarian yang Anda masukkan benar.")
