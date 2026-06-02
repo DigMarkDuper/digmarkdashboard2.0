@@ -935,7 +935,7 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                     if pd.isna(text) or text is None: return "-"
                     return str(text).encode('latin-1', 'replace').decode('latin-1')
 
-                # 2. Fungsi Generator PDF Lengkap
+                # 2. Fungsi Generator PDF Lengkap (ANTI-BLACK PIE CHART FIX)
                 def generate_pdf_report(df, leads, closing, cvr, kumpulan_grafik):
                     from fpdf import FPDF
                     import datetime
@@ -995,35 +995,37 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
 
                         for judul, fig in kumpulan_grafik.items():
                             try:
-                                # PERBAIKAN 1: Hapus pemaksaan font="black" agar Pie Chart tidak rusak
-                                # PERBAIKAN 2: Tambahkan margin kiri (l=80) dan bawah (b=80) agar teks tidak tumpang tindih
+                                # PERBAIKAN MUTLAK: Menghapus cache tema Streamlit yang bikin warna hitam
                                 fig.update_layout(
+                                    template="plotly_white",  # <--- INI KUNCI UTAMANYA
                                     paper_bgcolor="white", 
                                     plot_bgcolor="white", 
-                                    margin=dict(l=80, r=40, t=50, b=80)
+                                    font=dict(color="#1E293B"), # Gunakan warna abu-abu gelap, bukan hitam
+                                    margin=dict(l=60, r=40, t=50, b=60)
                                 )
                                 
-                                # Beri jarak ekstra antara judul sumbu Y dengan angkanya khusus untuk chart batang/garis
-                                if judul not in ['Breakdown Mekari Tag', 'Sumber Prospek', 'Distribusi Status']:
-                                    fig.update_yaxes(title_standoff=20)
+                                # Khusus Pie chart, pastikan garis tepi marker bersih
+                                if judul in ['Breakdown Mekari Tag', 'Sumber Prospek']:
+                                    fig.update_traces(marker=dict(line=dict(color='white', width=1.5)))
+                                elif judul not in ['Distribusi Status']:
+                                    fig.update_yaxes(title_standoff=15)
                                 
                                 with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmpfile:
-                                    # PERBAIKAN 3: Perlebar canvas menjadi 1000px dan scale=1.5 agar resolusi tajam
+                                    # Render menjadi PNG
                                     fig.write_image(tmpfile.name, width=1000, height=500, scale=1.5, format='png', engine="kaleido")
                                     
-                                    if pdf.get_y() > 180: # Jika sisa ruang di bawah kurang, pindah halaman
+                                    if pdf.get_y() > 180: 
                                         pdf.add_page()
                                         
                                     pdf.set_font("Arial", 'B', 11)
                                     pdf.cell(200, 8, txt=f"Grafik: {judul}", ln=True, align='C')
-                                    # Gambar diperbesar memenuhi lebar PDF (w=190)
                                     pdf.image(tmpfile.name, x=10, w=190)
-                                    pdf.ln(10) # Jarak antar grafik
+                                    pdf.ln(10)
                                     
                                 os.remove(tmpfile.name)
                             except Exception as e:
                                 pdf.set_font("Arial", 'I', 10)
-                                pdf.cell(200, 8, txt=f"[Grafik '{judul}' tidak dapat di-render]", ln=True, align='C')
+                                pdf.cell(200, 8, txt=f"[Grafik '{judul}' tidak dapat di-render: {e}]", ln=True, align='C')
 
                     # --- HALAMAN 3+: LAMPIRAN TABEL PROSPEK ---
                     kategori_tabel = ['Closing', 'Sales Progress', 'Daftar', 'Pending Registration']
@@ -1040,17 +1042,14 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                             pdf.cell(200, 10, txt=f"DAFTAR NAMA PROSPEK: {kategori.upper()}", ln=True, align='L')
                             pdf.ln(2)
                             
-                            # Buat Header Tabel
                             pdf.set_font("Arial", 'B', 9)
                             pdf.set_fill_color(230, 230, 230)
-                            # Lebar kolom (Total = 190)
                             col_widths = [10, 50, 40, 45, 45]
                             headers = ['No', 'Nama Lengkap', 'Nomor HP', 'Asal Wilayah', 'Sumber']
                             for i in range(5):
                                 pdf.cell(col_widths[i], 8, txt=headers[i], border=1, align='C', fill=True)
                             pdf.ln(8)
                             
-                            # Isi Tabel
                             pdf.set_font("Arial", '', 8)
                             nomor = 1
                             for _, row in df_filter.iterrows():
@@ -1068,7 +1067,6 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                                 pdf.ln(8)
                                 nomor += 1
                                 
-                                # Jika tabel sudah sampai bawah kertas, buat lembar baru
                                 if pdf.get_y() > 270:
                                     pdf.add_page()
                                     pdf.set_font("Arial", 'B', 9)
