@@ -995,23 +995,25 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
 
                         for judul, fig in kumpulan_grafik.items():
                             try:
-                                # PERBAIKAN MUTLAK: Menghapus cache tema Streamlit yang bikin warna hitam
+                                import plotly.express as px
+                                
+                                # PERBAIKAN FINAL: Menambahkan 'colorway' agar kategori yang 
+                                # tidak ada di color_map mendapat warna otomatis yang cantik (bukan hitam)
                                 fig.update_layout(
-                                    template="plotly_white",  # <--- INI KUNCI UTAMANYA
+                                    template="plotly_white", 
                                     paper_bgcolor="white", 
                                     plot_bgcolor="white", 
-                                    font=dict(color="#1E293B"), # Gunakan warna abu-abu gelap, bukan hitam
-                                    margin=dict(l=60, r=40, t=50, b=60)
+                                    font=dict(color="#1E293B"),
+                                    margin=dict(l=60, r=40, t=50, b=60),
+                                    colorway=px.colors.qualitative.Pastel # <--- INI OBATNYA
                                 )
                                 
-                                # Khusus Pie chart, pastikan garis tepi marker bersih
                                 if judul in ['Breakdown Mekari Tag', 'Sumber Prospek']:
                                     fig.update_traces(marker=dict(line=dict(color='white', width=1.5)))
                                 elif judul not in ['Distribusi Status']:
                                     fig.update_yaxes(title_standoff=15)
                                 
                                 with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmpfile:
-                                    # Render menjadi PNG
                                     fig.write_image(tmpfile.name, width=1000, height=500, scale=1.5, format='png', engine="kaleido")
                                     
                                     if pdf.get_y() > 180: 
@@ -1026,7 +1028,6 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                             except Exception as e:
                                 pdf.set_font("Arial", 'I', 10)
                                 pdf.cell(200, 8, txt=f"[Grafik '{judul}' tidak dapat di-render: {e}]", ln=True, align='C')
-
                     # --- HALAMAN 3+: LAMPIRAN TABEL PROSPEK ---
                     kategori_tabel = ['Closing', 'Sales Progress', 'Daftar', 'Pending Registration']
                     
