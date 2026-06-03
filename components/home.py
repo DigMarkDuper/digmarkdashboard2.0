@@ -349,6 +349,16 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
 
         # 3. AUTO-FETCH DATA BIAYA IKLAN LANGSUNG DARI BUNDLE SPREADSHEETS
         
+        # Fungsi khusus membersihkan angka (SINKRONISASI DENGAN HALAMAN ADS)
+        def clean_idr_cost(x):
+            if pd.isna(x) or str(x).strip() == '': return 0
+            x = str(x).upper().replace('RP', '').replace('IDR', '').strip()
+            if x.endswith(',00'): x = x[:-3]
+            if x.endswith('.00'): x = x[:-3]
+            x = x.replace('.', '').replace(',', '')
+            try: return float(x)
+            except: return 0
+            
         # A. Tarik TikTok (Tab Index 6)
         df_tk = utils.get_from_bundle(6)
         if not df_tk.empty:
@@ -356,7 +366,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
             df_calc_tk.columns = [str(c).strip().lower() for c in df_calc_tk.columns]
             col_cost_tk = next((c for c in df_calc_tk.columns if 'cost' in c), None)
             if col_cost_tk:
-                total_spend_tiktok = pd.to_numeric(df_calc_tk[col_cost_tk].astype(str).str.replace(r'[^\d.]', '', regex=True), errors='coerce').fillna(0).sum()
+                total_spend_tiktok = df_calc_tk[col_cost_tk].apply(clean_idr_cost).sum()
 
         # B. Tarik Meta/IG (Tab Index 7)
         df_mt = utils.get_from_bundle(7)
@@ -365,20 +375,14 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
             df_calc_mt.columns = [str(c).strip().lower() for c in df_calc_mt.columns]
             col_cost_mt = next((c for c in df_calc_mt.columns if 'spent' in c or 'spend' in c or 'cost' in c), None)
             if col_cost_mt:
-                total_spend_meta = pd.to_numeric(df_calc_mt[col_cost_mt].astype(str).str.replace(r'[^\d.]', '', regex=True), errors='coerce').fillna(0).sum()
+                total_spend_meta = df_calc_mt[col_cost_mt].apply(clean_idr_cost).sum()
 
         # C. Tarik Mekari (Tab Index 8)
         df_mk = utils.get_from_bundle(8)
-        def force_clean_num(x):
-            if pd.isna(x) or x == '': return 0
-            s = str(x).replace('Rp', '').replace('.', '').replace(',', '').strip()
-            try: return float(s)
-            except: return 0
-            
         if not df_mk.empty:
             col_biaya = next((c for c in df_mk.columns if 'biaya' in str(c).lower() or 'cost' in str(c).lower()), None)
             if col_biaya:
-                total_spend_mekari = df_mk[col_biaya].apply(force_clean_num).sum()
+                total_spend_mekari = df_mk[col_biaya].apply(clean_idr_cost).sum()
 
         # 4. KALKULASI FINAL GLOBAL ROI
         global_spend = total_spend_tiktok + total_spend_meta + total_spend_mekari
