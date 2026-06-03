@@ -347,9 +347,9 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
             if status_col:
                 global_closing = len(df_wa[df_wa[status_col].astype(str).str.contains('Closing', case=False, na=False)])
 
-        # 3. AUTO-FETCH DATA BIAYA IKLAN LANGSUNG DARI BUNDLE SPREADSHEETS
+       # 3. AUTO-FETCH DATA BIAYA IKLAN LANGSUNG DARI BUNDLE SPREADSHEETS
         
-        # Fungsi khusus membersihkan angka (SINKRONISASI DENGAN HALAMAN ADS)
+        # --- FUNGSI PEMBERSIH ANGKA ---
         def clean_idr_cost(x):
             if pd.isna(x) or str(x).strip() == '': return 0
             x = str(x).upper().replace('RP', '').replace('IDR', '').strip()
@@ -358,13 +358,26 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
             x = x.replace('.', '').replace(',', '')
             try: return float(x)
             except: return 0
+
+        # --- FUNGSI PENCARI KOLOM COST YANG AKURAT ---
+        def get_exact_cost_column(df_columns):
+            # Prioritas 1: Cari yang namanya persis target utama
+            for c in df_columns:
+                if c in ['cost', 'amount spent', 'spend', 'biaya', 'total cost']:
+                    return c
+            # Prioritas 2: Cari yang mengandung kata tersebut, 
+            # TAPI wajib abaikan kolom rasio seperti "cost per result" / "cpc"
+            for c in df_columns:
+                if any(k in c for k in ['cost', 'spend', 'biaya']) and 'per' not in c:
+                    return c
+            return None
             
         # A. Tarik TikTok (Tab Index 6)
         df_tk = utils.get_from_bundle(6)
         if not df_tk.empty:
             df_calc_tk = df_tk.copy()
             df_calc_tk.columns = [str(c).strip().lower() for c in df_calc_tk.columns]
-            col_cost_tk = next((c for c in df_calc_tk.columns if 'cost' in c), None)
+            col_cost_tk = get_exact_cost_column(df_calc_tk.columns)
             if col_cost_tk:
                 total_spend_tiktok = df_calc_tk[col_cost_tk].apply(clean_idr_cost).sum()
 
@@ -373,14 +386,15 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
         if not df_mt.empty:
             df_calc_mt = df_mt.copy()
             df_calc_mt.columns = [str(c).strip().lower() for c in df_calc_mt.columns]
-            col_cost_mt = next((c for c in df_calc_mt.columns if 'spent' in c or 'spend' in c or 'cost' in c), None)
+            col_cost_mt = get_exact_cost_column(df_calc_mt.columns)
             if col_cost_mt:
                 total_spend_meta = df_calc_mt[col_cost_mt].apply(clean_idr_cost).sum()
 
         # C. Tarik Mekari (Tab Index 8)
         df_mk = utils.get_from_bundle(8)
         if not df_mk.empty:
-            col_biaya = next((c for c in df_mk.columns if 'biaya' in str(c).lower() or 'cost' in str(c).lower()), None)
+            df_mk.columns = [str(c).strip().lower() for c in df_mk.columns]
+            col_biaya = get_exact_cost_column(df_mk.columns)
             if col_biaya:
                 total_spend_mekari = df_mk[col_biaya].apply(clean_idr_cost).sum()
 
