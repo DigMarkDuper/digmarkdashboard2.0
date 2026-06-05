@@ -28,6 +28,8 @@ from components.wa_admin import show_wa_admin_page
 from components.crm import show_crm_page
 from components.dm_sosmed import show_dm_sosmed_page
 from components.ads_analytics import show_ads_analytics_page
+# --- TAMBAHAN BARU: Import halaman interview ---
+from components.interview_analytic import show_interview_tracking_page
 
 # Konstanta Brand
 LOGO_URL = "https://www.dutapersadajogja.com/assets/img/logo.png"
@@ -220,6 +222,10 @@ try:
 
     elif page == "📈 ADS ANALYTICS":
         show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW)
+
+    # --- TAMBAHAN BARU: Route untuk halaman interview ---
+    elif page == "📅 TRACKING INTERVIEW":
+        show_interview_tracking_page(BRAND_BLUE, BRAND_YELLOW)
 
 except Exception as e:
     st.error(f"⚠️ Sistem mengalami kendala saat memuat {page}: {e}")
