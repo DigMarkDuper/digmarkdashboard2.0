@@ -226,6 +226,9 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
         
         # 7. Ads Report (Ikon Target Bullseye & Panah Konversi)
         ("https://github.com/DigMarkDuper/digmarkdashboard2.0/blob/main/asset/report.png?raw=true", "Ads Report", "ROI & CPL", "📈 ADS ANALYTICS", "btn_ads")
+        
+        # 8. Jadwal Interview Siswa (Ikon Kalender/User Interview Modern)
+        ("https://cdn-icons-png.flaticon.com/512/3652/3652191.png", "Interview", "Jadwal Seleksi", "📅 TRACKING INTERVIEW", "btn_int")
     ]
 
     # Render Baris 1
