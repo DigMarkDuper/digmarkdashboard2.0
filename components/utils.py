@@ -55,7 +55,8 @@ def fetch_all_master_data():
             4: get_df(4), # Database Nomor (CRM)
             6: get_df(6), # Iklan/Ads
             7: get_df(7), # CRM Progress
-            8: get_df(8)  # Pengaturan
+            8: get_df(8), # Pengaturan
+            9: get_df(9)  # <--- TAMBAHAN BARU: Jadwal Interview Siswa
         }
     except Exception as e:
         st.error(f"Gagal Sinkronisasi Master Data: {e}")
