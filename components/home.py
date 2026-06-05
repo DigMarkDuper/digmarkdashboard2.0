@@ -142,7 +142,8 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
                     </div>
                 </div>
             """, unsafe_allow_html=True)
-# --- HEADER UTAMA: COMMAND CENTER ---
+            
+    # --- HEADER UTAMA: COMMAND CENTER ---
     LOGO_URL = "https://www.dutapersadajogja.com/assets/img/logo.png"
     st.markdown(f"""
         <div class="main-header-box">
@@ -225,7 +226,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
         ("https://github.com/DigMarkDuper/digmarkdashboard2.0/blob/main/asset/direct-instagram.png?raw=true", "DM Sosmed", "Tracker Inbox", "📱 DM SOSMED", "btn_dm"),
         
         # 7. Ads Report (Ikon Target Bullseye & Panah Konversi)
-        ("https://github.com/DigMarkDuper/digmarkdashboard2.0/blob/main/asset/report.png?raw=true", "Ads Report", "ROI & CPL", "📈 ADS ANALYTICS", "btn_ads")
+        ("https://github.com/DigMarkDuper/digmarkdashboard2.0/blob/main/asset/report.png?raw=true", "Ads Report", "ROI & CPL", "📈 ADS ANALYTICS", "btn_ads"),
         
         # 8. Jadwal Interview Siswa (Ikon Kalender/User Interview Modern)
         ("https://cdn-icons-png.flaticon.com/512/3652/3652191.png", "Interview", "Jadwal Seleksi", "📅 TRACKING INTERVIEW", "btn_int")
@@ -238,7 +239,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Render Baris 2
+    # Render Baris 2 (Otomatis akan memuat 4 menu sisa karena nav_data sekarang berjumlah 8)
     cols2 = st.columns(4)
     for col, data in zip(cols2, nav_data[4:]):
         with col: create_square_card(*data)
@@ -308,7 +309,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
                     letter-spacing: 1.5px; 
                     text-transform: uppercase;
                 ">
-                    📊 Executive Snapshot <span style="color: {BRAND_YELLOW};">(MEI 2026)</span>
+                    📊 Executive Snapshot <span style="color: {BRAND_YELLOW};">(BULAN INI)</span>
                 </h2>
                 <p style="
                     margin: 0; 
@@ -325,15 +326,15 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
         k = st.columns(4)
         conv_mei = (total_closing_mei / total_leads_mei * 100) if total_leads_mei > 0 else 0
         
-        render_universal_card(k[0], "🎯", "Mei: Close/Leads", f"{total_closing_mei}/{total_leads_mei}", f"Conv: {conv_mei:.1f}%")
-        render_universal_card(k[1], "💰", "Omzet Mei", f"Rp {total_closing_mei * BIAYA_PELATIHAN:,.0f}".replace(",", "."), "Bulan Berjalan")
-        render_universal_card(k[2], "📱", "Hutang Sosmed", f"{sos_pend} Task", "Deadline Mei", "#DC2626" if sos_pend > 0 else "#111827")
-        render_universal_card(k[3], "🌐", "Hutang Web", f"{web_pend} Page", "Deadline Mei", "#DC2626" if web_pend > 0 else "#111827")
+        render_universal_card(k[0], "🎯", "Bulan Ini: Close/Leads", f"{total_closing_mei}/{total_leads_mei}", f"Conv: {conv_mei:.1f}%")
+        render_universal_card(k[1], "💰", "Omzet Bulan Ini", f"Rp {total_closing_mei * BIAYA_PELATIHAN:,.0f}".replace(",", "."), "Bulan Berjalan")
+        render_universal_card(k[2], "📱", "Hutang Sosmed", f"{sos_pend} Task", "Deadline Bulan Ini", "#DC2626" if sos_pend > 0 else "#111827")
+        render_universal_card(k[3], "🌐", "Hutang Web", f"{web_pend} Page", "Deadline Bulan Ini", "#DC2626" if web_pend > 0 else "#111827")
 
     except Exception as e:
         st.error(f"Gagal memuat snapshot: {e}")
 
-   # --- 6. ROI DASHBOARD (GLOBAL) ---
+    # --- 6. ROI DASHBOARD (GLOBAL) ---
     try:
         # 1. INISIALISASI VARIABEL AWAL
         global_leads = 0
@@ -350,9 +351,9 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
             if status_col:
                 global_closing = len(df_wa[df_wa[status_col].astype(str).str.contains('Closing', case=False, na=False)])
 
-       # 3. AUTO-FETCH DATA BIAYA IKLAN LANGSUNG DARI BUNDLE SPREADSHEETS
+        # 3. AUTO-FETCH DATA BIAYA IKLAN LANGSUNG DARI BUNDLE SPREADSHEETS
         
-        # --- FUNGSI PEMBERSIH ANGKA ---
+        # Fungsi khusus membersihkan angka (Tetap dipertahankan agar jutaan tidak jadi ribuan)
         def clean_idr_cost(x):
             if pd.isna(x) or str(x).strip() == '': return 0
             x = str(x).upper().replace('RP', '').replace('IDR', '').strip()
@@ -361,26 +362,13 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
             x = x.replace('.', '').replace(',', '')
             try: return float(x)
             except: return 0
-
-        # --- FUNGSI PENCARI KOLOM COST YANG AKURAT ---
-        def get_exact_cost_column(df_columns):
-            # Prioritas 1: Cari yang namanya persis target utama
-            for c in df_columns:
-                if c in ['cost', 'amount spent', 'spend', 'biaya', 'total cost']:
-                    return c
-            # Prioritas 2: Cari yang mengandung kata tersebut, 
-            # TAPI wajib abaikan kolom rasio seperti "cost per result" / "cpc"
-            for c in df_columns:
-                if any(k in c for k in ['cost', 'spend', 'biaya']) and 'per' not in c:
-                    return c
-            return None
             
         # A. Tarik TikTok (Tab Index 6)
         df_tk = utils.get_from_bundle(6)
         if not df_tk.empty:
             df_calc_tk = df_tk.copy()
             df_calc_tk.columns = [str(c).strip().lower() for c in df_calc_tk.columns]
-            col_cost_tk = get_exact_cost_column(df_calc_tk.columns)
+            col_cost_tk = next((c for c in df_calc_tk.columns if 'cost' in c), None)
             if col_cost_tk:
                 total_spend_tiktok = df_calc_tk[col_cost_tk].apply(clean_idr_cost).sum()
 
@@ -389,15 +377,14 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
         if not df_mt.empty:
             df_calc_mt = df_mt.copy()
             df_calc_mt.columns = [str(c).strip().lower() for c in df_calc_mt.columns]
-            col_cost_mt = get_exact_cost_column(df_calc_mt.columns)
+            col_cost_mt = next((c for c in df_calc_mt.columns if 'spent' in c or 'spend' in c or 'cost' in c), None)
             if col_cost_mt:
                 total_spend_meta = df_calc_mt[col_cost_mt].apply(clean_idr_cost).sum()
 
         # C. Tarik Mekari (Tab Index 8)
         df_mk = utils.get_from_bundle(8)
         if not df_mk.empty:
-            df_mk.columns = [str(c).strip().lower() for c in df_mk.columns]
-            col_biaya = get_exact_cost_column(df_mk.columns)
+            col_biaya = next((c for c in df_mk.columns if 'biaya' in str(c).lower() or 'cost' in str(c).lower()), None)
             if col_biaya:
                 total_spend_mekari = df_mk[col_biaya].apply(clean_idr_cost).sum()
 
