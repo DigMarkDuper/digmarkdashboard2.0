@@ -566,7 +566,7 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                 # --- UPDATE URUTAN STATUS ---
                 status_order = [
                     "Belum Terupdate", "No Response", "Follow Up", 
-                    "Pending Form - L1", "Pending Form L-2",  # <--- Status baru ditambahkan di sini
+                    "Pending Form - L1", "Pending Form - L2",  # <--- Status baru ditambahkan di sini
                     "Daftar", "Interview", "Closing", "Sales Progress", "Withdraw", "Lainnya",
                     "Not Eligible", "Double Chat", "Closed - Not Interested", "Partnership"
                 ]
