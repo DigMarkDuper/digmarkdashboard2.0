@@ -563,16 +563,31 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
+                # --- UPDATE URUTAN STATUS ---
                 status_order = [
-                    "Belum Terupdate", "No Response", "Follow Up", "Daftar", "Interview", 
-                    "Closing", "Sales Progress", "Withdraw", "Lainnya",
+                    "Belum Terupdate", "No Response", "Follow Up", 
+                    "Pending Form - L1", "Pending Form L-2",  # <--- Status baru ditambahkan di sini
+                    "Daftar", "Interview", "Closing", "Sales Progress", "Withdraw", "Lainnya",
                     "Not Eligible", "Double Chat", "Closed - Not Interested", "Partnership"
                 ]
+                
+                # --- UPDATE WARNA STATUS ---
                 color_map = {
-                    "Belum Terupdate": "#F3F4F6", "No Response": "#FDE68A", "Follow Up": "#BFDBFE",
-                    "Daftar": "#BBF7D0", "Interview": "#E9D5FF", "Closing": "#BBF7D0",
-                    "Lainnya": "#D1D5DB", "Sales Progress": "#1D4ED8", "Withdraw": "#B91C1C",
-                    "Not Eligible": "#9CA3AF", "Double Chat": "#6B7280", "Closed - Not Interested": "#4B5563", "Partnership": "#E9D5FF"
+                    "Belum Terupdate": "#F3F4F6", 
+                    "No Response": "#FDE68A", 
+                    "Follow Up": "#BFDBFE",
+                    "Pending Form - L1": "#FCD34D",  # Kuning terang untuk L1
+                    "Pending Form L-2": "#FBBF24",   # Kuning sedikit gelap/oranye untuk L2
+                    "Daftar": "#BBF7D0", 
+                    "Interview": "#E9D5FF", 
+                    "Closing": "#BBF7D0",
+                    "Lainnya": "#D1D5DB", 
+                    "Sales Progress": "#1D4ED8", 
+                    "Withdraw": "#B91C1C",
+                    "Not Eligible": "#9CA3AF", 
+                    "Double Chat": "#6B7280", 
+                    "Closed - Not Interested": "#4B5563", 
+                    "Partnership": "#E9D5FF"
                 }
                 
                 if 'Status' in df_full_tags.columns:
