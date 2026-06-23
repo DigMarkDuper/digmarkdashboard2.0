@@ -29,44 +29,41 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
     """, unsafe_allow_html=True)
     
     # =========================================================
-    # 1. AREA UTILITY (SYNC & UPLOAD)
+    # 1. AREA UTILITY (SYNC & UPLOAD) -> BAGIAN UPLOAD EXCEL
     # =========================================================
-    c_sync, c_upload = st.columns([1, 1])
-    
-    with c_sync:
-        st.markdown("### 🔄 Sinkronisasi")
-        if st.button("Tarik Data Unik dari WA Admin", use_container_width=True, key="sync_crm_v_final"):
-            with st.spinner("Menyinkronkan data..."):
-                sync_leads_to_crm() 
-            st.success("Berhasil sinkronisasi!")
-            st.rerun()
-
-    with c_upload:
-        st.markdown("### ⬆️ Import Data Baru")
-        with st.expander("Upload File Excel (.xlsx)"):
-            st.info("💡 Format: **phone_number**, **full_name**, **company**.")
-            
-            df_template = pd.DataFrame(columns=["phone_number", "full_name", "company"])
-            buffer_template = io.BytesIO()
-            with pd.ExcelWriter(buffer_template, engine='xlsxwriter') as writer:
-                df_template.to_excel(writer, index=False, sheet_name='Template')
-            
-            st.download_button(label="📥 Download Template", data=buffer_template.getvalue(), file_name="Template_CRM.xlsx", use_container_width=True)
-            
             uploaded_file = st.file_uploader("Upload Excel", type=["xlsx"], key="up_v_final")
             if uploaded_file:
                 try:
                     df_up = pd.read_excel(uploaded_file)
                     if st.button("📥 Konfirmasi Import", use_container_width=True):
                         with st.spinner("Mengirim data..."):
-                            tgl_in = datetime.date.today().strftime("%d-%m-%Y")
+                            tgl_in = datetime.date.today().strftime("%Y-%m-%d") # Format standar GSheets
                             df_up = df_up.fillna("")
                             bulk = []
                             for _, r in df_up.iterrows():
-                                # Struktur: No, Nama, No Hp, Domisili, Tgl Lahir, Tgl Masuk
-                                bulk.append(["", str(r.get('full_name','')), "'" + str(r.get('phone_number','')), str(r.get('company','')), "", tgl_in])
+                                # Mapping presisi ke 17 Kolom Database Nomor GSheets Mas
+                                bulk.append([
+                                    "",                                      # 0: No
+                                    "'" + str(r.get('phone_number','')),     # 1: No Hp
+                                    str(r.get('full_name','')),              # 2: Nama
+                                    str(r.get('company','')),                # 3: Domisili
+                                    "",                                      # 4: Tanggal Lahir
+                                    "",                                      # 5: Usia
+                                    "",                                      # 6: Kategori
+                                    "",                                      # 7: Keterangan Setelah Isi Form
+                                    tgl_in,                                  # 8: Tanggal Masuk Database
+                                    "",                                      # 9: Mekari Tag (Status Terakhir)
+                                    "",                                      # 10: Treatment 1
+                                    "",                                      # 11: Treatment 2
+                                    "",                                      # 12: Tanggal Treatment 1
+                                    "",                                      # 13: Tanggal Treatment 2
+                                    "",                                      # 14: Status
+                                    "",                                      # 15: Updated Status After Treatment
+                                    ""                                       # 16: Catatan
+                                ])
                             
-                            if append_sheet_rows(4, bulk):
+                            # MENGGUNAKAN INDEX 5 (Tab ke-6)
+                            if append_sheet_rows(5, bulk): 
                                 st.success("Data berhasil diimport!")
                                 st.cache_data.clear()
                                 st.rerun()
@@ -87,10 +84,12 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
             from components.utils import init_connection
             client = init_connection()
             if client:
-                # Angka 4 adalah index tab Database Nomor
-                data_raw = client.open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(4).get_all_records()
-                if data_raw:
-                    df_crm = pd.DataFrame(data_raw)
+                # MENGGUNAKAN INDEX 5 (Tab ke-6) dan ambil mentahan agar kebal error header
+                data_raw = client.open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(5).get_all_values()
+                
+                # Memisahkan baris pertama sebagai Header, dan sisanya sebagai Data
+                if data_raw and len(data_raw) > 1:
+                    df_crm = pd.DataFrame(data_raw[1:], columns=data_raw[0])
         
         # Validasi akhir setelah fallback
         if df_crm is None or df_crm.empty:
@@ -99,6 +98,7 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
 
         # Pembersihan data awal agar filter akurat (hapus whitespace & NaN)
         df_crm = df_crm.fillna('')
+        df_crm.columns = df_crm.columns.astype(str)
         for col in df_crm.columns:
             df_crm[col] = df_crm[col].astype(str).str.strip()
 
