@@ -44,30 +44,36 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
     with c_upload:
         st.markdown("### ⬆️ Import Data Baru")
         with st.expander("Upload File Excel (.xlsx)"):
-            st.info("💡 Format: **phone_number**, **full_name**, **company**.")
+            st.info("💡 Format: **phone_number**, **full_name**, **customer_name**, **company**.")
             
-            df_template = pd.DataFrame(columns=["phone_number", "full_name", "company"])
+            # Template disesuaikan dengan format 4 kolom Mekari Qontak
+            df_template = pd.DataFrame(columns=["phone_number", "full_name", "customer_name", "company"])
             buffer_template = io.BytesIO()
             with pd.ExcelWriter(buffer_template, engine='xlsxwriter') as writer:
                 df_template.to_excel(writer, index=False, sheet_name='Template')
             
-            st.download_button(label="📥 Download Template", data=buffer_template.getvalue(), file_name="Template_CRM.xlsx", use_container_width=True)
+            st.download_button(label="📥 Download Template Upload", data=buffer_template.getvalue(), file_name="Template_CRM.xlsx", use_container_width=True)
             
             uploaded_file = st.file_uploader("Upload Excel", type=["xlsx"], key="up_v_final")
             if uploaded_file:
                 try:
                     df_up = pd.read_excel(uploaded_file)
-                    if st.button("📥 Konfirmasi Import", use_container_width=True):
+                    if st.button("📥 Konfirmasi Import ke GSheets", use_container_width=True):
                         with st.spinner("Mengirim data..."):
                             tgl_in = datetime.date.today().strftime("%Y-%m-%d")
                             df_up = df_up.fillna("")
                             bulk = []
                             for _, r in df_up.iterrows():
-                                # Mapping presisi ke 17 Kolom Database Nomor GSheets
+                                # Cek validasi nama jika admin mengisi salah satu kolom nama
+                                nama_calon = str(r.get('full_name', ''))
+                                if nama_calon == "" or nama_calon.lower() == "nan":
+                                    nama_calon = str(r.get('customer_name', ''))
+
+                                # Mapping presisi ke 17 Kolom Database Nomor GSheets Mas (Tab ke-6)
                                 bulk.append([
                                     "",                                      # 0: No
                                     "'" + str(r.get('phone_number','')),     # 1: No Hp
-                                    str(r.get('full_name','')),              # 2: Nama
+                                    nama_calon,                              # 2: Nama
                                     str(r.get('company','')),                # 3: Domisili
                                     "",                                      # 4: Tanggal Lahir
                                     "",                                      # 5: Usia
@@ -90,7 +96,7 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
                                 st.cache_data.clear()
                                 st.rerun()
                 except Exception as e:
-                    st.error(f"Error: {e}")
+                    st.error(f"Error saat mengupload data: {e}")
 
     st.markdown("---")
 
@@ -101,31 +107,31 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
         # Panggil data utama dari bundle
         df_crm = load_database_nomor()
         
-        # JIKA KOSONG: Lakukan pemanggilan ulang langsung ke API (Force Fetch)
+        # JIKA KOSONG / ERROR CACHE: Lakukan pemanggilan ulang langsung ke API (Force Fetch)
         if df_crm is None or len(df_crm) == 0:
             client = init_connection()
             if client:
-                # Menggunakan Index 5 (Tab ke-6) mentahan
+                # Menggunakan Index 5 (Tab ke-6) mentahan agar bypass error duplicate header
                 data_raw = client.open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(5).get_all_values()
                 
                 # Memisahkan baris pertama sebagai Header, dan sisanya sebagai Data
                 if data_raw and len(data_raw) > 1:
                     df_crm = pd.DataFrame(data_raw[1:], columns=data_raw[0])
         
-        # Validasi akhir setelah fallback
+        # Validasi akhir setelah fallback jika spreadsheet benar-benar kosong kosong
         if df_crm is None or df_crm.empty:
-            st.info("Database masih kosong atau gagal ditarik dari Google Sheets.")
+            st.info("Database masih kosong atau gagal ditarik dari Google Sheets Tab ke-6.")
             return
 
-        # Pembersihan data awal agar filter akurat (hapus whitespace & NaN)
+        # Pembersihan data awal agar filter akurat (hapus whitespace & NaN hantu)
         df_crm = df_crm.fillna('')
         df_crm.columns = df_crm.columns.astype(str)
         for col in df_crm.columns:
             df_crm[col] = df_crm[col].astype(str).str.strip()
 
-        # --- UI FILTER ---
+        # --- UI FILTER STRATEGIS ---
         with st.expander("🔍 Filter Strategis Database", expanded=True):
-            search_crm = st.text_input("🔎 Cari Nama atau Nomor HP:", placeholder="Ketik di sini...", key="search_crm")
+            search_crm = st.text_input("🔎 Cari Nama atau Nomor HP:", placeholder="Ketik nama atau nomor di sini...", key="search_crm")
             
             f1, f2, f3 = st.columns(3)
             with f1:
@@ -191,9 +197,11 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
         col_dl, col_ref = st.columns(2)
         
         with col_dl:
+            # Generate format Excel 4 kolom yang sesuai presisi sistem Mekari Qontak
             df_mekari = pd.DataFrame({
                 "phone_number": filtered_df['No Hp'] if 'No Hp' in filtered_df.columns else "",
                 "full_name": filtered_df['Nama'] if 'Nama' in filtered_df.columns else "",
+                "customer_name": filtered_df['Nama'] if 'Nama' in filtered_df.columns else "", # Duplikasi dari Nama untuk struktur Mekari
                 "company": filtered_df['Domisili'] if 'Domisili' in filtered_df.columns else ""
             })
             
@@ -218,7 +226,9 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
                 st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Merender tabel dataframe utama ke layar dashboard
         st.dataframe(filtered_df, use_container_width=True, hide_index=True)
 
     except Exception as e:
-        st.error(f"Gagal memuat data: {e}")
+        st.error(f"Gagal memuat visualisasi data tabel: {e}")
