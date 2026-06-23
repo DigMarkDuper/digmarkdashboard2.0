@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import io
 import datetime
-from components.utils import sync_leads_to_crm, load_database_nomor, append_sheet_rows
+from components.utils import sync_leads_to_crm, load_database_nomor, append_sheet_rows, init_connection
 
 def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
     # --- FUNGSI METRIC CARD (STYLE MATCHING) ---
@@ -29,19 +29,41 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
     """, unsafe_allow_html=True)
     
     # =========================================================
-    # 1. AREA UTILITY (SYNC & UPLOAD) -> BAGIAN UPLOAD EXCEL
+    # 1. AREA UTILITY (SYNC & UPLOAD)
     # =========================================================
+    c_sync, c_upload = st.columns([1, 1])
+    
+    with c_sync:
+        st.markdown("### 🔄 Sinkronisasi")
+        if st.button("Tarik Data Unik dari WA Admin", use_container_width=True, key="sync_crm_v_final"):
+            with st.spinner("Menyinkronkan data..."):
+                sync_leads_to_crm() 
+            st.success("Berhasil sinkronisasi!")
+            st.rerun()
+
+    with c_upload:
+        st.markdown("### ⬆️ Import Data Baru")
+        with st.expander("Upload File Excel (.xlsx)"):
+            st.info("💡 Format: **phone_number**, **full_name**, **company**.")
+            
+            df_template = pd.DataFrame(columns=["phone_number", "full_name", "company"])
+            buffer_template = io.BytesIO()
+            with pd.ExcelWriter(buffer_template, engine='xlsxwriter') as writer:
+                df_template.to_excel(writer, index=False, sheet_name='Template')
+            
+            st.download_button(label="📥 Download Template", data=buffer_template.getvalue(), file_name="Template_CRM.xlsx", use_container_width=True)
+            
             uploaded_file = st.file_uploader("Upload Excel", type=["xlsx"], key="up_v_final")
             if uploaded_file:
                 try:
                     df_up = pd.read_excel(uploaded_file)
                     if st.button("📥 Konfirmasi Import", use_container_width=True):
                         with st.spinner("Mengirim data..."):
-                            tgl_in = datetime.date.today().strftime("%Y-%m-%d") # Format standar GSheets
+                            tgl_in = datetime.date.today().strftime("%Y-%m-%d")
                             df_up = df_up.fillna("")
                             bulk = []
                             for _, r in df_up.iterrows():
-                                # Mapping presisi ke 17 Kolom Database Nomor GSheets Mas
+                                # Mapping presisi ke 17 Kolom Database Nomor GSheets
                                 bulk.append([
                                     "",                                      # 0: No
                                     "'" + str(r.get('phone_number','')),     # 1: No Hp
@@ -62,8 +84,8 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
                                     ""                                       # 16: Catatan
                                 ])
                             
-                            # MENGGUNAKAN INDEX 5 (Tab ke-6)
-                            if append_sheet_rows(5, bulk): 
+                            # Menggunakan Index 5 (Tab ke-6)
+                            if append_sheet_rows(5, bulk):
                                 st.success("Data berhasil diimport!")
                                 st.cache_data.clear()
                                 st.rerun()
@@ -81,10 +103,9 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
         
         # JIKA KOSONG: Lakukan pemanggilan ulang langsung ke API (Force Fetch)
         if df_crm is None or len(df_crm) == 0:
-            from components.utils import init_connection
             client = init_connection()
             if client:
-                # MENGGUNAKAN INDEX 5 (Tab ke-6) dan ambil mentahan agar kebal error header
+                # Menggunakan Index 5 (Tab ke-6) mentahan
                 data_raw = client.open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(5).get_all_values()
                 
                 # Memisahkan baris pertama sebagai Header, dan sisanya sebagai Data
@@ -119,7 +140,6 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
                 sel_daerah = st.multiselect("Domisili:", options=opts_daerah)
             
             with f3:
-                # Opsi filter sesuai permintaan
                 sel_treatment = st.selectbox(
                     "Status Treatment:", 
                     ["Semua", "Sudah Treatment 1", "Sudah Treatment 2", "Belum Treatment"]
@@ -128,38 +148,29 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
         # --- PROSES FILTERING ---
         mask = pd.Series([True] * len(df_crm))
         
-        # 1. Filter Search (Tetap)
         if search_crm:
             mask &= (df_crm['Nama'].str.contains(search_crm, case=False) | 
                      df_crm['No Hp'].str.contains(search_crm))
         
-        # 2. Filter Multiselect (Tetap)
         if sel_mekari:
             mask &= df_crm[m_tag_col].isin(sel_mekari)
         if sel_daerah:
             mask &= df_crm['Domisili'].isin(sel_daerah)
 
-        # 3. Filter Treatment (DIPERBAIKI)
         col_t1 = 'Treatment 1'
         col_t2 = 'Treatment 2'
         
         if col_t1 in df_crm.columns and col_t2 in df_crm.columns:
             if sel_treatment == "Sudah Treatment 1":
-                # Hanya menampilkan yang sudah diisi T1
                 mask &= (df_crm[col_t1] != "")
-            
             elif sel_treatment == "Sudah Treatment 2":
-                # Hanya menampilkan yang sudah diisi T2
                 mask &= (df_crm[col_t2] != "")
-            
             elif sel_treatment == "Belum Treatment":
-                # Menampilkan yang KEDUA kolomnya masih kosong
                 mask &= (df_crm[col_t1] == "") & (df_crm[col_t2] == "")
 
-        # Terapkan Mask
         filtered_df = df_crm[mask].copy()
 
-       # =========================================================
+        # =========================================================
         # 3. DISPLAY METRICS & TABLE
         # =========================================================
         st.subheader("📑 Hasil Analisis Database")
@@ -180,7 +191,6 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
         col_dl, col_ref = st.columns(2)
         
         with col_dl:
-            # Menyiapkan DataFrame khusus format Mekari Qontak
             df_mekari = pd.DataFrame({
                 "phone_number": filtered_df['No Hp'] if 'No Hp' in filtered_df.columns else "",
                 "full_name": filtered_df['Nama'] if 'Nama' in filtered_df.columns else "",
@@ -202,17 +212,12 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
             
         with col_ref:
             if st.button("🔄 Refresh Data Database", use_container_width=True, key="ref_crm_db"):
-                # 1. Bersihkan semua cache data yang ditarik dari Google Sheets
                 st.cache_data.clear()
-                
-                # 2. Hapus memori filter pencarian agar UI kembali bersih
                 if 'search_crm' in st.session_state:
                     del st.session_state['search_crm']
                 st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Tampilkan tabel data
         st.dataframe(filtered_df, use_container_width=True, hide_index=True)
 
     except Exception as e:
