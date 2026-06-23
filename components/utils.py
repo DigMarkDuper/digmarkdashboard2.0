@@ -289,7 +289,7 @@ def sync_leads_to_crm():
             ]
             rows_to_add.append(crm_row)
         
-        if append_sheet_rows(4, rows_to_add):
+        if append_sheet_rows(5, rows_to_add):
             return True, f"Berhasil menyinkronkan {len(rows_to_add)} data baru ke CRM."
         return False, "Gagal menulis ke Google Sheets CRM."
             
