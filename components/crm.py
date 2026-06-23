@@ -91,8 +91,8 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
                                     ""                                       # 16: Catatan
                                 ])
                             
-                            # Menggunakan Index 5 (Tab ke-6)
-                            if append_sheet_rows(5, bulk):
+                            # Menggunakan Index 4 (Tab ke-5)
+                            if append_sheet_rows(4, bulk):
                                 st.success("Data berhasil diimport!")
                                 st.cache_data.clear()
                                 st.rerun()
@@ -113,7 +113,7 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
             client = init_connection()
             if client:
                 # Menggunakan Index 5 (Tab ke-6) mentahan agar bypass error duplicate header
-                data_raw = client.open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(5).get_all_values()
+                data_raw = client.open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(4).get_all_values()
                 
                 # Memisahkan baris pertama sebagai Header, dan sisanya sebagai Data
                 if data_raw and len(data_raw) > 1:
