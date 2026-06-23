@@ -79,12 +79,25 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
     # 2. LOAD DATABASE & LOGIKA FILTER (COLUMNS SYNC)
     # =========================================================
     try:
+        # Panggil data utama dari bundle
         df_crm = load_database_nomor()
-        if df_crm.empty:
-            st.info("Database masih kosong.")
+        
+        # JIKA KOSONG: Lakukan pemanggilan ulang langsung ke API (Force Fetch)
+        if df_crm is None or len(df_crm) == 0:
+            from components.utils import init_connection
+            client = init_connection()
+            if client:
+                # Angka 4 adalah index tab Database Nomor
+                data_raw = client.open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(4).get_all_records()
+                if data_raw:
+                    df_crm = pd.DataFrame(data_raw)
+        
+        # Validasi akhir setelah fallback
+        if df_crm is None or df_crm.empty:
+            st.info("Database masih kosong atau gagal ditarik dari Google Sheets.")
             return
 
-        # Pembersihan data awal agar filter akurat
+        # Pembersihan data awal agar filter akurat (hapus whitespace & NaN)
         df_crm = df_crm.fillna('')
         for col in df_crm.columns:
             df_crm[col] = df_crm[col].astype(str).str.strip()
