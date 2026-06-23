@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import io
 import datetime
+import re  # <--- Wajib di-import untuk membersihkan simbol nomor HP
 from components.utils import sync_leads_to_crm, load_database_nomor, append_sheet_rows, init_connection
 
 def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
@@ -197,11 +198,33 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
         col_dl, col_ref = st.columns(2)
         
         with col_dl:
+            # FUNGSI PEMBERSIH NOMOR HP KHUSUS MEKARI
+            def format_no_hp_mekari(nomor):
+                nomor = str(nomor).strip()
+                # Hapus semua karakter yang bukan angka (termasuk +, -, dan spasi)
+                nomor = re.sub(r'\D', '', nomor)
+                
+                if not nomor:
+                    return ""
+                
+                # Standarisasi awalan ke kode negara 62
+                if nomor.startswith('0'):
+                    return '62' + nomor[1:]
+                elif nomor.startswith('8'):
+                    return '62' + nomor
+                return nomor
+
+            # Terapkan pembersihan sebelum data dimasukkan ke DataFrame Mekari
+            if 'No Hp' in filtered_df.columns:
+                cleaned_phone_numbers = filtered_df['No Hp'].apply(format_no_hp_mekari)
+            else:
+                cleaned_phone_numbers = ""
+
             # Generate format Excel 4 kolom yang sesuai presisi sistem Mekari Qontak
             df_mekari = pd.DataFrame({
-                "phone_number": filtered_df['No Hp'] if 'No Hp' in filtered_df.columns else "",
+                "phone_number": cleaned_phone_numbers,
                 "full_name": filtered_df['Nama'] if 'Nama' in filtered_df.columns else "",
-                "customer_name": filtered_df['Nama'] if 'Nama' in filtered_df.columns else "", # Duplikasi dari Nama untuk struktur Mekari
+                "customer_name": filtered_df['Nama'] if 'Nama' in filtered_df.columns else "", # Duplikasi dari Nama
                 "company": filtered_df['Domisili'] if 'Domisili' in filtered_df.columns else ""
             })
             
