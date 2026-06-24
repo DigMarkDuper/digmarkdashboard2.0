@@ -176,7 +176,7 @@ def update_sheet_cell(sheet_index, row_index, column_name, new_value):
 # =====================================================================
 
 def sync_leads_to_crm():
-    """Fungsi untuk memindahkan data WA Admin ke CRM dengan pembersihan nomor & filter kategori junk"""
+    """Fungsi untuk memindahkan data WA Admin ke CRM dengan pembersihan nomor & filter kategori junk, beserta kolom Status"""
     try:
         df_wa = load_wa_admin()
         df_crm = load_database_nomor()
@@ -246,7 +246,7 @@ def sync_leads_to_crm():
 
         rows_to_add = []
         
-        # Mapping data ke dalam susunan 17 kolom tabel CRM
+        # Mapping data ke dalam susunan 18 kolom tabel CRM (A sampai R)
         for _, row in new_leads.iterrows():
             tgl_masuk = row.get('Tanggal Masuk', "")
             if isinstance(tgl_masuk, pd.Timestamp):
@@ -268,29 +268,35 @@ def sync_leads_to_crm():
             mekari_tag = str(row.get('Mekari Tag', ""))
             if mekari_tag.lower() == 'nan': mekari_tag = ""
 
+            # ---> MENGAMBIL KOLOM STATUS DARI TAB WA ADMIN <---
+            status_wa = str(row.get('Status', ""))
+            if status_wa.lower() == 'nan': status_wa = ""
+
             crm_row = [
-                "",              # 0: No
-                no_hp,           # 1: No Hp (Format Bersih 62)
-                nama,            # 2: Nama
-                domisili,        # 3: Domisili
-                "",              # 4: Tanggal Lahir
-                "",              # 5: Usia
-                kategori_asal,   # 6: Kategori
-                "",              # 7: Keterangan Setelah Isi Form
-                tgl_masuk,       # 8: Tanggal Masuk Database
-                mekari_tag,      # 9: Mekari Tag (Status Terakhir)
-                "",              # 10: Treatment 1
-                "",              # 11: Treatment 2
-                "",              # 12: Tanggal Treatment 1
-                "",              # 13: Tanggal Treatment 2
-                "",              # 14: Status
-                "",              # 15: Updated Status After Treatment
-                ""               # 16: Catatan
+                "",              # 0 (A): No
+                no_hp,           # 1 (B): No Hp (Format Bersih 62)
+                nama,            # 2 (C): Nama
+                domisili,        # 3 (D): Domisili
+                "",              # 4 (E): Tanggal Lahir
+                "",              # 5 (F): Usia
+                kategori_asal,   # 6 (G): Kategori
+                "",              # 7 (H): Keterangan Setelah Isi Form
+                tgl_masuk,       # 8 (I): Tanggal Masuk Database
+                mekari_tag,      # 9 (J): Mekari Tag (Status Terakhir)
+                "",              # 10 (K): Treatment 1
+                "",              # 11 (L): Treatment 2
+                "",              # 12 (M): Tanggal Treatment 1
+                "",              # 13 (N): Tanggal Treatment 2
+                "",              # 14 (O): Status
+                "",              # 15 (P): Updated Status After Treatment
+                "",              # 16 (Q): Catatan
+                status_wa        # 17 (R): Status (Diambil dari WA Admin)
             ]
             rows_to_add.append(crm_row)
         
+        # Mengirim ke index 4 (Tab ke-5 CRM)
         if append_sheet_rows(4, rows_to_add):
-            return True, f"Berhasil menyinkronkan {len(rows_to_add)} data baru ke CRM."
+            return True, f"Berhasil menyinkronkan {len(rows_to_add)} data baru ke CRM beserta Status WA."
         return False, "Gagal menulis ke Google Sheets CRM."
             
     except Exception as e:
