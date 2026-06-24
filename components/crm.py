@@ -26,7 +26,6 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
         st.markdown("### 🔄 Sinkronisasi")
         if st.button("Tarik Data Unik dari WA Admin", use_container_width=True, key="sync_crm_v_final"):
             with st.spinner("Menyinkronkan data..."):
-                # Mesin sinkronisasinya dipanggil dari utils.py di sini
                 sync_leads_to_crm() 
             st.success("Berhasil sinkronisasi!")
             st.rerun()
@@ -57,7 +56,6 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
                                 if nama_calon == "" or nama_calon.lower() == "nan":
                                     nama_calon = str(r.get('customer_name', ''))
 
-                                # Mapping presisi ke 18 Kolom (A sampai R)
                                 bulk.append([
                                     "",                                      # 0 (A): No
                                     "'" + str(r.get('phone_number','')),     # 1 (B): No Hp
@@ -76,7 +74,7 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
                                     "",                                      # 14 (O): Status
                                     "",                                      # 15 (P): Updated Status After Treatment
                                     "",                                      # 16 (Q): Catatan
-                                    ""                                       # 17 (R): Status dari WA Admin (Disiapkan kosong untuk upload manual)
+                                    ""                                       # 17 (R): Status dari WA Admin
                                 ])
                             
                             if append_sheet_rows(4, bulk):
@@ -110,10 +108,11 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
         for col in df_crm.columns:
             df_crm[col] = df_crm[col].astype(str).str.strip()
 
+        # UI FILTER STRATEGIS (SEKARANG MENJADI 4 KOLOM)
         with st.expander("🔍 Filter Strategis Database", expanded=True):
             search_crm = st.text_input("🔎 Cari Nama atau Nomor HP:", placeholder="Ketik nama atau nomor di sini...", key="search_crm")
             
-            f1, f2, f3 = st.columns(3)
+            f1, f2, f3, f4 = st.columns(4)
             with f1:
                 m_tag_col = 'Mekari Tag (Status Terakhir)'
                 opts_mekari = sorted(df_crm[m_tag_col].unique().tolist()) if m_tag_col in df_crm.columns else []
@@ -130,6 +129,17 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
                     "Status Treatment:", 
                     ["Semua", "Sudah Treatment 1", "Sudah Treatment 2", "Belum Treatment"]
                 )
+            
+            with f4:
+                # Logika pintar untuk mencari kolom "Status" yang berada paling ujung (Kolom R hasil sinkronisasi)
+                status_cols = [c for c in df_crm.columns if 'status' in c.lower() and 'mekari' not in c.lower() and 'treatment' not in c.lower()]
+                target_status_col = status_cols[-1] if status_cols else 'Status'
+                
+                opts_status = sorted(df_crm[target_status_col].unique().tolist()) if target_status_col in df_crm.columns else []
+                if '' in opts_status: opts_status.remove('')
+                
+                # Filter Baru
+                sel_status = st.multiselect("Status Terakhir:", options=opts_status)
 
         mask = pd.Series([True] * len(df_crm))
         
@@ -139,8 +149,12 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
         
         if sel_mekari:
             mask &= df_crm[m_tag_col].isin(sel_mekari)
+            
         if sel_daerah:
             mask &= df_crm['Domisili'].isin(sel_daerah)
+            
+        if sel_status and target_status_col in df_crm.columns:
+            mask &= df_crm[target_status_col].isin(sel_status)
 
         col_t1 = 'Treatment 1'
         col_t2 = 'Treatment 2'
