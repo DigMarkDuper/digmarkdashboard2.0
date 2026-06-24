@@ -2,22 +2,10 @@ import streamlit as st
 import pandas as pd
 import io
 import datetime
-import re  # <--- Wajib di-import untuk membersihkan simbol nomor HP
+import re  
 from components.utils import sync_leads_to_crm, load_database_nomor, append_sheet_rows, init_connection
 
 def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
-    # --- FUNGSI METRIC CARD (STYLE MATCHING) ---
-    def render_metric_card(title, value, accent_color, icon_url):
-        return f"""
-        <div style="background: #ffffff; border: 1px solid #e5e7eb; border-left: 5px solid {accent_color}; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 15px;">
-            <img src="{icon_url}" width="30">
-            <div>
-                <p style="margin: 0; color: #6b7280; font-size: 10px; font-weight: 800; text-transform: uppercase;">{title}</p>
-                <h3 style="margin: 0; color: #111827; font-size: 18px; font-weight: 900;">{value}</h3>
-            </div>
-        </div>
-        """
-
     # --- HEADER UTAMA ---
     st.markdown(f"""
         <div style="display: flex; align-items: center; gap: 18px; background: {BRAND_BLUE}; padding: 20px 25px; border-radius: 12px; margin-bottom: 30px; border-left: 8px solid {BRAND_YELLOW}; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
@@ -38,6 +26,7 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
         st.markdown("### 🔄 Sinkronisasi")
         if st.button("Tarik Data Unik dari WA Admin", use_container_width=True, key="sync_crm_v_final"):
             with st.spinner("Menyinkronkan data..."):
+                # Mesin sinkronisasinya dipanggil dari utils.py di sini
                 sync_leads_to_crm() 
             st.success("Berhasil sinkronisasi!")
             st.rerun()
@@ -47,7 +36,6 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
         with st.expander("Upload File Excel (.xlsx)"):
             st.info("💡 Format: **phone_number**, **full_name**, **customer_name**, **company**.")
             
-            # Template disesuaikan dengan format 4 kolom Mekari Qontak
             df_template = pd.DataFrame(columns=["phone_number", "full_name", "customer_name", "company"])
             buffer_template = io.BytesIO()
             with pd.ExcelWriter(buffer_template, engine='xlsxwriter') as writer:
@@ -65,33 +53,32 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
                             df_up = df_up.fillna("")
                             bulk = []
                             for _, r in df_up.iterrows():
-                                # Cek validasi nama jika admin mengisi salah satu kolom nama
                                 nama_calon = str(r.get('full_name', ''))
                                 if nama_calon == "" or nama_calon.lower() == "nan":
                                     nama_calon = str(r.get('customer_name', ''))
 
-                                # Mapping presisi ke 17 Kolom Database Nomor GSheets Mas (Tab ke-6)
+                                # Mapping presisi ke 18 Kolom (A sampai R)
                                 bulk.append([
-                                    "",                                      # 0: No
-                                    "'" + str(r.get('phone_number','')),     # 1: No Hp
-                                    nama_calon,                              # 2: Nama
-                                    str(r.get('company','')),                # 3: Domisili
-                                    "",                                      # 4: Tanggal Lahir
-                                    "",                                      # 5: Usia
-                                    "",                                      # 6: Kategori
-                                    "",                                      # 7: Keterangan Setelah Isi Form
-                                    tgl_in,                                  # 8: Tanggal Masuk Database
-                                    "",                                      # 9: Mekari Tag (Status Terakhir)
-                                    "",                                      # 10: Treatment 1
-                                    "",                                      # 11: Treatment 2
-                                    "",                                      # 12: Tanggal Treatment 1
-                                    "",                                      # 13: Tanggal Treatment 2
-                                    "",                                      # 14: Status
-                                    "",                                      # 15: Updated Status After Treatment
-                                    ""                                       # 16: Catatan
+                                    "",                                      # 0 (A): No
+                                    "'" + str(r.get('phone_number','')),     # 1 (B): No Hp
+                                    nama_calon,                              # 2 (C): Nama
+                                    str(r.get('company','')),                # 3 (D): Domisili
+                                    "",                                      # 4 (E): Tanggal Lahir
+                                    "",                                      # 5 (F): Usia
+                                    "",                                      # 6 (G): Kategori
+                                    "",                                      # 7 (H): Keterangan Setelah Isi Form
+                                    tgl_in,                                  # 8 (I): Tanggal Masuk Database
+                                    "",                                      # 9 (J): Mekari Tag (Status Terakhir)
+                                    "",                                      # 10 (K): Treatment 1
+                                    "",                                      # 11 (L): Treatment 2
+                                    "",                                      # 12 (M): Tanggal Treatment 1
+                                    "",                                      # 13 (N): Tanggal Treatment 2
+                                    "",                                      # 14 (O): Status
+                                    "",                                      # 15 (P): Updated Status After Treatment
+                                    "",                                      # 16 (Q): Catatan
+                                    ""                                       # 17 (R): Status dari WA Admin (Disiapkan kosong untuk upload manual)
                                 ])
                             
-                            # Menggunakan Index 4 (Tab ke-5)
                             if append_sheet_rows(4, bulk):
                                 st.success("Data berhasil diimport!")
                                 st.cache_data.clear()
@@ -102,35 +89,27 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
     st.markdown("---")
 
     # =========================================================
-    # 2. LOAD DATABASE & LOGIKA FILTER (COLUMNS SYNC)
+    # 2. LOAD DATABASE & LOGIKA FILTER
     # =========================================================
     try:
-        # Panggil data utama dari bundle
         df_crm = load_database_nomor()
         
-        # JIKA KOSONG / ERROR CACHE: Lakukan pemanggilan ulang langsung ke API (Force Fetch)
         if df_crm is None or len(df_crm) == 0:
             client = init_connection()
             if client:
-                # Menggunakan Index 5 (Tab ke-6) mentahan agar bypass error duplicate header
                 data_raw = client.open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(4).get_all_values()
-                
-                # Memisahkan baris pertama sebagai Header, dan sisanya sebagai Data
                 if data_raw and len(data_raw) > 1:
                     df_crm = pd.DataFrame(data_raw[1:], columns=data_raw[0])
         
-        # Validasi akhir setelah fallback jika spreadsheet benar-benar kosong kosong
         if df_crm is None or df_crm.empty:
-            st.info("Database masih kosong atau gagal ditarik dari Google Sheets Tab ke-6.")
+            st.info("Database masih kosong atau gagal ditarik dari Google Sheets Tab ke-5.")
             return
 
-        # Pembersihan data awal agar filter akurat (hapus whitespace & NaN hantu)
         df_crm = df_crm.fillna('')
         df_crm.columns = df_crm.columns.astype(str)
         for col in df_crm.columns:
             df_crm[col] = df_crm[col].astype(str).str.strip()
 
-        # --- UI FILTER STRATEGIS ---
         with st.expander("🔍 Filter Strategis Database", expanded=True):
             search_crm = st.text_input("🔎 Cari Nama atau Nomor HP:", placeholder="Ketik nama atau nomor di sini...", key="search_crm")
             
@@ -152,7 +131,6 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
                     ["Semua", "Sudah Treatment 1", "Sudah Treatment 2", "Belum Treatment"]
                 )
 
-        # --- PROSES FILTERING ---
         mask = pd.Series([True] * len(df_crm))
         
         if search_crm:
@@ -194,37 +172,29 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
 
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # --- TOMBOL AKSI: DOWNLOAD MEKARI & REFRESH ---
         col_dl, col_ref = st.columns(2)
         
         with col_dl:
-            # FUNGSI PEMBERSIH NOMOR HP KHUSUS MEKARI
             def format_no_hp_mekari(nomor):
                 nomor = str(nomor).strip()
-                # Hapus semua karakter yang bukan angka (termasuk +, -, dan spasi)
                 nomor = re.sub(r'\D', '', nomor)
-                
                 if not nomor:
                     return ""
-                
-                # Standarisasi awalan ke kode negara 62
                 if nomor.startswith('0'):
                     return '62' + nomor[1:]
                 elif nomor.startswith('8'):
                     return '62' + nomor
                 return nomor
 
-            # Terapkan pembersihan sebelum data dimasukkan ke DataFrame Mekari
             if 'No Hp' in filtered_df.columns:
                 cleaned_phone_numbers = filtered_df['No Hp'].apply(format_no_hp_mekari)
             else:
                 cleaned_phone_numbers = ""
 
-            # Generate format Excel 4 kolom yang sesuai presisi sistem Mekari Qontak
             df_mekari = pd.DataFrame({
                 "phone_number": cleaned_phone_numbers,
                 "full_name": filtered_df['Nama'] if 'Nama' in filtered_df.columns else "",
-                "customer_name": filtered_df['Nama'] if 'Nama' in filtered_df.columns else "", # Duplikasi dari Nama
+                "customer_name": filtered_df['Nama'] if 'Nama' in filtered_df.columns else "",
                 "company": filtered_df['Domisili'] if 'Domisili' in filtered_df.columns else ""
             })
             
@@ -250,7 +220,6 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
 
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Merender tabel dataframe utama ke layar dashboard
         st.dataframe(filtered_df, use_container_width=True, hide_index=True)
 
     except Exception as e:
