@@ -61,7 +61,8 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
         with col_filter1:
             selected_months = st.multiselect("📅 Bulan Deadline:", options=months, default=months, key="sos_bulan")
         
-        list_pic = ["Abi", "Hanif", "Hana", "Ejak"] 
+        # PERUBAHAN 1: Update list PIC di sini
+        list_pic = ["Ejak", "Hana", "Abi", "Angel"] 
         with col_filter2:
             selected_pic = st.multiselect("👥 Pantau PIC:", options=list_pic, default=list_pic, key="sos_pic")
 
@@ -222,7 +223,8 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
 
             # --- PERHITUNGAN WORKLOAD PIC ---
             workload_data = []
-            # Pastikan selected_pic berasal dari list yang benar: ["Ejak", "Hana", "Abi", "Hanif"]
+            # PERUBAHAN 2: Update komen dokumentasi
+            # Pastikan selected_pic berasal dari list yang benar: ["Ejak", "Hana", "Abi", "Angel"]
             for pic in selected_pic:
                 pic_df = filtered_df[filtered_df['PIC'] == pic]
                 total_tugas = len(pic_df)
@@ -293,181 +295,4 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
                         border-radius: 12px; 
                         margin-bottom: 25px; 
                         border-left: 6px solid {BRAND_BLUE};
-                        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-                    ">
-                        <img src="https://img.icons8.com/fluency/48/scales.png" width="32">
-                        <h3 style="
-                            margin: 0; 
-                            color: white; 
-                            font-weight: 800; 
-                            letter-spacing: 1px; 
-                            font-size: 18px;
-                            text-transform: uppercase;
-                        ">
-                            RASIO PRODUKSI: SELESAI VS HUTANG
-                        </h3>
-                    </div>
-                """, unsafe_allow_html=True)
-                
-                # Stacked Bar: Selesai (Hijau) vs Hutang (Merah)
-                fig_d = go.Figure()
-                fig_d.add_trace(go.Bar(
-                    y=df_workload['PIC'],
-                    x=df_workload['Selesai (Produksi)'],
-                    name='Selesai',
-                    orientation='h',
-                    marker=dict(color='#2ECC71'), 
-                    text=df_workload['Selesai (Produksi)'],
-                    textposition='auto'
-                ))
-                fig_d.add_trace(go.Bar(
-                    y=df_workload['PIC'],
-                    x=df_workload['Hutang (Produksi)'],
-                    name='Hutang',
-                    orientation='h',
-                    marker=dict(color='#E74C3C'), 
-                    text=df_workload['Hutang (Produksi)'],
-                    textposition='auto'
-                ))
-
-                fig_d.update_layout(
-                    barmode='stack',
-                    margin=dict(t=20, b=20, l=10, r=10),
-                    height=300,
-                    plot_bgcolor='white',
-                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-                )
-                st.plotly_chart(fig_d, use_container_width=True)
-
-            with col_audit:
-                st.markdown(f"""
-                    <div style="
-                        display: flex; 
-                        align-items: center; 
-                        gap: 12px; 
-                        background: #010101; 
-                        padding: 12px 20px; 
-                        border-radius: 12px; 
-                        margin-bottom: 25px; 
-                        border-left: 6px solid {BRAND_BLUE};
-                        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-                    ">
-                        <img src="https://img.icons8.com/fluency/48/test-passed.png" width="32">
-                        <h3 style="
-                            margin: 0; 
-                            color: white; 
-                            font-weight: 800; 
-                            letter-spacing: 1px; 
-                            font-size: 18px;
-                            text-transform: uppercase;
-                        ">
-                            DETAIL AUDIT PIPELINE
-                        </h3>
-                    </div>
-                """, unsafe_allow_html=True)
-                
-                for name in selected_pic:
-                    pic_prod = filtered_df[(filtered_df['PIC'] == name) & (filtered_df['PROSES'] != 'DONE')]
-                    
-                    # Logika hutang post (khusus untuk mengecek status centang V, meski tidak masuk skor workload PIC)
-                    v_mask_pic = filtered_df['Output'].str.contains('Video', case=False, na=False)
-                    pic_sched = filtered_df[(filtered_df['PIC'] == name) & (filtered_df['PROSES'] == 'DONE') & 
-                                            ((filtered_df['IG'] == False) | ((v_mask_pic) & (filtered_df['YT'] == False)) | (filtered_df['TIKTOK'] == False))]
-                    
-                    status_emoji = "🔴" if (not pic_prod.empty or not pic_sched.empty) else "🟢"
-                    with st.expander(f"{status_emoji} {name} - Status Detail"):
-                        # Info Workload
-                        wl_info = df_workload[df_workload['PIC'] == name].iloc[0]
-                        st.caption(f"🚀 Produksi Selesai: {wl_info['Total Workload Selesai']} task")
-                        
-                        if not pic_prod.empty:
-                            st.markdown("**Hutang Produksi:**")
-                            for _, r in pic_prod.iterrows():
-                                st.write(f"🔹 {r['Output']}: {r['Judul Konten']}")
-                        if not pic_sched.empty:
-                            st.markdown("**Hutang Post:**")
-                            for _, r in pic_sched.iterrows():
-                                plts = [p for p in ['IG', 'TIKTOK'] if not r[p]]
-                                if "Video" in str(r['Output']) and not r['YT']: plts.append("YT")
-                                st.warning(f"⚠️ {r['Kode Konten']} ({', '.join(plts)})")
-                        if pic_prod.empty and pic_sched.empty:
-                            st.success("Tugas produksi selesai semua! ✨")
-            
-            # --- BARIS 3: LIVE EDITOR ---
-            
-            st.markdown(f"""
-                <div style="
-                    display: flex; 
-                    align-items: center; 
-                    gap: 12px; 
-                    background: #010101; 
-                    padding: 12px 20px; 
-                    border-radius: 12px; 
-                    margin-bottom: 25px; 
-                    border-left: 6px solid {BRAND_BLUE};
-                    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-                ">
-                    <img src="https://img.icons8.com/fluency/48/edit-property.png" width="32">
-                    <h3 style="
-                        margin: 0; 
-                        color: white; 
-                        font-weight: 800; 
-                        letter-spacing: 1px; 
-                        font-size: 18px;
-                        text-transform: uppercase;
-                    ">
-                        MASTER PRODUCTION PIPELINE (LIVE EDITOR)
-                    </h3>
-                </div>
-            """, unsafe_allow_html=True)
-            
-            pic_map = {"Abi": "🔵 Abi", "Hana": "🟢 Hana", "Hanif": "🟡 Hanif"}
-            out_map = {"Video": "🎬 Video", "Design": "🎨 Design"}
-            stat_map = {"DONE": "✅ DONE", "PENDING": "⏳ PENDING", "ON PROGRESS": "🏗️ ON PROGRESS"}
-
-            df_display = filtered_df[['Kode Konten', 'Tanggal Deadline', 'Output', 'PIC', 'Judul Konten', 'PROSES', 'IG', 'YT', 'TIKTOK']].copy()
-            df_display['PIC'] = df_display['PIC'].map(pic_map).fillna(df_display['PIC'])
-            df_display['Output'] = df_display['Output'].map(out_map).fillna(df_display['Output'])
-            df_display['PROSES'] = df_display['PROSES'].map(stat_map).fillna(df_display['PROSES'])
-
-            edited_df = st.data_editor(
-                df_display,
-                column_config={
-                    "PIC": st.column_config.SelectboxColumn("PIC", options=list(pic_map.values())),
-                    "Output": st.column_config.SelectboxColumn("Output", options=list(out_map.values())),
-                    "PROSES": st.column_config.SelectboxColumn("Status", options=list(stat_map.values())),
-                    "IG": st.column_config.CheckboxColumn("IG"),
-                    "YT": st.column_config.CheckboxColumn("YT"),
-                    "TIKTOK": st.column_config.CheckboxColumn("TikTok")
-                },
-                disabled=['Kode Konten', 'Tanggal Deadline', 'Judul Konten'],
-                use_container_width=True,
-                key="editor_sosmed"
-            )
-
-            if st.button("💾 Simpan Semua Perubahan", use_container_width=True):
-                with st.spinner("Sinkronisasi database..."):
-                    updates = 0
-                    for idx in edited_df.index:
-                        for col in ["PIC", "Output", "PROSES", "IG", "YT", "TIKTOK"]:
-                            old_val = str(filtered_df.at[idx, col]).strip()
-                            new_val_raw = edited_df.at[idx, col]
-                            
-                            # Clean Emoji
-                            if isinstance(new_val_raw, str) and " " in new_val_raw:
-                                new_val = new_val_raw.split(" ", 1)[-1].strip()
-                            else:
-                                new_val = new_val_raw
-
-                            if old_val != str(new_val).strip():
-                                val_to_send = "V" if (isinstance(new_val, bool) and new_val) else ("" if isinstance(new_val, bool) else str(new_val))
-                                update_sheet_cell(0, idx, col, val_to_send)
-                                updates += 1
-                    
-                    if updates > 0:
-                        st.success(f"Berhasil memperbarui {updates} data!")
-                        st.cache_data.clear()
-                        st.rerun()
-
-    except Exception as e:
-        st.error(f"Kesalahan Teknis: {e}")
+                        box-shadow: 0 4px
