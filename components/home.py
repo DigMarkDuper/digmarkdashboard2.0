@@ -741,7 +741,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
                         size_max=35, 
                         zoom=3.8, 
                         center=dict(lat=-2.5, lon=118.0), 
-                        mapbox_style="carto-positron", 
+                        map_style="carto-positron", 
                         hover_name="Lokasi",
                         hover_data={"Lat": False, "Lon": False, "Jumlah": True}
                     )
