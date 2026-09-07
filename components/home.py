@@ -731,7 +731,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
                 st.markdown("<div style='font-size:14px; color:gray; font-weight:bold; margin-bottom:10px;'>Titik Persebaran Leads - Seluruh Indonesia</div>", unsafe_allow_html=True)
                 
                 if not map_data.empty:
-                    fig_map = px.scatter_mapbox(
+                    fig_map = px.scatter_map(
                         map_data, 
                         lat="Lat", 
                         lon="Lon", 
