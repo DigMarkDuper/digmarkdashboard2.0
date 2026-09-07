@@ -731,7 +731,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
                 st.markdown("<div style='font-size:14px; color:gray; font-weight:bold; margin-bottom:10px;'>Titik Persebaran Leads - Seluruh Indonesia</div>", unsafe_allow_html=True)
                 
                 if not map_data.empty:
-                    fig_map = px.scatter_map(
+                        fig_map = px.scatter_map(
                         map_data, 
                         lat="Lat", 
                         lon="Lon", 
@@ -745,6 +745,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
                         hover_name="Lokasi",
                         hover_data={"Lat": False, "Lon": False, "Jumlah": True}
                     )
+
                     fig_map.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, height=600, coloraxis_showscale=False)
                     st.plotly_chart(fig_map, use_container_width=True)
                 else:
