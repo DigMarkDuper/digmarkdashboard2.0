@@ -3,7 +3,7 @@ import pandas as pd
 import io
 import datetime
 import re  
-from components.utils import sync_leads_to_crm, load_database_nomor, append_sheet_rows, init_connection, TAB
+from components.utils import sync_leads_to_crm, load_database_nomor, append_sheet_rows, open_master, TAB
 
 def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
     # --- HEADER UTAMA ---
@@ -93,9 +93,9 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
         df_crm = load_database_nomor()
         
         if df_crm is None or len(df_crm) == 0:
-            client = init_connection()
-            if client:
-                data_raw = client.open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(TAB['CRM']).get_all_values()
+            sheet = open_master()
+            if sheet:
+                data_raw = sheet.get_worksheet(TAB['CRM']).get_all_values()
                 if data_raw and len(data_raw) > 1:
                     df_crm = pd.DataFrame(data_raw[1:], columns=data_raw[0])
         

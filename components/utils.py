@@ -65,6 +65,26 @@ def init_connection():
         st.error(f"Koneksi Gagal: {e}")
         return None
 
+def open_master():
+    """Membuka Master Spreadsheet by ID (open_by_key), bukan by title.
+
+    NB: `client.open(nama)` memerlukan scope Google Drive (auth/drive) untuk
+    mencari file dikti oleh title. Scope Drive sudah dilewati bij audit (C2,
+    principle of least privilege), dus title-open altijd faalt met 403.
+    Openen by key gebruikt alleen de Sheets API (scope auth/spreadsheets is
+    genoeg) en herstelt de leeslist EN schrijflist zonder Drive-access.
+    Key wordt gelezen dari st.secrets — nooit hardcoded.
+    """
+    client = init_connection()
+    if not client:
+        return None
+    try:
+        key = st.secrets["spreadsheet_key"]
+        return client.open_by_key(key)
+    except Exception as e:
+        st.error(f"Gagal membuka Master Sheet: {e}")
+        return None
+
 # =====================================================================
 # 2. DATA LOADERS - JALUR UTAMA (BUNDLE SEMUA TAB)
 # =====================================================================
@@ -75,7 +95,8 @@ def fetch_all_master_data():
     client = init_connection()
     if not client: return None
     try:
-        master = client.open("MASTER DATA DIGITAL MARKETING 2.0")
+        master = open_master()
+        if master is None: return None
 
         def get_df(idx):
             try:
@@ -161,7 +182,7 @@ def load_dm_sosmed_fast():
     try:
         client = init_connection()
         if client:
-            sheet = client.open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(TAB['DM_SOSMED'])
+            sheet = open_master().get_worksheet(TAB['DM_SOSMED'])
             data = sheet.get_all_records()
             df = pd.DataFrame(data) if data else pd.DataFrame()
             if not df.empty:
@@ -186,10 +207,9 @@ def load_meta():
 # =====================================================================
 
 def append_sheet_rows(sheet_index, data_list):
-    client = init_connection()
-    if client:
+    spreadsheet = open_master()
+    if spreadsheet:
         try:
-            spreadsheet = client.open("MASTER DATA DIGITAL MARKETING 2.0")
             sheet = spreadsheet.get_worksheet(sheet_index)
             cleaned = [[str(x) if not isinstance(x, (int, float)) else x for x in row] for row in data_list]
             sheet.append_rows(cleaned, value_input_option='USER_ENTERED')
@@ -223,8 +243,7 @@ def confirm_and_clear(sheet_index, confirm_key, button_label="🗑️ Kosongkan 
         with c1:
             if st.button("Ya, hapus permanen", use_container_width=True, key=f"yes_{confirm_key}"):
                 try:
-                    client = init_connection()
-                    sheet = client.open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(sheet_index)
+                    sheet = open_master().get_worksheet(sheet_index)
                     sheet.clear()
                     if header_row:
                         sheet.append_row(header_row)
@@ -243,10 +262,9 @@ def confirm_and_clear(sheet_index, confirm_key, button_label="🗑️ Kosongkan 
     return False
 
 def update_sheet_cell(sheet_index, row_index, column_name, new_value):
-    client = init_connection()
-    if client:
+    ss = open_master()
+    if ss:
         try:
-            ss = client.open("MASTER DATA DIGITAL MARKETING 2.0")
             sheet = ss.get_worksheet(sheet_index)
             headers = sheet.row_values(1)
             if column_name in headers:
