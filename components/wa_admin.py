@@ -90,13 +90,13 @@ def show_wa_admin_page(BRAND_BLUE, BRAND_YELLOW):
                     
             if 'Mekari Tag' in df_wa.columns:
                 # Filter membuang data sampah dari metrik utama
-                tag_dibuang = ['Double Chat', 'Closed - Not Interested', 'Partnership']
+                tag_dibuang = utils.JUNK_TAGS
                 pola_hapus = '|'.join(tag_dibuang)
                 df_wa = df_wa[~df_wa['Mekari Tag'].astype(str).str.contains(pola_hapus, case=False, na=False)]
 
             if 'Mekari Tag' in df_wa.columns:
                             # Filter membuang data sampah dari metrik utama
-                            tag_dibuang = ['Double Chat', 'Closed - Not Interested', 'Partnership']
+                            tag_dibuang = utils.JUNK_TAGS
                             pola_hapus = '|'.join(tag_dibuang)
                             df_wa = df_wa[~df_wa['Mekari Tag'].astype(str).str.contains(pola_hapus, case=False, na=False)]
 

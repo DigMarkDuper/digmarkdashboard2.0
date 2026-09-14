@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import datetime
 import components.utils as utils
 
 def show_interview_tracking_page(BRAND_BLUE, BRAND_YELLOW):

@@ -3,7 +3,7 @@ import pandas as pd
 import io
 import datetime
 import re  
-from components.utils import sync_leads_to_crm, load_database_nomor, append_sheet_rows, init_connection
+from components.utils import sync_leads_to_crm, load_database_nomor, append_sheet_rows, init_connection, TAB
 
 def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
     # --- HEADER UTAMA ---
@@ -77,7 +77,7 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
                                     ""                                       # 17 (R): Status dari WA Admin
                                 ])
                             
-                            if append_sheet_rows(4, bulk):
+                            if append_sheet_rows(TAB['CRM'], bulk):
                                 st.success("Data berhasil diimport!")
                                 st.cache_data.clear()
                                 st.rerun()
@@ -95,7 +95,7 @@ def show_crm_page(BRAND_BLUE, BRAND_YELLOW):
         if df_crm is None or len(df_crm) == 0:
             client = init_connection()
             if client:
-                data_raw = client.open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(4).get_all_values()
+                data_raw = client.open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(TAB['CRM']).get_all_values()
                 if data_raw and len(data_raw) > 1:
                     df_crm = pd.DataFrame(data_raw[1:], columns=data_raw[0])
         

@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import io
 import plotly.express as px
+import plotly.graph_objects as go
 from datetime import datetime
 import components.utils as utils
 
@@ -346,7 +347,7 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
         st.markdown("### 🔍 Preview Penggabungan")
         st.dataframe(st.session_state.preview_data, use_container_width=True, hide_index=True)
         if st.button("🚀 SIMPAN KE SPREADSHEET", use_container_width=True):
-            if utils.append_sheet_rows(2, st.session_state.preview_data.values.tolist()):
+            if utils.append_sheet_rows(utils.TAB['INSIGHT'], st.session_state.preview_data.values.tolist()):
                 st.success("🔥 Data Berhasil Disimpan!")
                 st.session_state.preview_data = None
                 st.session_state.uploader_key += 1
@@ -356,7 +357,7 @@ def show_insight_page(BRAND_BLUE, BRAND_YELLOW):
 
     # --- HISTORY TABLE ---
     st.markdown("---")
-    st.markdown(f"""
+    st.markdown("""
         <div style="display: flex; align-items: center; gap: 15px; background: #F8FAFC; padding: 15px 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #E2E8F0; border-left: 8px solid #22C55E;">
             <div style="background: white; padding: 8px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center;">
                 <img src="https://img.icons8.com/color/48/google-sheets.png" width="30">

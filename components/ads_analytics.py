@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import io
 import datetime
 import components.utils as utils
 
@@ -60,23 +59,22 @@ def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
         </div>
     """, unsafe_allow_html=True)
     
-    # Asumsi Nilai 1 Closing
-    BIAYA_PELATIHAN = 12995000
+    # Asumsi Nilai 1 Closing (sumber tunggal dari utils - FIX 5)
+    BIAYA_PELATIHAN = utils.BIAYA_PELATIHAN
     
     # =====================================================================
     # 1. LOAD DATA (HANYA DARI WA ADMIN & ADS)
     # =====================================================================
-    df_crm = pd.DataFrame()
     df_wa = pd.DataFrame()
     
-    total_spend_tiktok, total_clicks_tiktok, total_leads_tiktok, closing_tiktok = 0, 0, 0, 0
-    total_spend_meta, total_clicks_meta, total_leads_meta, closing_meta = 0, 0, 0, 0
+    total_spend_tiktok, total_leads_tiktok, closing_tiktok = 0, 0, 0
+    total_spend_meta, total_leads_meta, closing_meta = 0, 0, 0
     total_spend_mekari, total_pesan_mekari = 0, 0
     
     global_leads = 0
     global_closing = 0
     
-    df_ads_tiktok_db, df_ads_meta_db, df_ads_mekari_db = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+    df_ads_tiktok_db, df_ads_meta_db = pd.DataFrame(), pd.DataFrame()
     
     # --- A. LOAD WA ADMIN (SINKRONISASI TOTAL DENGAN HALAMAN WA ADMIN) ---
     try:
@@ -103,7 +101,7 @@ def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
                 if not df_closing.empty:
                     closing_tiktok = len(df_closing[df_closing[kolom_sumber_wa].astype(str).str.contains('Tiktok', case=False, na=False)])
                     closing_meta = len(df_closing[df_closing[kolom_sumber_wa].astype(str).str.contains(r'Instagram|Facebook|IG|FB|Meta', case=False, regex=True, na=False)])
-    except Exception as e:
+    except Exception:
         pass
 
    # --- B. LOAD DATA BUDGET IKLAN DARI SPREADSHEET ---
@@ -121,7 +119,7 @@ def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
         except: return 0
 
     try:
-        df_ads_tiktok_db = utils.get_from_bundle(6)
+        df_ads_tiktok_db = utils.get_from_bundle(utils.TAB['ADS_TIKTOK'])
         if not df_ads_tiktok_db.empty:
             df_calc_tk = df_ads_tiktok_db.copy()
             df_calc_tk.columns = [str(c).strip().lower() for c in df_calc_tk.columns]
@@ -131,7 +129,7 @@ def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
                 df_calc_tk[col_cost_tk] = df_calc_tk[col_cost_tk].apply(clean_idr_cost)
                 total_spend_tiktok = df_calc_tk[col_cost_tk].sum()
 
-        df_ads_meta_db = utils.get_from_bundle(7)
+        df_ads_meta_db = utils.get_from_bundle(utils.TAB['ADS_META'])
         if not df_ads_meta_db.empty:
             df_calc_mt = df_ads_meta_db.copy()
             df_calc_mt.columns = [str(c).strip().lower() for c in df_calc_mt.columns]
@@ -140,11 +138,11 @@ def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
                 # Terapkan fungsi pembersih
                 df_calc_mt[col_cost_mt] = df_calc_mt[col_cost_mt].apply(clean_idr_cost)
                 total_spend_meta = df_calc_mt[col_cost_mt].sum()
-    except Exception as e: 
+    except Exception:
         pass
 
     # --- C. HITUNG MEKARI ---
-    df_db_mekari = utils.get_from_bundle(8)
+    df_db_mekari = utils.get_from_bundle(utils.TAB['MEKARI'])
     
     def force_clean_num(x):
         if pd.isna(x) or x == '': return 0
@@ -166,7 +164,6 @@ def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
     global_spend = total_spend_tiktok + total_spend_meta + total_spend_mekari
     global_omzet = global_closing * BIAYA_PELATIHAN 
     
-    global_cpl = global_spend / global_leads if global_leads > 0 else 0
     global_cac = global_spend / global_closing if global_closing > 0 else 0
     global_roas = (global_omzet / global_spend) if global_spend > 0 else 0
 
@@ -185,7 +182,6 @@ def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
     global_omzet = global_closing * BIAYA_PELATIHAN 
     
     # Perhitungan rasio aman dari error (dibagi nol)
-    global_cpl = global_spend / global_leads if global_leads > 0 else 0
     global_cac = global_spend / global_closing if global_closing > 0 else 0
     global_roas = (global_omzet / global_spend) if global_spend > 0 else 0
 
@@ -373,7 +369,7 @@ def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
                         with st.spinner("Mengirim ke Tab 7..."):
                             df_final = df_clean_tk.fillna("")
                             bulk_data = [df_final.columns.tolist()] + df_final.values.tolist() if df_ads_tiktok_db.empty else df_final.values.tolist()
-                            if utils.append_sheet_rows(6, bulk_data):
+                            if utils.append_sheet_rows(utils.TAB['ADS_TIKTOK'], bulk_data):
                                 st.success("✅ Berhasil masuk ke Tab TikTok.")
                                 st.balloons()
                                 st.cache_data.clear()
@@ -385,10 +381,7 @@ def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
         with st.expander("📑 Database TikTok Tersimpan (Klik untuk lihat & Reset)", expanded=False):
             if not df_ads_tiktok_db.empty:
                 st.dataframe(df_ads_tiktok_db, use_container_width=True, hide_index=True)
-                if st.button("🗑️ Kosongkan Database TikTok", use_container_width=True, key="rst_tk"):
-                    utils.init_connection().open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(6).clear()
-                    st.cache_data.clear()
-                    if 'bundle' in st.session_state: del st.session_state['bundle']
+                if utils.confirm_and_clear(utils.TAB['ADS_TIKTOK'], "tiktok_db", button_label="🗑️ Kosongkan Database TikTok"):
                     st.rerun()
 
     # =====================================================================
@@ -495,10 +488,7 @@ def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
         with st.expander("📑 Database Meta Tersimpan (Klik untuk lihat & Reset)", expanded=False):
             if not df_ads_meta_db.empty:
                 st.dataframe(df_ads_meta_db, use_container_width=True, hide_index=True)
-                if st.button("🗑️ Kosongkan Database Meta", use_container_width=True, key="rst_mt"):
-                    utils.init_connection().open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(7).clear()
-                    st.cache_data.clear()
-                    if 'bundle' in st.session_state: del st.session_state['bundle']
+                if utils.confirm_and_clear(utils.TAB['ADS_META'], "meta_db", button_label="🗑️ Kosongkan Database Meta"):
                     st.rerun()
 
     # ---------------- TAB MEKARI (SMART IMPORTER) ----------------
@@ -609,7 +599,7 @@ def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
                             fmt_cost = f"Rp{int(up_spend):,}".replace(',', '.')
                             row = [tgl_skrg, p_data, jenis_lap, up_msgs, fmt_cost]
                             
-                            if utils.append_sheet_rows(8, [row]):
+                            if utils.append_sheet_rows(utils.TAB['MEKARI'], [row]):
                                 st.success("Berhasil Disimpan!")
                                 st.cache_data.clear()
                                 if 'bundle' in st.session_state: del st.session_state['bundle']
@@ -646,22 +636,15 @@ def show_ads_analytics_page(BRAND_BLUE, BRAND_YELLOW):
 
             st.dataframe(df_db_mekari, use_container_width=True, hide_index=True)
             
-            if st.button("🗑️ Kosongkan Riwayat", use_container_width=True, key="btn_del_mekari"):
-                with st.spinner("Mengosongkan data..."):
-                    sheet = utils.init_connection().open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(8)
-                    sheet.clear()
-                    sheet.append_row(["Tanggal Input", "Periode", "Jenis Laporan", "Total Interaksi", "Total Biaya (Rp)"])
-                    st.cache_data.clear()
-                    if 'bundle' in st.session_state: del st.session_state['bundle']
-                    st.rerun()
+            _meks_headers = ["Tanggal Input", "Periode", "Jenis Laporan", "Total Interaksi", "Total Biaya (Rp)"]
+            if utils.confirm_and_clear(utils.TAB['MEKARI'], "mekari_history",
+                                       button_label="🗑️ Kosongkan Riwayat", header_row=_meks_headers):
+                st.rerun()
         else:
             st.warning("⚠️ Data riwayat kosong. Jika Anda merasa sudah upload, ini berarti Header tabelnya hilang di Google Sheets.")
             
-            if st.button("🛠️ Reset & Siapkan Format Tabel (Solusi Error)", use_container_width=True, key="btn_force_reset_mekari"):
-                with st.spinner("Mereset format tabel Google Sheets..."):
-                    sheet = utils.init_connection().open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(8)
-                    sheet.clear()
-                    sheet.append_row(["Tanggal Input", "Periode", "Jenis Laporan", "Total Interaksi", "Total Biaya (Rp)"])
-                    st.cache_data.clear()
-                    if 'bundle' in st.session_state: del st.session_state['bundle']
-                    st.rerun()
+            _meks_headers = ["Tanggal Input", "Periode", "Jenis Laporan", "Total Interaksi", "Total Biaya (Rp)"]
+            if utils.confirm_and_clear(utils.TAB['MEKARI'], "mekari_force_reset",
+                                       button_label="🛠️ Reset & Siapkan Format Tabel (Solusi Error)",
+                                       header_row=_meks_headers):
+                st.rerun()

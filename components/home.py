@@ -128,20 +128,31 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
     """, unsafe_allow_html=True)
 
     # --- FUNGSI RENDER UNIVERSAL ---
-    def render_universal_card(col, icon, title, value, subtext="", color="#111827"):
-        with col:
-            st.markdown(f"""
-                <div class="kpi-card">
-                    <div class="card-header">
-                        <span style="font-size: 20px;">{icon}</span>
-                        <div class="metric-title">{title}</div>
+    def render_universal_card(col, icon, title, value, subtext="", color="#111827", accent="#1E3A8A", variant="kpi"):
+        if variant == "kpi":
+            with col:
+                st.markdown(f"""
+                    <div class="kpi-card">
+                        <div class="card-header">
+                            <span style="font-size: 20px;">{icon}</span>
+                            <div class="metric-title">{title}</div>
+                        </div>
+                        <div>
+                            <div class="metric-value" style="color:{color};">{value}</div>
+                            <div class="metric-sub">{subtext}</div>
+                        </div>
                     </div>
-                    <div>
-                        <div class="metric-value" style="color:{color};">{value}</div>
-                        <div class="metric-sub">{subtext}</div>
-                    </div>
+                """, unsafe_allow_html=True)
+        else:
+            col.markdown(f"""
+                <div style="background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 5px solid {accent}; margin-bottom: 15px;">
+                    <div style="font-size: 24px; margin-bottom: 5px;">{icon}</div>
+                    <div style="font-size: 10px; color: #64748B; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">{title}</div>
+                    <div style="font-size: 18px; font-weight: 900; color: #0F172A; margin: 5px 0;">{value}</div>
+                    <div style="font-size: 10px; color: #94A3B8; font-weight: 600;">{subtext}</div>
                 </div>
             """, unsafe_allow_html=True)
+
             
     # --- HEADER UTAMA: COMMAND CENTER ---
     LOGO_URL = "https://www.dutapersadajogja.com/assets/img/logo.png"
@@ -251,7 +262,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
         sekarang = datetime.datetime.now()
         bulan_ini = sekarang.month
         tahun_ini = sekarang.year
-        BIAYA_PELATIHAN = 12995000 
+        BIAYA_PELATIHAN = utils.BIAYA_PELATIHAN
 
         total_leads_mei, total_closing_mei = 0, 0
         sos_pend, web_pend = 0, 0
@@ -342,7 +353,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
         total_spend_tiktok = 0
         total_spend_meta = 0
         total_spend_mekari = 0
-        BIAYA_PELATIHAN = 12995000 # Disamakan dengan ads_analytic.py
+        BIAYA_PELATIHAN = utils.BIAYA_PELATIHAN
 
         # 2. HITUNG LEADS & CLOSING (Dari df_wa)
         if 'df_wa' in locals() and not df_wa.empty:
@@ -364,7 +375,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
             except: return 0
             
         # A. Tarik TikTok (Tab Index 6)
-        df_tk = utils.get_from_bundle(6)
+        df_tk = utils.get_from_bundle(utils.TAB['ADS_TIKTOK'])
         if not df_tk.empty:
             df_calc_tk = df_tk.copy()
             df_calc_tk.columns = [str(c).strip().lower() for c in df_calc_tk.columns]
@@ -373,7 +384,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
                 total_spend_tiktok = df_calc_tk[col_cost_tk].apply(clean_idr_cost).sum()
 
         # B. Tarik Meta/IG (Tab Index 7)
-        df_mt = utils.get_from_bundle(7)
+        df_mt = utils.get_from_bundle(utils.TAB['ADS_META'])
         if not df_mt.empty:
             df_calc_mt = df_mt.copy()
             df_calc_mt.columns = [str(c).strip().lower() for c in df_calc_mt.columns]
@@ -382,7 +393,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
                 total_spend_meta = df_calc_mt[col_cost_mt].apply(clean_idr_cost).sum()
 
         # C. Tarik Mekari (Tab Index 8)
-        df_mk = utils.get_from_bundle(8)
+        df_mk = utils.get_from_bundle(utils.TAB['MEKARI'])
         if not df_mk.empty:
             col_biaya = next((c for c in df_mk.columns if 'biaya' in str(c).lower() or 'cost' in str(c).lower()), None)
             if col_biaya:
@@ -440,21 +451,11 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
         """, unsafe_allow_html=True)
         r = st.columns(5)
 
-        def render_universal_card(col, icon, title, value, subtitle, accent="#1E3A8A"):
-            col.markdown(f"""
-                <div style="background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 5px solid {accent}; margin-bottom: 15px;">
-                    <div style="font-size: 24px; margin-bottom: 5px;">{icon}</div>
-                    <div style="font-size: 10px; color: #64748B; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">{title}</div>
-                    <div style="font-size: 18px; font-weight: 900; color: #0F172A; margin: 5px 0;">{value}</div>
-                    <div style="font-size: 10px; color: #94A3B8; font-weight: 600;">{subtitle}</div>
-                </div>
-            """, unsafe_allow_html=True)
-
-        render_universal_card(r[0], "💸", "Total Spend Ads+Mekari", f"Rp {global_spend:,.0f}", "All Platforms", "#8B0000")
-        render_universal_card(r[1], "👥", "Leads Total", f"{global_leads}", "Database WA")
-        render_universal_card(r[2], "🎓", "Closing Total", f"{global_closing} Siswa", "Total Closing", "#006400")
-        render_universal_card(r[3], "🎯", "Biaya per Siswa (CAC)", f"Rp {global_cac:,.0f}", "Efisiensi")
-        render_universal_card(r[4], "🚀", "ROAS Total", f"{global_roas:,.1f}x", "Profitability", "#1E3A8A")
+        render_universal_card(r[0], "💸", "Total Spend Ads+Mekari", f"Rp {global_spend:,.0f}", "All Platforms", accent="#8B0000", variant="roi")
+        render_universal_card(r[1], "👥", "Leads Total", f"{global_leads}", "Database WA", variant="roi")
+        render_universal_card(r[2], "🎓", "Closing Total", f"{global_closing} Siswa", "Total Closing", accent="#006400", variant="roi")
+        render_universal_card(r[3], "🎯", "Biaya per Siswa (CAC)", f"Rp {global_cac:,.0f}", "Efisiensi", variant="roi")
+        render_universal_card(r[4], "🚀", "ROAS Total", f"{global_roas:,.1f}x", "Profitability", accent="#1E3A8A", variant="roi")
 
         st.markdown("---")
     except Exception as e:
@@ -462,7 +463,6 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
 
     # --- 7. ANNUAL TARGET TRACKING ---
     try:
-        import plotly.graph_objects as go
         
         TARGET_ICON = "https://cdn-icons-png.flaticon.com/512/11520/11520268.png" # Ikon Bullseye Modern
 
@@ -678,7 +678,7 @@ def show_homepage(BRAND_BLUE, BRAND_YELLOW, go_to_page_func, bundle):
         # Filter tag sampah (Double Chat, Partnership, dll)
         mekari_col = next((c for c in df_maps.columns if 'Mekari' in str(c)), None)
         if mekari_col:
-            tag_dibuang = ['Double Chat', 'Closed - Not Interested', 'Partnership']
+            tag_dibuang = utils.JUNK_TAGS
             pola_hapus = '|'.join(tag_dibuang)
             df_maps = df_maps[~df_maps[mekari_col].astype(str).str.contains(pola_hapus, case=False, na=False)]
 
