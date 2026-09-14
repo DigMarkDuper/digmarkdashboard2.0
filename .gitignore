@@ -1,0 +1,15 @@
+# --- Sensitive credentials / secrets ---
+.streamlit/secrets.toml
+.env
+*.key
+
+# --- Python cache ---
+__pycache__/
+*.pyc
+
+# --- Virtual environments ---
+.venv/
+venv/
+
+# --- OS / editor ---
+.DS_Store

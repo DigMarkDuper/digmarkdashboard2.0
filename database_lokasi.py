@@ -150,7 +150,7 @@ indo_coords = {
 
     # --- KALIMANTAN SELATAN ---
     'banjarmasin': [-3.3166, 114.5901], 'banjarbaru': [-3.4423, 114.8301], 'balangan': [-2.3500, 115.5000],
-    'banjar': [-3.4500, 114.9500], 'barito kuala': [-3.0000, 114.6500], 'hulu sungai selatan': [-2.7500, 115.2000],
+    'banjar kalsel': [-3.4500, 114.9500], 'barito kuala': [-3.0000, 114.6500], 'hulu sungai selatan': [-2.7500, 115.2000],
     'hulu sungai tengah': [-2.6000, 115.4500], 'hulu sungai utara': [-2.4500, 115.2500], 'kotabaru': [-3.2500, 116.2000],
     'tabalong': [-1.9000, 115.4500], 'tanah bumbu': [-3.4500, 115.7000], 'tanah laut': [-3.8500, 114.7500],
     'tapin': [-2.9500, 115.0500],

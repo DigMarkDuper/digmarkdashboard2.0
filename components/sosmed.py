@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from components.utils import load_sosmed, update_sheet_cell
+from components.utils import load_sosmed, update_sheet_cell, is_posted_series, is_not_posted_series
 
 def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
     st.markdown(f"""
@@ -76,13 +76,13 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
             # --- LOGIKA PERHITUNGAN (VERSI FIX) ---
             is_done = filtered_df['PROSES'].astype(str).str.upper() == 'DONE'
             
-            # Fungsi pembantu untuk cek apakah kolom "Sudah Di-post"
+            # Fungsi pembantu untuk cek apakah kolom "Sudah Di-post" (delegasi ke helper bersama - FIX 6)
             def is_posted(column_name):
-                return filtered_df[column_name].astype(str).str.upper().isin(['V', 'TRUE', '1', 'YES', 'CHECKED'])
+                return is_posted_series(filtered_df[column_name])
             
             # Fungsi pembantu untuk cek apakah kolom "Belum Di-post"
             def is_not_posted(column_name):
-                return ~is_posted(column_name)
+                return is_not_posted_series(filtered_df[column_name])
 
             # Hitung Produksi Global
             v_mask = filtered_df['Output'].str.contains('Video', case=False, na=False)
@@ -374,7 +374,7 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
                     # Logika hutang post (khusus untuk mengecek status centang V, meski tidak masuk skor workload PIC)
                     v_mask_pic = filtered_df['Output'].str.contains('Video', case=False, na=False)
                     pic_sched = filtered_df[(filtered_df['PIC'] == name) & (filtered_df['PROSES'] == 'DONE') & 
-                                            ((filtered_df['IG'] == False) | ((v_mask_pic) & (filtered_df['YT'] == False)) | (filtered_df['TIKTOK'] == False))]
+                                            (is_not_posted('IG') | (v_mask_pic & is_not_posted('YT')) | is_not_posted('TIKTOK'))]
                     
                     status_emoji = "🔴" if (not pic_prod.empty or not pic_sched.empty) else "🟢"
                     with st.expander(f"{status_emoji} {name} - Status Detail"):
@@ -389,8 +389,8 @@ def show_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
                         if not pic_sched.empty:
                             st.markdown("**Hutang Post:**")
                             for _, r in pic_sched.iterrows():
-                                plts = [p for p in ['IG', 'TIKTOK'] if not r[p]]
-                                if "Video" in str(r['Output']) and not r['YT']: plts.append("YT")
+                                plts = [p for p in ['IG', 'TIKTOK'] if is_not_posted_series(pd.Series([r[p]])).iloc[0]]
+                                if "Video" in str(r['Output']) and is_not_posted_series(pd.Series([r['YT']])).iloc[0]: plts.append("YT")
                                 st.warning(f"⚠️ {r['Kode Konten']} ({', '.join(plts)})")
                         if pic_prod.empty and pic_sched.empty:
                             st.success("Tugas produksi selesai semua! ✨")

@@ -3,9 +3,49 @@ import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import base64
-import datetime
 import time  
 import re
+import concurrent.futures
+
+# =====================================================================
+# KONSTANTA GLOBAL (FIX 5 - D2/M2 centralize constants & tab indices)
+# =====================================================================
+TAB = {
+    'SOSMED': 0,
+    'WEBSITE': 1,
+    'INSIGHT': 2,
+    'WA_ADMIN': 3,
+    'CRM': 4,
+    'DM_SOSMED': 5,
+    'ADS_TIKTOK': 6,
+    'ADS_META': 7,
+    'MEKARI': 8,
+    'INTERVIEW': 9,
+}
+
+# Biaya pelatihan (rupiah) — sumber tunggal (FIX 5 - D2)
+BIAYA_PELATIHAN = 12995000
+
+# Daftar tag/kategori JUNK tunggal (FIX 7 - pastikan para file sinkron)
+JUNK_TAGS = [
+    'not eligible',
+    'partnership',
+    'alumni',
+    'closed - not interested',
+    'closed - registered',
+    'double chat',
+]
+
+# Helper penandaan "sudah posting" (FIX 6 - D3 unify posted/junk logic)
+POSTED_VALUES = ('V', 'TRUE', '1', 'YES', 'CHECKED')
+
+def is_posted_series(series):
+    """True untuk nilai yang menandakan konten sudah diposting."""
+    return series.astype(str).str.upper().str.strip().isin(POSTED_VALUES)
+
+def is_not_posted_series(series):
+    """True untuk nilai yang menandakan konten BELUM diposting."""
+    return ~is_posted_series(series)
 
 # =====================================================================
 # 1. KONEKSI ENGINE (GOOGLE SHEETS API)
@@ -18,7 +58,7 @@ def init_connection():
         creds_info = dict(st.secrets["gcp_service_account"])
         if "private_key" in creds_info:
             creds_info["private_key"] = creds_info["private_key"].replace("\\n", "\n").strip()
-        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/spreadsheets"]
         creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_info, scope)
         return gspread.authorize(creds)
     except Exception as e:
@@ -31,33 +71,42 @@ def init_connection():
 
 @st.cache_data(ttl=600)
 def fetch_all_master_data():
-    """Menarik hampir semua tab sekaligus (Jalur Lambat - 1.2s per tab)"""
+    """Menarik hampir semua tab sekaligus (Jalur Paralel - ~1.2s total)"""
     client = init_connection()
     if not client: return None
     try:
         master = client.open("MASTER DATA DIGITAL MARKETING 2.0")
-        
+
         def get_df(idx):
             try:
-                time.sleep(1.2) # Jeda aman API agar tidak terkena Limit
+                # Jeda aman API agar tidak terkena Limit (dibagi per-thread paralel)
+                time.sleep(1.2)
                 data = master.get_worksheet(idx).get_all_records()
-                return pd.DataFrame(data) if data else pd.DataFrame()
-            except Exception as e: 
+                return idx, (pd.DataFrame(data) if data else pd.DataFrame())
+            except Exception as e:
                 print(f"Gagal tarik tab {idx}: {e}")
-                return pd.DataFrame()
-        
-        # Tarik data bundle (Index 5 dilewati karena ada jalur cepat sendiri)
-        return {
-            0: get_df(0), # Sosmed
-            1: get_df(1), # Website
-            2: get_df(2), # Insight
-            3: get_df(3), # WA Admin
-            4: get_df(4), # Database Nomor (CRM)
-            6: get_df(6), # Iklan/Ads
-            7: get_df(7), # CRM Progress
-            8: get_df(8), # Pengaturan
-            9: get_df(9)  # <--- TAMBAHAN BARU: Jadwal Interview Siswa
-        }
+                return idx, pd.DataFrame()
+
+        # Tarik semua tab secara paralel (Index 5 dilewati karena ada jalur cepat sendiri)
+        tab_indices = [
+            TAB['SOSMED'],     # 0 Sosmed
+            TAB['WEBSITE'],    # 1 Website
+            TAB['INSIGHT'],    # 2 Insight
+            TAB['WA_ADMIN'],   # 3 WA Admin
+            TAB['CRM'],        # 4 Database Nomor (CRM)
+            TAB['ADS_TIKTOK'], # 6 Iklan/Ads
+            TAB['ADS_META'],   # 7 CRM Progress
+            TAB['MEKARI'],     # 8 Pengaturan
+            TAB['INTERVIEW'],  # 9 Jadwal Interview Siswa
+        ]
+
+        bundle = {0: pd.DataFrame(), 1: pd.DataFrame(), 2: pd.DataFrame(),
+                  3: pd.DataFrame(), 4: pd.DataFrame(), 6: pd.DataFrame(),
+                  7: pd.DataFrame(), 8: pd.DataFrame(), 9: pd.DataFrame()}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(tab_indices)) as executor:
+            for idx, df in executor.map(get_df, tab_indices):
+                bundle[idx] = df
+        return bundle
     except Exception as e:
         st.error(f"Gagal Sinkronisasi Master Data: {e}")
         return None
@@ -75,7 +124,7 @@ def get_from_bundle(idx):
 # =====================================================================
 
 def load_sosmed(): 
-    df = get_from_bundle(0)
+    df = get_from_bundle(TAB['SOSMED'])
     if not df.empty:
         col_date = 'Tanggal Deadline' if 'Tanggal Deadline' in df.columns else 'Deadline'
         if col_date in df.columns:
@@ -84,7 +133,7 @@ def load_sosmed():
     return df
 
 def load_website():
-    df = get_from_bundle(1)
+    df = get_from_bundle(TAB['WEBSITE'])
     if not df.empty:
         col_date = 'Deadline' if 'Deadline' in df.columns else 'Tanggal Deadline'
         if col_date in df.columns:
@@ -93,10 +142,10 @@ def load_website():
     return df
 
 def load_insight():
-    return get_from_bundle(2)
+    return get_from_bundle(TAB['INSIGHT'])
 
 def load_wa_admin(): 
-    df = get_from_bundle(3)
+    df = get_from_bundle(TAB['WA_ADMIN'])
     if not df.empty:
         if 'Tanggal Masuk' in df.columns:
             df['Tanggal Masuk'] = pd.to_datetime(df['Tanggal Masuk'], dayfirst=True, errors='coerce')
@@ -104,7 +153,7 @@ def load_wa_admin():
 
 def load_database_nomor():
     """Fungsi yang dicari oleh crm.py"""
-    return get_from_bundle(4)
+    return get_from_bundle(TAB['CRM'])
 
 # Loader Cepat khusus DM Sosmed (Jalur Cepat Tab 5)
 @st.cache_data(ttl=300)
@@ -112,7 +161,7 @@ def load_dm_sosmed_fast():
     try:
         client = init_connection()
         if client:
-            sheet = client.open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(5)
+            sheet = client.open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(TAB['DM_SOSMED'])
             data = sheet.get_all_records()
             df = pd.DataFrame(data) if data else pd.DataFrame()
             if not df.empty:
@@ -125,11 +174,11 @@ def load_dm_sosmed_fast():
 
 # Tambahan untuk Halaman ADS/Insight jika perlu dipanggil spesifik
 def load_tiktok():
-    df = get_from_bundle(6) # Asumsi tab ads index 6 mencakup tiktok
+    df = get_from_bundle(TAB['ADS_TIKTOK']) # Asumsi tab ads index 6 mencakup tiktok
     return df
 
 def load_meta():
-    df = get_from_bundle(6) # Asumsi tab ads index 6 mencakup meta
+    df = get_from_bundle(TAB['ADS_TIKTOK']) # Asumsi tab ads index 6 mencakup meta (jalur sama)
     return df
 
 # =====================================================================
@@ -155,6 +204,42 @@ def append_sheet_rows_fast(sheet_index, data_list):
     if success:
         st.cache_data.clear() # Hapus cache agar data terbaru segera terlihat
         return True
+    return False
+
+def confirm_and_clear(sheet_index, confirm_key, button_label="🗑️ Kosongkan / Hapus", header_row=None):
+    """Dua-langkah konfirmasi sebelum aksi destruktif sheet.clear() (FIX 2 - C1).
+
+    Klik pertama hanya memunculkan tombol konfirmasi; sheet.clear() hanya dieksekusi
+    setelah user menekan 'Ya, hapus permanen'. Kembalikan True jika benar-benar terhapus.
+    """
+    flag_key = f"confirm_clear_{confirm_key}"
+
+    if st.button(button_label, use_container_width=True, key=f"btn_{confirm_key}"):
+        st.session_state[flag_key] = True
+
+    if st.session_state.get(flag_key):
+        st.warning("⚠️ Tindakan ini **menghapus SELURUH data** pada tab secara permanen. Lanjutkan?")
+        c1, c2 = st.columns(2)
+        with c1:
+            if st.button("Ya, hapus permanen", use_container_width=True, key=f"yes_{confirm_key}"):
+                try:
+                    client = init_connection()
+                    sheet = client.open("MASTER DATA DIGITAL MARKETING 2.0").get_worksheet(sheet_index)
+                    sheet.clear()
+                    if header_row:
+                        sheet.append_row(header_row)
+                    st.session_state[flag_key] = False
+                    st.cache_data.clear()
+                    if 'bundle' in st.session_state:
+                        del st.session_state['bundle']
+                    return True
+                except Exception as e:
+                    st.error(f"Gagal menghapus: {e}")
+                    return False
+        with c2:
+            if st.button("Batal", use_container_width=True, key=f"no_{confirm_key}"):
+                st.session_state[flag_key] = False
+                st.rerun()
     return False
 
 def update_sheet_cell(sheet_index, row_index, column_name, new_value):
@@ -211,14 +296,7 @@ def sync_leads_to_crm():
         # ==========================================================
         # ELEMINASI KATEGORI / TAG JUNK (DIBUANG SEBELUM SINKRONISASI)
         # ==========================================================
-        list_dibuang = [
-            'not eligible', 
-            'partnership', 
-            'alumni', 
-            'closed - not interested', 
-            'closed - registered',
-            'double chat' 
-        ]
+        list_dibuang = JUNK_TAGS
         pola_hapus = '|'.join(list_dibuang)
 
         if 'Mekari Tag' in df_wa.columns:
@@ -295,7 +373,7 @@ def sync_leads_to_crm():
             rows_to_add.append(crm_row)
         
         # Mengirim ke index 4 (Tab ke-5 CRM)
-        if append_sheet_rows(4, rows_to_add):
+        if append_sheet_rows(TAB['CRM'], rows_to_add):
             return True, f"Berhasil menyinkronkan {len(rows_to_add)} data baru ke CRM beserta Status WA."
         return False, "Gagal menulis ke Google Sheets CRM."
             

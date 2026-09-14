@@ -1,9 +1,8 @@
 import streamlit as st
-import pandas as pd
 import plotly.express as px
 import datetime
 # Pastikan kedua fungsi append terimpor di sini
-from components.utils import load_dm_sosmed_fast, append_sheet_rows_fast, append_sheet_rows
+from components.utils import load_dm_sosmed_fast, append_sheet_rows_fast, TAB
 
 def show_dm_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
     st.title("📥 TRACKER DM SOSMED")
@@ -120,7 +119,7 @@ def show_dm_sosmed_page(BRAND_BLUE, BRAND_YELLOW):
                 data_baru = [no_urut, platform, username, link_final, no_hp_final, domisili, status_dm, tag_dm, tgl_hari_ini]
                 
                 # MENGGUNAKAN append_sheet_rows_fast agar sinkron dengan cache
-                if append_sheet_rows_fast(5, [data_baru]):
+                if append_sheet_rows_fast(TAB['DM_SOSMED'], [data_baru]):
                     st.success(f"🔥 Berhasil menyimpan {username}!")
                     # Update cache lokal agar data baru langsung tampil di tabel bawah
                     st.session_state.dm_data_cache = load_dm_sosmed_fast()

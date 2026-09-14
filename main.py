@@ -1,5 +1,5 @@
 import streamlit as st
-import datetime
+import time
 import os
 import sys
 
@@ -36,9 +36,23 @@ LOGO_URL = "https://www.dutapersadajogja.com/assets/img/logo.png"
 BRAND_BLUE = "#005696"
 BRAND_YELLOW = "#FDB813"
 
+# --- Konstanta Keamanan Login (FIX 4 - S1) ---
+LOGIN_MAX_ATTEMPTS = 5
+LOGIN_LOCK_SECONDS = 60
+SESSION_TIMEOUT_HOURS = 12
+SESSION_TIMEOUT_SECONDS = SESSION_TIMEOUT_HOURS * 3600
+
 def check_password():
+    # --- Cek sesi kedaluwarsa (idle/session expiry) ---
     if st.session_state.get("password_correct"):
-        return True
+        logged_in_at = st.session_state.get("logged_in_at")
+        if logged_in_at and (time.time() - logged_in_at) > SESSION_TIMEOUT_SECONDS:
+            # Sesi kedaluwarsa -> wajib login ulang
+            st.session_state["password_correct"] = False
+            for key in ["logged_in_at", "login_attempts", "login_locked_until"]:
+                st.session_state.pop(key, None)
+        else:
+            return True
     
     # 1. Pasang background asli
     utils.set_bg_local('bg.png') 
@@ -117,7 +131,7 @@ def check_password():
         ''', unsafe_allow_html=True)
             
         # Judul: Center Alignment dengan Flexbox untuk akurasi tinggi
-        st.markdown(f'''
+        st.markdown('''
             <div style="
                 display: flex; 
                 flex-direction: column; 
@@ -140,19 +154,37 @@ def check_password():
             </div>
         ''', unsafe_allow_html=True)
 
-        # Form Login
+        # Form Login — dengan brute-force throttle (FIX 4 - S1)
+        now = time.time()
+        locked_until = st.session_state.get("login_locked_until", 0)
+        if now < locked_until:
+            remaining = int(locked_until - now)
+            st.warning(f"Terlalu banyak percobaan gagal. Coba lagi dalam {remaining} detik.")
+        
         with st.form("login_compact"):
             u_name = st.text_input("Username").strip().lower()
             u_pass = st.text_input("Password", type="password")
             
             # Tombol dibuat lebih tegas
             if st.form_submit_button("LOGIN KE SISTEM"):
-                if "credentials" in st.secrets and u_name in st.secrets["credentials"] and st.secrets["credentials"][u_name] == u_pass:
+                if now < locked_until:
+                    st.error(f"Akun dikunci sementara. Tunggu {int(locked_until - now)} detik.")
+                elif "credentials" in st.secrets and u_name in st.secrets["credentials"] and st.secrets["credentials"][u_name] == u_pass:
                     st.session_state["password_correct"] = True
+                    st.session_state["logged_in_at"] = time.time()
+                    st.session_state.pop("login_attempts", None)
+                    st.session_state.pop("login_locked_until", None)
                     st.rerun()
                 else:
-                    st.error("Akses Ditolak: Kredensial Salah")
-                    
+                    attempts = st.session_state.get("login_attempts", 0) + 1
+                    st.session_state["login_attempts"] = attempts
+                    if attempts >= LOGIN_MAX_ATTEMPTS:
+                        st.session_state["login_locked_until"] = time.time() + LOGIN_LOCK_SECONDS
+                        st.session_state["login_attempts"] = 0
+                        st.error(f"Terlalu banyak percobaan gagal. Akun dikunci {LOGIN_LOCK_SECONDS} detik.")
+                    else:
+                        st.error(f"Akses Ditolak: Kredensial Salah ({attempts}/{LOGIN_MAX_ATTEMPTS} percobaan)")
+    
     return False
 
 # --- Jalankan di bagian paling luar ---
